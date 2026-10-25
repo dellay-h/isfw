@@ -2,7 +2,7 @@
 // of the enemy and skill lists (dev/store.js), saved to their files on every
 // change.
 import { STALE_DRAFTS } from './data.js';
-import { initStore, onChange, flush, server } from './dev/store.js';
+import { initStore, onChange, flush, server, READONLY } from './dev/store.js';
 import { initEnemies, renderEnemies } from './dev/enemies.js';
 import { initSkills, renderSkills } from './dev/skills.js';
 
@@ -25,9 +25,20 @@ export function showDev(view) {
   renderBanner();
 }
 
+// Read-only (online copy): disable every editing control, also after the
+// lists re-render. Expand/collapse and the preview panel keep working.
+function lockEditing() {
+  const lock = () => {
+    for (const el of document.querySelectorAll('.dev-main input, .dev-main select, .dev-main textarea, .dev-main button[data-act], #de-new, #ds-new, #de-apply, #ds-apply')) el.disabled = true;
+  };
+  for (const root of document.querySelectorAll('.dev-main')) new MutationObserver(lock).observe(root, { childList: true, subtree: true });
+  lock();
+}
+
 export function initDev({ getState } = {}) {
   initEnemies({ getState });
   initSkills();
+  if (READONLY) lockEditing();
   for (const id of ['#de-apply', '#ds-apply']) {
     $(id).addEventListener('click', async () => { await flush(); location.reload(); });
   }

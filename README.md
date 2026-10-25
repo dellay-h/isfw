@@ -16,6 +16,14 @@ lets the dev screens save their files.
 The top band switches between **monitor** (the game), **dev/enemies** and
 **dev/skills**.
 
+## Online copy (GitHub Pages)
+
+`.github/workflows/pages.yml` publishes the game on every push to `main`
+(only `index.html`, `css/` and `js/`). One-time setup: repo Settings → Pages →
+Source: **GitHub Actions**. Online there is no `server.py`, so the dev pages
+are read-only (viewable, nothing can be edited or saved); edit balance locally
+with `start.bat` and push.
+
 ## Layout
 
 - `index.html` – page skeleton
@@ -30,6 +38,7 @@ The top band switches between **monitor** (the game), **dev/enemies** and
 - `js/migrate.js` – converts dev edits saved in the old enemy format
 - `design/` – design notes: archetype ideas, skill ideas
 - `server.py` – local server (no caching, `/api/ping`, saves `/api/enemies` and `/api/skills`)
+- `.github/workflows/pages.yml` – publishes the game to GitHub Pages
 
 ## Dev screens
 

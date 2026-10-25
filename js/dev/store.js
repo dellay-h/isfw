@@ -20,6 +20,10 @@ export const status = {
 };
 export const server = { ok: null, msg: '' }; // null = not checked yet
 
+// Online copy (e.g. GitHub Pages): there is no server.py to save to, so the
+// dev pages are read-only there. Editing works only when served locally.
+export const READONLY = !['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+
 // What is on disk, as far as this page knows:
 //   data: hash of the data (drafts record it, see data.js)
 //   text: sha-256 of the file text (sent with saves; the server refuses a
@@ -32,9 +36,9 @@ async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
-const ready = Promise.all(Object.keys(disk).map(async (name) => {
+const ready = READONLY ? Promise.resolve() : Promise.all(Object.keys(disk).map(async (name) => {
   try {
-    const r = await fetch(`/js/${name}.js`, { cache: 'no-store' });
+    const r = await fetch(`js/${name}.js`, { cache: 'no-store' });
     const text = await r.text();
     // only trust it if it is the version this page loaded
     const m = await import(`../${name}.js?check=${Date.now()}`).catch(() => null);
@@ -54,6 +58,7 @@ function keepLocal(name) {
 
 // Call after every edit of store[name].
 export function persist(name) {
+  if (READONLY) return;
   keepLocal(name);
   const st = status[name];
   st.state = 'pending';
@@ -62,6 +67,7 @@ export function persist(name) {
 }
 
 export async function write(name) {
+  if (READONLY) return;
   const st = status[name];
   clearTimeout(st.timer);
   st.timer = null;
@@ -70,7 +76,7 @@ export async function write(name) {
     await ready;
     if (disk[name].stale || !disk[name].text) throw new Error(`${name}.js changed on disk after this page loaded. Reload the page to get the new version (your edits here are kept aside)`);
     const body = SOURCE[name](snapshot);
-    const r = await fetch(`/api/${name}?base=${disk[name].text}`, {
+    const r = await fetch(`api/${name}?base=${disk[name].text}`, {
       method: 'POST',
       headers: { 'Content-Type': 'text/javascript; charset=utf-8' },
       body,
@@ -103,7 +109,7 @@ export async function flush() {
 // Is the page served by server.py (which can save)?
 export async function checkServer() {
   try {
-    const r = await fetch('/api/ping', { cache: 'no-store' });
+    const r = await fetch('api/ping', { cache: 'no-store' });
     const j = r.ok ? await r.json() : null;
     server.ok = !!(j && j.server === 'isfw' && j.version >= 3);
   } catch { server.ok = false; }
@@ -112,12 +118,13 @@ export async function checkServer() {
 }
 
 export function initStore() {
+  if (READONLY) return;
   // Flush pending saves when the page is closed or reloaded.
   window.addEventListener('pagehide', () => {
     for (const name of Object.keys(status)) {
       if (status[name].state === 'saved') continue;
       if (!disk[name].text || disk[name].stale) continue;
-      navigator.sendBeacon(`/api/${name}?base=${disk[name].text}`, new Blob([SOURCE[name](store[name])], { type: 'text/javascript' }));
+      navigator.sendBeacon(`api/${name}?base=${disk[name].text}`, new Blob([SOURCE[name](store[name])], { type: 'text/javascript' }));
     }
   });
   checkServer();
@@ -130,6 +137,7 @@ export function initStore() {
 export function statusText(name) {
   const st = status[name];
   const file = `${name}.js`;
+  if (READONLY) return `read-only online copy of ${file} · edit it locally (start.bat)`;
   const parts = [];
   if (st.state === 'saved') parts.push(st.at ? `saved to ${file} ${st.at.toTimeString().slice(0, 8)}` : `${file} up to date`);
   else if (st.state === 'pending') parts.push('saving…');
