@@ -215,6 +215,14 @@ main[hidden], .dev-view[hidden] { display: none; }
 .dev-side .kv td.num { text-align: right; }
 .dev-banner { margin: 8px 16px 0; padding: 4px 8px; border: 1px solid var(--err); color: var(--err); background: var(--panel); }
 .dev-banner[hidden] { display: none; }
+.gh-bar { margin: 8px 16px 0; padding: 4px 8px; border: 1px solid var(--line); background: var(--panel); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.gh-bar[hidden] { display: none; }
+.gh-bar input { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); padding: 0 4px; height: 18px; }
+.gh-bar input:focus { outline: none; border-color: var(--accent); }
+.gh-bar #gh-message { width: 240px; }
+.gh-bar #gh-token { width: 260px; }
+.gh-bar #gh-msg { flex-basis: 100%; }
+.gh-bar #gh-msg:empty { display: none; }
 .dev-status { margin: 6px 0; color: var(--muted); }
 .dev-warn > div, .dev-warn { color: var(--warn); }
 .dev-warn { margin-bottom: 8px; }

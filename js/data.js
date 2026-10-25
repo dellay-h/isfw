@@ -104,11 +104,21 @@ export const MODS = {
 // They live in enemies.js and skills.js (the dev screens save every edit
 // there). If a save failed, the edits kept in the browser are used instead
 // until they are saved.
-import { ENEMIES as FILE_ENEMIES } from './enemies.js';
-import { SKILLS as FILE_SKILLS } from './skills.js';
+import { SITE, key } from './site.js';
+import { loadRemote, token } from './github.js';
+import { ENEMIES as LOCAL_ENEMIES } from './enemies.js';
+import { SKILLS as LOCAL_SKILLS } from './skills.js';
+
+// Online dev version, signed in: use the latest files on the dev branch
+// (REMOTE.error is set if that failed; the files served with the page are
+// used then, and nothing can be committed).
+export const REMOTE = SITE.mode === 'dev' && token.get() ? await loadRemote().catch((error) => ({ error })) : null;
+const fromRemote = !!(REMOTE && !REMOTE.error);
+const FILE_ENEMIES = fromRemote ? REMOTE.enemies.data : LOCAL_ENEMIES;
+const FILE_SKILLS = fromRemote ? REMOTE.skills.data : LOCAL_SKILLS;
 
 export const FILES = { enemies: FILE_ENEMIES, skills: FILE_SKILLS };
-export const DRAFT_KEYS = { enemies: 'isfw.dev.enemies.v3', skills: 'isfw.dev.skills.v3' };
+export const DRAFT_KEYS = { enemies: key('isfw.dev.enemies.v3'), skills: key('isfw.dev.skills.v3') };
 
 // Short hash of a data list, to tell which version of a file a draft was
 // made from.
@@ -124,13 +134,14 @@ export const FILE_HASH = { enemies: dataHash(FILE_ENEMIES), skills: dataHash(FIL
 // localStorage under isfw.dev.stale.<name>, never used automatically).
 export const STALE_DRAFTS = [];
 function setAside(name, raw) {
-  try { localStorage.setItem(`isfw.dev.stale.${name}`, raw); } catch {}
+  try { localStorage.setItem(key(`isfw.dev.stale.${name}`), raw); } catch {}
   STALE_DRAFTS.push(name);
 }
 
 // A draft is { base, data }: used only while the file still is the version it
 // was made from (base); otherwise the file wins and the draft is set aside.
 function readDraft(name) {
+  if (SITE.mode === 'play') return null; // the playable version never uses dev edits
   try {
     const raw = localStorage.getItem(DRAFT_KEYS[name]);
     if (!raw) return null;
@@ -146,10 +157,10 @@ function readDraft(name) {
 }
 
 // Drafts from older versions of the dev screens: set aside, never used.
-try {
-  for (const [key, name] of [['isfw.dev.enemies', 'enemies'], ['isfw.dev.enemies.v2', 'enemies'], ['isfw.dev.skills.v2', 'skills']]) {
-    const raw = localStorage.getItem(key);
-    if (raw) { setAside(name, raw); localStorage.removeItem(key); }
+if (SITE.mode === 'local') try {
+  for (const [old, name] of [['isfw.dev.enemies', 'enemies'], ['isfw.dev.enemies.v2', 'enemies'], ['isfw.dev.skills.v2', 'skills']]) {
+    const raw = localStorage.getItem(old);
+    if (raw) { setAside(name, raw); localStorage.removeItem(old); }
   }
 } catch { /* storage unavailable */ }
 

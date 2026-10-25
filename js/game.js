@@ -4,8 +4,9 @@
 // active skills. A unit's attributes, attacks and spells are derived from
 // those (see unit()). Combat runs the same rules for both sides.
 import { PLAYER_BASE, ENEMIES, SKILLS, REWARD, REGEN, SKILL_SLOTS, MODS, HEURISTIC, armorReduction } from './data.js';
+import { key } from './site.js';
 
-const SAVE_KEY = 'isfw.save.v3';
+const SAVE_KEY = key('isfw.save.v3');
 const LOG_MAX = 200;
 
 // The enemy and skill lists everything below reads. The dev screens swap in

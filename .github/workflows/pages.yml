@@ -1,36 +1,72 @@
-# Publishes the game to GitHub Pages on every push to main.
+# Publishes both versions of the game to GitHub Pages:
+#   branch main -> https://dellay-h.github.io/isfw/      (playable, no dev pages)
+#   branch dev  -> https://dellay-h.github.io/isfw/dev/  (development version)
 # Only the game files go online (index.html, css/, js/); server.py, start.bat,
-# README.md and design/ stay in the repo only. Online, the dev pages are
-# read-only (js/dev/store.js: READONLY), since there is no server.py to save to.
+# README.md and design/ stay in the repo only. Each copy gets its own
+# js/site.js saying which version it is.
+#
+# Pages deploys only from main (the default github-pages environment rule),
+# so a push to dev just starts this workflow again on main, which then builds
+# both branches. This file is read from main: change it there.
 name: pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  rebuild-from-main:
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+      - name: Check out dev (if it exists)
+        run: |
+          if git -C main ls-remote --exit-code --heads origin dev >/dev/null; then
+            git -C main fetch --depth 1 origin dev
+            git -C main worktree add ../dev FETCH_HEAD
+          fi
       - name: Collect site files
         run: |
           mkdir _site
-          cp -r index.html css js _site/
+          cp -r main/index.html main/css main/js _site/
+          printf "export const SITE = { mode: 'play', repo: '%s', branch: 'dev', release: 'main' };\nexport const key = (name) => name;\n" "$GITHUB_REPOSITORY" > _site/js/site.js
+          if [ -d dev ]; then
+            mkdir _site/dev
+            cp -r dev/index.html dev/css dev/js _site/dev/
+            sed -i "s/mode: 'local'/mode: 'dev'/" _site/dev/js/site.js
+            grep -q "mode: 'dev'" _site/dev/js/site.js
+          fi
           touch _site/.nojekyll
+          find _site -type f | sort
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -2,6 +2,7 @@
 import { ENEMIES, REGEN, USING_DRAFT, armorReduction } from './data.js';
 import * as G from './game.js';
 import { initDev, showDev } from './dev.js';
+import { SITE } from './site.js';
 
 let s = G.load();
 const $ = (sel) => document.querySelector(sel);
@@ -579,18 +580,28 @@ function tick() {
 }
 
 // ---------- views (top band nav) ----------
-const VIEWS = { monitor: '#view-monitor', 'dev/enemies': '#view-dev-enemies', 'dev/skills': '#view-dev-skills' };
+// The playable version (SITE.mode 'play') has no dev pages at all.
+const PLAY = SITE.mode === 'play';
+const VIEWS = PLAY ? { monitor: '#view-monitor' } : { monitor: '#view-monitor', 'dev/enemies': '#view-dev-enemies', 'dev/skills': '#view-dev-skills' };
+if (PLAY) {
+  for (const a of document.querySelectorAll('header nav a')) if (a.dataset.view !== 'monitor') a.remove();
+}
+if (SITE.mode === 'dev') {
+  $('#version').textContent += ' · dev';
+  $('#draft-tag').title = 'enemies/skills come from dev edits not committed to the dev branch yet';
+}
 function showView() {
   let v = location.hash.slice(1);
   if (v === 'dev') v = 'dev/enemies';
   if (!VIEWS[v]) v = 'monitor';
+  if (PLAY && location.hash && location.hash !== '#monitor') history.replaceState(null, '', '#monitor');
   for (const [name, sel] of Object.entries(VIEWS)) $(sel).hidden = name !== v;
   for (const a of document.querySelectorAll('header nav a')) a.classList.toggle('on', a.dataset.view === v);
   document.title = `isfw / ${v}`;
-  showDev(v.startsWith('dev/') ? v : null);
+  if (!PLAY) showDev(v.startsWith('dev/') ? v : null);
 }
 $('#draft-tag').hidden = !USING_DRAFT;
-initDev({ getState: () => s });
+if (!PLAY) initDev({ getState: () => s });
 window.addEventListener('hashchange', showView);
 showView();
 

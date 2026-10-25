@@ -1,5 +1,6 @@
 // Small helpers shared by the dev pages: formatting, nested paths, inputs,
 // and remembering which expandable sections are open.
+import { key } from '../site.js';
 
 export const esc = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 export const fmt = (n, d = 2) => Number(n).toFixed(d);
@@ -42,7 +43,7 @@ export function nextId(list, prefix, width) {
 }
 
 // ---------- open/closed state of expandable sections ----------
-const OPEN_KEY = 'isfw.dev.open';
+const OPEN_KEY = key('isfw.dev.open');
 export const open = (() => {
   try { return new Set(JSON.parse(localStorage.getItem(OPEN_KEY)) || []); } catch { return new Set(); }
 })();

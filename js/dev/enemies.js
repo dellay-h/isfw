@@ -8,6 +8,7 @@ import {
   numInput, textInput, boolInput, select, btn, xBtn, field, readInput, confirmed, wire,
 } from './ui.js';
 import { focusSkill, newSkill } from './skills.js';
+import { key } from '../site.js';
 
 const $ = (sel) => document.querySelector(sel);
 const E = () => store.enemies;
@@ -304,7 +305,7 @@ function onAction(el) {
 }
 
 // ---------- player preview ----------
-const PREVIEW_KEY = 'isfw.dev.preview';
+const PREVIEW_KEY = key('isfw.dev.preview');
 let preview = [];
 try { preview = JSON.parse(localStorage.getItem(PREVIEW_KEY)) || []; } catch {}
 const savePreview = () => { try { localStorage.setItem(PREVIEW_KEY, JSON.stringify(preview)); } catch {} };

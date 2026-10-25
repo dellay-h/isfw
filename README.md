@@ -16,13 +16,48 @@ lets the dev screens save their files.
 The top band switches between **monitor** (the game), **dev/enemies** and
 **dev/skills**.
 
-## Online copy (GitHub Pages)
+## Online versions (GitHub Pages)
 
-`.github/workflows/pages.yml` publishes the game on every push to `main`
-(only `index.html`, `css/` and `js/`). One-time setup: repo Settings → Pages →
-Source: **GitHub Actions**. Online there is no `server.py`, so the dev pages
-are read-only (viewable, nothing can be edited or saved); edit balance locally
-with `start.bat` and push.
+| version     | branch | address                             | dev pages |
+|-------------|--------|-------------------------------------|-----------|
+| playable    | `main` | https://dellay-h.github.io/isfw/     | none |
+| development | `dev`  | https://dellay-h.github.io/isfw/dev/ | read-only, or editable after signing in |
+
+`.github/workflows/pages.yml` publishes both on every push to `main` or `dev`
+(only `index.html`, `css/` and `js/`, with a generated `js/site.js` saying
+which version each copy is). Pages only deploys from `main`, so a push to
+`dev` restarts the workflow on `main`, which builds both branches. One-time
+setup: repo Settings → Pages → Source: **GitHub Actions**.
+
+The two versions share one address, so the dev version keeps its game save,
+drafts and settings in the browser under `isfw.devsite.*`; the playable save
+(`isfw.save.v3`) is never touched by it.
+
+### Editing online (dev version)
+
+1. Create a fine-grained token: GitHub → Settings → Developer settings →
+   Personal access tokens → Fine-grained tokens → Generate new token.
+   Resource owner **dellay-h**, Repository access **Only select repositories:
+   isfw**, Permissions → Repository: **Contents: Read and write** and
+   **Workflows: Read and write** (needed to release when `dev` changed files
+   in `.github/workflows/`). Set an expiration.
+2. Open the dev version, go to dev/enemies or dev/skills, paste the token,
+   **sign in**. The token is kept only in that browser; **sign out** removes it.
+3. Signed in, the dev pages load `enemies.js` / `skills.js` straight from the
+   `dev` branch (always the latest commit, no waiting for the site to update).
+   Edits are kept in the browser as drafts ("uncommitted changes"); "apply to
+   game" plays them without committing.
+4. **commit** writes the changed files to `dev` as one commit (optional
+   message). If a file changed on `dev` since the page loaded it (e.g. a commit
+   from another computer), nothing is committed: reload to get the newer
+   version; the conflicting edits are kept aside in the browser.
+5. **release to playable** (click twice) moves `main` to `dev` (or merges
+   `dev` into `main` if `main` has commits of its own). The playable site
+   updates about a minute later. It needs all changes committed first.
+
+Locally (`start.bat`) nothing changes: the dev pages save straight to the
+files. Online commits land on GitHub, so run `git pull` (on the branch you
+work on, usually `dev`) before editing locally.
 
 ## Layout
 
@@ -38,7 +73,9 @@ with `start.bat` and push.
 - `js/migrate.js` – converts dev edits saved in the old enemy format
 - `design/` – design notes: archetype ideas, skill ideas
 - `server.py` – local server (no caching, `/api/ping`, saves `/api/enemies` and `/api/skills`)
-- `.github/workflows/pages.yml` – publishes the game to GitHub Pages
+- `js/site.js` – which version this copy is (local / play / dev) and browser storage names; replaced in the online copies
+- `js/github.js` – GitHub access for the online dev version (load, commit, release)
+- `.github/workflows/pages.yml` – publishes the playable and dev versions to GitHub Pages
 
 ## Dev screens
 
