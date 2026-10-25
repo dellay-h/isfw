@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>isfw / monitor</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <span class="logo">isfw</span>
+    <nav>
+      <a href="#monitor" data-view="monitor">monitor</a>
+      <a href="#dev/enemies" data-view="dev/enemies">dev/enemies</a>
+      <a href="#dev/skills" data-view="dev/skills">dev/skills</a>
+    </nav>
+    <span class="spacer"></span>
+    <span id="draft-tag" class="warn" title="enemies/skills come from dev edits that are not saved to their files yet" hidden>dev draft&nbsp;&nbsp;</span>
+    <span class="muted">v0.46</span>
+  </header>
+
+  <main id="view-monitor">
+    <section id="unit">
+      <h2>src</h2>
+      <table class="kv">
+        <tr><td>hp <span class="q" data-bd="maxHp">?</span></td><td class="num" id="p-hp"></td></tr>
+        <tr><td></td><td id="p-hpbar"></td></tr>
+        <tr><td>dmg <span class="q" data-bd="damage">?</span></td><td class="num" id="p-dmg"></td></tr>
+        <tr><td>aspd <span class="q" data-bd="attackSpeed">?</span></td><td class="num" id="p-aspd"></td></tr>
+        <tr><td>mag pwr <span class="q" data-bd="magicPower">?</span></td><td class="num" id="p-mpow"></td></tr>
+        <tr><td>mag spd <span class="q" data-bd="magicSpeed">?</span></td><td class="num" id="p-mspd"></td></tr>
+        <tr><td>dps <span class="q" data-bd="dps">?</span></td><td class="num" id="p-dps"></td></tr>
+        <tr><td>mp <span class="q" data-bd="maxMana">?</span></td><td class="num" id="p-mp"></td></tr>
+        <tr><td></td><td id="p-mpbar"></td></tr>
+        <tr><td>mp regen <span class="q" data-bd="manaRegen">?</span></td><td class="num" id="p-mpregen"></td></tr>
+        <tr><td>armor <span class="q" data-bd="armor">?</span></td><td class="num" id="p-armor"></td></tr>
+        <tr><td>block <span class="q" data-bd="block">?</span></td><td class="num" id="p-block"></td></tr>
+        <tr><td>regen <span class="q" data-bd="regen">?</span></td><td class="num" id="p-regen"></td></tr>
+      </table>
+      <h2>totals</h2>
+      <table class="kv">
+        <tr><td>runs</td><td class="num" id="st-fights"></td></tr>
+        <tr><td>ok</td><td class="num" id="st-wins"></td></tr>
+        <tr><td>fail</td><td class="num" id="st-losses"></td></tr>
+      </table>
+    </section>
+
+    <section id="center">
+      <h2>targets</h2>
+      <div class="scroll-x">
+      <table id="targets" class="grid">
+        <thead>
+          <tr>
+            <th>id</th><th class="num">tier</th><th>label</th><th>stats</th><th>unlocks</th><th class="num">rewards</th><th class="num">count</th><th>status</th><th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      </div>
+
+      <h2>process</h2>
+      <div id="proc"></div>
+      <div class="controls">
+        <label><input type="checkbox" id="auto"> repeat</label>
+        <button id="btn-stop">stop</button>
+        <span class="spacer"></span>
+        <button id="btn-reset" class="quiet">reset</button>
+      </div>
+
+      <h2>log</h2>
+      <div id="log"></div>
+    </section>
+
+    <section id="skills">
+      <h2>slots <span id="slot-count"></span></h2>
+      <table id="slots" class="grid"><colgroup><col class="c-n"><col class="c-id"><col class="c-name"><col><col class="c-act"></colgroup><tbody></tbody></table>
+
+      <h2>library</h2>
+      <table id="library" class="grid"><colgroup><col class="c-n"><col class="c-id"><col class="c-name"><col><col class="c-act"></colgroup><tbody></tbody></table>
+
+      <h2>special</h2>
+      <table id="special" class="grid"><colgroup><col class="c-n"><col class="c-id"><col class="c-name"><col><col class="c-act"></colgroup><tbody></tbody></table>
+    </section>
+  </main>
+
+  <div id="dev-banner" class="dev-banner" hidden></div>
+
+  <main id="view-dev-enemies" class="dev-view" hidden>
+    <div class="dev-main">
+      <h2>enemies <span id="de-count" class="muted"></span></h2>
+      <div class="controls">
+        <button id="de-new">+ enemy</button>
+        <button id="de-expand" class="quiet">expand all</button>
+        <button id="de-collapse" class="quiet">collapse all</button>
+        <span class="spacer"></span>
+        <button id="de-apply">apply to game</button>
+      </div>
+      <div id="de-status" class="dev-status"></div>
+      <div id="de-warn" class="dev-warn"></div>
+      <div id="de-list"></div>
+    </div>
+    <aside id="de-preview" class="dev-side"></aside>
+  </main>
+
+  <main id="view-dev-skills" class="dev-view" hidden>
+    <div class="dev-main">
+      <h2>skills <span id="ds-count" class="muted"></span></h2>
+      <div class="controls">
+        <button id="ds-new">+ skill</button>
+        <button id="ds-expand" class="quiet">expand all</button>
+        <button id="ds-collapse" class="quiet">collapse all</button>
+        <span class="spacer"></span>
+        <button id="ds-apply">apply to game</button>
+      </div>
+      <div id="ds-status" class="dev-status"></div>
+      <div id="ds-msg" class="dev-warn"></div>
+      <div id="ds-list"></div>
+    </div>
+  </main>
+
+  <div id="popup" hidden></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
