@@ -21,6 +21,7 @@ const ATTR_DEFS = [
   { key: 'maxHp', label: 'hp', path: 'base.maxHp', required: true, def: 100 },
   { key: 'limit', label: 'max kills', path: 'limit', required: true, def: 100, int: true },
   { key: 'tier', label: 'tier', path: 'tier', def: 0, int: true },
+  { key: 'unlockCost', label: 'unlock cost (prestige pts)', path: 'unlockCost', def: 1, int: true },
   ...ATTRS.filter((a) => a.key !== 'maxHp').map((a) => ({
     key: a.key,
     label: a.key === 'regenFlat' ? 'regen (hp/s, negative = decay)' : a.label,

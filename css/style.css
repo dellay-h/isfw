@@ -282,3 +282,5 @@ button.armed { color: var(--err); border-color: var(--err); }
 #shop-items { max-width: 520px; }
 #shop td:last-child { text-align: right; white-space: nowrap; }
 #shop .grid tr:first-child { border-top: 0; }
+#targets tr.locked td:not(:last-child) { color: var(--muted); }
+#targets tr.locked .hov { color: var(--muted); }

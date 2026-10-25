@@ -9,6 +9,8 @@ const ENEMIES_HEADER = `// Enemy data. Written by the dev/enemies screen on ever
 //   tier          enemies are grouped in tiers (default 0)
 //   rank          'challenge' | 'tutorial' | 'common' | 'elite' | 'boss' (RANKS in data.js)
 //   limit         maximum number of kills
+//   unlockCost    optional: prestige points to unlock it (locked until paid;
+//                 stays unlocked through prestiges)
 //   base          base attributes, same keys as the player's (data.js ATTRS):
 //                 maxHp, damage, attackSpeed, magicPower, magicSpeed, maxMana,
 //                 manaRegen, armor, block, blockShred, regenFlat (hp/s, negative = decay)
@@ -51,7 +53,7 @@ const SKILLS_HEADER = `// Skill data, shared by the player and enemies. Written 
 //   slots:   extra skill slots (player)
 `;
 
-const ENEMY_ORDER = ['id', 'name', 'tier', 'rank', 'boss', 'limit', 'base', 'skills', 'rewards', 'skillRewards'];
+const ENEMY_ORDER = ['id', 'name', 'tier', 'rank', 'boss', 'limit', 'unlockCost', 'base', 'skills', 'rewards', 'skillRewards'];
 const ACTION_ORDER = ['base', 'scaling', 'time', 'speedScaling', 'hits', 'cost', 'lifesteal', 'dot', 'shield', 'heal', 'countdown'];
 const LEVEL_ORDER = ['attack', 'spell', 'onHit', 'empower', 'mods', 'slots'];
 
@@ -82,10 +84,10 @@ function list(items, order, indent) {
 
 function enemyText(e) {
   const pad = '    ';
-  const head = ['id', 'name', 'tier', 'rank', 'boss', 'limit'].filter((k) => e[k] !== undefined).map((k) => `${k}: ${lit(e[k])}`);
+  const head = ['id', 'name', 'tier', 'rank', 'boss', 'limit', 'unlockCost'].filter((k) => e[k] !== undefined).map((k) => `${k}: ${lit(e[k])}`);
   const lines = [head.join(', ') + ','];
   for (const k of ordered(e, ENEMY_ORDER)) {
-    if (['id', 'name', 'tier', 'rank', 'boss', 'limit'].includes(k) || e[k] === undefined) continue;
+    if (['id', 'name', 'tier', 'rank', 'boss', 'limit', 'unlockCost'].includes(k) || e[k] === undefined) continue;
     if (k === 'rewards') lines.push(`rewards: ${list(e[k], ['stat', 'total', 'type'], pad)},`);
     else if (k === 'skillRewards') lines.push(`skillRewards: ${list(e[k], ['skill', 'level', 'at'], pad)},`);
     else if (k === 'skills') lines.push(`skills: ${lit(e[k], ['skill', 'level'])},`);

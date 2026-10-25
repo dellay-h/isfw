@@ -43,9 +43,10 @@ export function newState() {
     retry: null,                         // enemy id to rerun once hp is full (repeat after a defeat)
     log: [],
     stats: { fights: 0, wins: 0, losses: 0 },
-    prestige: { points: 0, count: 0, shop: {}, limits: {} }, // kept through prestiges; only a full reset clears it
+    prestige: { points: 0, count: 0, shop: {}, limits: {}, unlocked: {} }, // kept through prestiges; only a full reset clears it
                                          // shop: { item id: level bought }
                                          // limits: { enemy id: max kills added by LIMIT_GROWTH }
+                                         // unlocked: { enemy id: true } enemies bought with prestige points
   };
 }
 
@@ -61,6 +62,7 @@ export function load() {
       Object.assign(s.prestige, saved.prestige || {});
       s.prestige.shop = { ...(saved.prestige?.shop || {}) };
       s.prestige.limits = { ...(saved.prestige?.limits || {}) };
+      s.prestige.unlocked = { ...(saved.prestige?.unlocked || {}) };
       Object.assign(s.kills, saved.kills || {});
       // limits can be lowered: never keep more kills than an enemy allows
       for (const e of C.enemies) s.kills[e.id] = Math.max(0, Math.min(limitOf(s, e), Math.floor(s.kills[e.id] || 0)));
@@ -133,6 +135,22 @@ export function limitGain(s, e) {
   const lim = limitOf(s, e);
   const cap = Math.ceil(lim * LIMIT_GROWTH.share);
   return Math.max(0, Math.min(s.kills[e.id] || 0, cap, LIMIT_GROWTH.max - lim));
+}
+
+// ---------- locked enemies ----------
+// An enemy with unlockCost can't be fought until it is bought with that many
+// prestige points. Stays unlocked through prestiges.
+export const unlockCostOf = (e) => Math.max(0, Math.floor(e?.unlockCost || 0));
+export const isUnlocked = (s, e) => !unlockCostOf(e) || !!s.prestige.unlocked[e.id];
+export const canUnlock = (s, e) => !isUnlocked(s, e) && s.prestige.points >= unlockCostOf(e);
+
+export function unlockEnemy(s, id) {
+  const e = enemyDef(id);
+  if (!e || !canUnlock(s, e)) return false;
+  s.prestige.points -= unlockCostOf(e);
+  s.prestige.unlocked[e.id] = true;
+  log(s, `${e.id} ${e.name} unlocked (${s.prestige.points} point${s.prestige.points === 1 ? '' : 's'} left)`, 'warn');
+  return true;
 }
 
 export const prestigeBosses = (s) => C.enemies.filter((e) => rankOf(e) === 'boss' && (s.kills[e.id] || 0) > 0);
@@ -474,7 +492,7 @@ export function mitigate(dmg, armor, block) {
 // ---------- combat ----------
 export function canFight(s, id) {
   const e = enemyDef(id);
-  return e && (s.kills[id] || 0) < limitOf(s, e) && s.hp > 0;
+  return e && isUnlocked(s, e) && (s.kills[id] || 0) < limitOf(s, e) && s.hp > 0;
 }
 
 export function startFight(s, id) {

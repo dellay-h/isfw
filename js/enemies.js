@@ -6,6 +6,8 @@
 //   tier          enemies are grouped in tiers (default 0)
 //   rank          'challenge' | 'tutorial' | 'common' | 'elite' | 'boss' (RANKS in data.js)
 //   limit         maximum number of kills
+//   unlockCost    optional: prestige points to unlock it (locked until paid;
+//                 stays unlocked through prestiges)
 //   base          base attributes, same keys as the player's (data.js ATTRS):
 //                 maxHp, damage, attackSpeed, magicPower, magicSpeed, maxMana,
 //                 manaRegen, armor, block, blockShred, regenFlat (hp/s, negative = decay)
@@ -77,7 +79,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E012', name: 'dropout sorcerer', tier: 1, rank: 'common', limit: 50,
+    id: 'E012', name: 'dropout sorcerer', tier: 1, rank: 'common', limit: 50, unlockCost: 1,
     base: { maxHp: 80, magicPower: 1, manaRegen: 0.5 },
     skills: [{ skill: 'S13', level: 1 }, { skill: 'S15', level: 1 }],
     rewards: [
@@ -90,7 +92,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E004', name: 'fire wizard apprentice', tier: 1, rank: 'elite', limit: 5,
+    id: 'E004', name: 'fire wizard apprentice', tier: 1, rank: 'elite', limit: 5, unlockCost: 1,
     base: { maxHp: 300, magicPower: 1, magicSpeed: 0, maxMana: 0, manaRegen: 0.5 },
     skills: [{ skill: 'S04', level: 1 }, { skill: 'S14', level: 1 }],
     rewards: [

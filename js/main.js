@@ -469,13 +469,17 @@ function render() {
     if (rc) { const html = rewardCounter(e); if (rc.dataset.v !== html) { rc.dataset.v = html; rc.innerHTML = html; } }
     // active: in a fight with it, or regenerating to retry it (repeat after a defeat)
     const active = s.fight ? s.fight.enemyId === e.id : s.retry === e.id;
+    const locked = !G.isUnlocked(s, e);
     tr.querySelector('[data-f=status]').textContent =
-      active ? 'active' : k >= lim ? 'closed' : 'open';
+      locked ? 'locked' : active ? 'active' : k >= lim ? 'closed' : 'open';
     tr.classList.toggle('active', !!active);
+    tr.classList.toggle('locked', locked);
     const b = tr.querySelector('button');
-    const act = active ? 'stop' : 'run';
-    if (b.dataset.act !== act) { b.dataset.act = act; b.textContent = act; }
-    b.disabled = !active && (!!s.fight || k >= lim || s.hp <= 0);
+    const act = locked ? 'unlock' : active ? 'stop' : 'run';
+    const label = locked ? `unlock ${G.unlockCostOf(e)} pt` : act;
+    if (b.dataset.act !== act || b.textContent !== label) { b.dataset.act = act; b.textContent = label; }
+    b.title = locked ? `costs ${G.unlockCostOf(e)} prestige point${G.unlockCostOf(e) === 1 ? '' : 's'}; stays unlocked through prestiges` : '';
+    b.disabled = locked ? !G.canUnlock(s, e) : !active && (!!s.fight || k >= lim || s.hp <= 0);
   }
 
   const f = s.fight;
@@ -528,6 +532,10 @@ $('#targets').addEventListener('click', (ev) => {
   if (!btn) return;
   if (btn.dataset.act === 'stop') { stop(); return; }
   const id = btn.closest('tr').dataset.id;
+  if (btn.dataset.act === 'unlock') {
+    if (G.unlockEnemy(s, id)) { G.save(s); render(); }
+    return;
+  }
   if (G.startFight(s, id)) {
     render();
   }
