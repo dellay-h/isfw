@@ -43,6 +43,7 @@ export function newState() {
     retry: null,                         // enemy id to rerun once hp is full (repeat after a defeat)
     log: [],
     stats: { fights: 0, wins: 0, losses: 0 },
+    prestige: { points: 0, count: 0 },   // kept through prestiges; only a full reset clears it
   };
 }
 
@@ -56,6 +57,7 @@ export function load() {
       // skill levels and loaded skills.
       Object.assign(s.kills, saved.kills || {});
       Object.assign(s.stats, saved.stats || {});
+      Object.assign(s.prestige, saved.prestige || {});
       syncSlots(s);
       if (Array.isArray(saved.slots)) {
         saved.slots.slice(0, s.slots.length).forEach((id, i) => { s.slots[i] = skillDef(id) ? id : null; });
@@ -77,8 +79,8 @@ export function load() {
 
 export function save(s) {
   try {
-    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry } = s;
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry }));
+    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige } = s;
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige }));
   } catch { /* storage unavailable: run without saving */ }
 }
 
@@ -102,6 +104,32 @@ function clampPools(s) {
   const d = derived(s);
   s.hp = Math.min(s.hp, d.maxHp);
   s.mana = Math.min(s.mana, d.maxMana);
+}
+
+// ---------- prestige ----------
+// A soft reset: every kill count goes back to 0 (and with it every kill reward
+// and skill level). It gives 1 prestige point per different boss defeated
+// since the last prestige. Prestige points, totals, log and the repeat
+// setting are kept.
+export const prestigeBosses = (s) => C.enemies.filter((e) => rankOf(e) === 'boss' && (s.kills[e.id] || 0) > 0);
+export const prestigeGain = (s) => prestigeBosses(s).length;
+
+export function prestige(s) {
+  const gain = prestigeGain(s);
+  if (!gain) return 0;
+  s.fight = null;
+  s.retry = null;
+  s.kills = Object.fromEntries(C.enemies.map((e) => [e.id, 0]));
+  s.slots = Array(SKILL_SLOTS).fill(null);
+  syncSlots(s);
+  s.prestige.points += gain;
+  s.prestige.count++;
+  const d = derived(s);
+  s.hp = d.maxHp;
+  s.hpMax = d.maxHp;
+  s.mana = 0;
+  log(s, `prestige ${s.prestige.count}: +${gain} point${gain > 1 ? 's' : ''} (${s.prestige.points} total), all counts reset`, 'warn');
+  return gain;
 }
 
 // ---------- skill unlocks ----------

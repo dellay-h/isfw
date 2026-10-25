@@ -445,6 +445,9 @@ function render() {
   $('#st-fights').textContent = s.stats.fights;
   $('#st-wins').textContent = s.stats.wins;
   $('#st-losses').textContent = s.stats.losses;
+  $('#st-ppoints').textContent = s.prestige.points;
+  $('#st-pcount').textContent = s.prestige.count;
+  renderPrestige();
   renderPopup(d);
 
   for (const tr of document.querySelectorAll('#targets tbody tr')) {
@@ -537,6 +540,36 @@ $('#skills').addEventListener('click', (ev) => {
   if (!btn) return;
   if (btn.dataset.act === 'equip') G.equip(s, btn.dataset.id);
   if (btn.dataset.act === 'unequip') G.unequip(s, Number(btn.dataset.i));
+  render();
+});
+
+// Prestige button: "prestige +N" (N = different bosses defeated this
+// prestige), disabled at 0. Two clicks, like reset.
+function renderPrestige() {
+  const b = $('#btn-prestige');
+  const bosses = G.prestigeBosses(s);
+  b.disabled = !bosses.length;
+  b.title = bosses.length
+    ? `resets every count; +1 point per boss defeated: ${bosses.map((e) => `${e.id} ${e.name}`).join(', ')}`
+    : 'defeat a boss to prestige';
+  if (!b.dataset.armed) {
+    const label = bosses.length ? `prestige +${bosses.length}` : 'prestige';
+    if (b.textContent !== label) b.textContent = label;
+  }
+}
+
+$('#btn-prestige').addEventListener('click', () => {
+  const b = $('#btn-prestige');
+  if (!b.dataset.armed) {
+    b.dataset.armed = '1';
+    b.textContent = 'confirm prestige';
+    setTimeout(() => { delete b.dataset.armed; renderPrestige(); }, 3000);
+    return;
+  }
+  delete b.dataset.armed;
+  G.prestige(s);
+  G.save(s);
+  lastLogKey = lastSkillKey = '';
   render();
 });
 
