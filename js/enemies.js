@@ -39,6 +39,19 @@ export const ENEMIES = [
     ],
   },
   {
+    id: 'E011', name: 'goblin', tier: 1, rank: 'common', limit: 200,
+    base: { maxHp: 30, attackSpeed: -0.333 },
+    skills: [{ skill: 'S03', level: 1 }],
+    rewards: [
+      { stat: 'damage', total: 0.8 },
+    ],
+    skillRewards: [
+      { skill: 'S11', level: 1, at: 'first' },
+      { skill: 'S11', level: 2, at: 100 },
+      { skill: 'S11', level: 3, at: 'final' },
+    ],
+  },
+  {
     id: 'E002', name: 'slime', tier: 1, rank: 'common', limit: 200,
     base: { maxHp: 60, attackSpeed: -0.09 },
     skills: [{ skill: 'S01', level: 1 }],
@@ -62,19 +75,6 @@ export const ENEMIES = [
       { skill: 'S03', level: 1, at: 'first' },
       { skill: 'S03', level: 2, at: 50 },
       { skill: 'S03', level: 3, at: 'final' },
-    ],
-  },
-  {
-    id: 'E011', name: 'goblin', tier: 1, rank: 'common', limit: 200,
-    base: { maxHp: 30, attackSpeed: -0.333 },
-    skills: [{ skill: 'S03', level: 1 }],
-    rewards: [
-      { stat: 'damage', total: 0.8 },
-    ],
-    skillRewards: [
-      { skill: 'S11', level: 1, at: 'first' },
-      { skill: 'S11', level: 2, at: 100 },
-      { skill: 'S11', level: 3, at: 'final' },
     ],
   },
   {
