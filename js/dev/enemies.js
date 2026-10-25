@@ -1,6 +1,6 @@
 // dev/enemies: create and edit enemies, plus a preview of the player's
 // attributes for a chosen set of kills.
-import { ATTRS, REWARD, RANKS, HEURISTIC } from '../data.js';
+import { ATTRS, RANKS, HEURISTIC } from '../data.js';
 import * as G from '../game.js';
 import { store, persist, statusText, appliedToGame } from './store.js';
 import {
@@ -125,15 +125,11 @@ function skillsField(e, i) {
 function rewardsField(e, i) {
   const stats = Object.entries(G.STAT_LABEL);
   const common = G.rankOf(e) === 'common';
-  const wave = REWARD.common.waveKills;
   const rows = (e.rewards || []).map((r, j) => {
     const pct = r.type === 'percent';
     const show = (v) => (pct ? `${num(v * 100)}%` : num(v));
     const t = r.total || 0;
-    const step = (n) => t * (G.rewardShare(e, n) - G.rewardShare(e, n - 1));
-    const per = common && e.limit > wave
-      ? `first kill +${show(step(1))}, kills 2–${wave} +${show(step(2))} each, ${wave + 1}–${e.limit} +${show(step(wave + 1))} each`
-      : `first kill +${show(step(1))}, then +${show(step(2))} per kill`;
+    const per = `+${show(t * G.rewardShare(e, 1))} per kill`;
     let hint = '';
     if (common && r.stat) {
       const sg = withC(() => G.suggestTotal(e, r));
@@ -147,9 +143,7 @@ function rewardsField(e, i) {
       <td>${xBtn('rew-del', `data-i="${i}" data-j="${j}"`)}</td>
       <td class="calc">${per}${hint}</td></tr>`;
   }).join('');
-  const how = common
-    ? `common: the first ${wave} kills give ${fmt(REWARD.common.waveShare * 100, 0)}% of the total (the first kill counts x${REWARD.firstMult}), the remaining kills give the rest evenly.`
-    : `each kill gives its share; the first kill counts x${REWARD.firstMult}.`;
+  const how = 'every kill gives the same share (total / max kills).';
   const body = `${rows ? `<table class="dev-table">${rows}</table>` : '<div class="muted">no attribute rewards</div>'}
     <div class="addrow">${btn('+ attribute reward', 'rew-add', `data-i="${i}"`)}</div>
     <div class="calc">total gained over all ${e.limit} kills, so it stays the same if max kills changes. ${how}</div>`;

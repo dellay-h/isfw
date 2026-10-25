@@ -32,23 +32,14 @@ export const SKILL_SLOTS = 2;
 export const RANKS = {
   challenge: { label: 'challenge', limit: 1 }, // shown above tier 0, award specials
   tutorial: { label: 'tutorial', limit: 10 },
-  common: { label: 'common', limit: 200 },
-  elite: { label: 'elite', limit: 25 },
-  boss: { label: 'boss', limit: 5 },
+  common: { label: 'common', limit: 50 },
+  elite: { label: 'elite', limit: 5 },
+  boss: { label: 'boss', limit: 1 },
 };
 
 // Kill rewards. Each enemy lists rewards: [{ stat, total, type? }]. total is
-// what the player gains over all kills; each kill gives its share, with the
-// first kill counting as firstMult kills.
-//   elite, boss, tutorial: after n kills the player has
-//       total x weight(n) / weight(limit),   weight(n) = n + (firstMult - 1)
-//   common: two waves. Kills 1..waveKills give waveShare of the total (with
-//       the first kill counting more inside that wave); the remaining kills
-//       give the rest, evenly.
-export const REWARD = {
-  firstMult: 4,      // the first kill counts as 4 kills
-  common: { waveKills: 50, waveShare: 0.5 },
-};
+// what the player gains over all kills; every kill (the first included) gives
+// the same share: after n kills the player has total x n / limit.
 
 // Balancing heuristic (dev/enemies "20% suggestion"): a common enemy, fully
 // defeated, should raise the player's attribute by `share`, measured when the

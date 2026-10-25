@@ -7,16 +7,15 @@ const ENEMIES_HEADER = `// Enemy data. Written by the dev/enemies screen on ever
 // Enemies work like the player: base attributes plus a set of skills.
 //   id, name
 //   tier          enemies are grouped in tiers (default 0)
-//   rank          'tutorial' | 'common' | 'elite' | 'boss' (RANKS in data.js); common
-//                 enemies give their rewards in two waves (REWARD in data.js)
+//   rank          'challenge' | 'tutorial' | 'common' | 'elite' | 'boss' (RANKS in data.js)
 //   limit         maximum number of kills
 //   base          base attributes, same keys as the player's (data.js ATTRS):
 //                 maxHp, damage, attackSpeed, magicPower, magicSpeed, maxMana,
 //                 manaRegen, armor, block, blockShred, regenFlat (hp/s, negative = decay)
 //   skills        [{ skill, level }] its own skills (from skills.js), always active
 //   rewards       [{ stat, total, type?: 'flat' | 'percent' }] attribute the player
-//                 gains over all kills. Each kill gives its share; the first
-//                 kill counts more (REWARD in data.js).
+//                 gains over all kills. Every kill gives the same share
+//                 (total / limit).
 //   skillRewards  [{ skill, level, at }] skill levels the player is awarded.
 //                 at: 'first' | 'final' | kill count. Levels are reached in order.
 `;

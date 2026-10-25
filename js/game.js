@@ -3,7 +3,7 @@
 // The player and enemies are both "units": base attributes plus a set of
 // active skills. A unit's attributes, attacks and spells are derived from
 // those (see unit()). Combat runs the same rules for both sides.
-import { PLAYER_BASE, ENEMIES, SKILLS, REWARD, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, armorReduction } from './data.js';
+import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, armorReduction } from './data.js';
 import { key } from './site.js';
 
 const SAVE_KEY = key('isfw.save.v3');
@@ -57,6 +57,8 @@ export function load() {
       // Attributes are never stored: every effect is recomputed from kills,
       // skill levels and loaded skills.
       Object.assign(s.kills, saved.kills || {});
+      // limits can be lowered: never keep more kills than an enemy allows
+      for (const e of C.enemies) s.kills[e.id] = Math.max(0, Math.min(e.limit, Math.floor(s.kills[e.id] || 0)));
       Object.assign(s.stats, saved.stats || {});
       Object.assign(s.prestige, saved.prestige || {});
       s.prestige.shop = { ...(saved.prestige?.shop || {}) };
@@ -351,24 +353,11 @@ function unit(base, active, extra = [], idleFlat = 0) {
   };
 }
 
-// Kill-reward weight after n kills: each kill counts 1, the first counts
-// firstMult.
-export function killWeight(e, n) {
-  return n ? n + (REWARD.firstMult - 1) : 0;
-}
-
 // Share of an enemy's total rewards earned after n kills.
 export function rewardShare(e, n) {
   n = Math.min(n, e.limit);
   if (!(n > 0) || !(e.limit > 0)) return 0;
-  const w = REWARD.common;
-  if (rankOf(e) === 'common' && e.limit > w.waveKills) {
-    // two waves: kills 1..waveKills give waveShare (first kill counts more),
-    // the remaining kills give the rest evenly
-    if (n <= w.waveKills) return w.waveShare * killWeight(e, n) / killWeight(e, w.waveKills);
-    return w.waveShare + (1 - w.waveShare) * (n - w.waveKills) / (e.limit - w.waveKills);
-  }
-  return killWeight(e, n) / killWeight(e, e.limit);
+  return n / e.limit; // every kill gives the same share
 }
 
 // Balancing heuristic: the total a common enemy's reward should have so that

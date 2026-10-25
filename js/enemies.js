@@ -4,16 +4,15 @@
 // Enemies work like the player: base attributes plus a set of skills.
 //   id, name
 //   tier          enemies are grouped in tiers (default 0)
-//   rank          'tutorial' | 'common' | 'elite' | 'boss' (RANKS in data.js); common
-//                 enemies give their rewards in two waves (REWARD in data.js)
+//   rank          'challenge' | 'tutorial' | 'common' | 'elite' | 'boss' (RANKS in data.js)
 //   limit         maximum number of kills
 //   base          base attributes, same keys as the player's (data.js ATTRS):
 //                 maxHp, damage, attackSpeed, magicPower, magicSpeed, maxMana,
 //                 manaRegen, armor, block, blockShred, regenFlat (hp/s, negative = decay)
 //   skills        [{ skill, level }] its own skills (from skills.js), always active
 //   rewards       [{ stat, total, type?: 'flat' | 'percent' }] attribute the player
-//                 gains over all kills. Each kill gives its share; the first
-//                 kill counts more (REWARD in data.js).
+//                 gains over all kills. Every kill gives the same share
+//                 (total / limit).
 //   skillRewards  [{ skill, level, at }] skill levels the player is awarded.
 //                 at: 'first' | 'final' | kill count. Levels are reached in order.
 export const ENEMIES = [
@@ -39,7 +38,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E011', name: 'goblin', tier: 1, rank: 'common', limit: 200,
+    id: 'E011', name: 'goblin', tier: 1, rank: 'common', limit: 50,
     base: { maxHp: 30, attackSpeed: -0.333 },
     skills: [{ skill: 'S03', level: 1 }],
     rewards: [
@@ -47,12 +46,12 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S11', level: 1, at: 'first' },
-      { skill: 'S11', level: 2, at: 100 },
+      { skill: 'S11', level: 2, at: 25 },
       { skill: 'S11', level: 3, at: 'final' },
     ],
   },
   {
-    id: 'E002', name: 'slime', tier: 1, rank: 'common', limit: 200,
+    id: 'E002', name: 'slime', tier: 1, rank: 'common', limit: 50,
     base: { maxHp: 60, attackSpeed: -0.09 },
     skills: [{ skill: 'S01', level: 1 }],
     rewards: [
@@ -60,12 +59,12 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S02', level: 1, at: 'first' },
-      { skill: 'S02', level: 2, at: 50 },
+      { skill: 'S02', level: 2, at: 13 },
       { skill: 'S02', level: 3, at: 'final' },
     ],
   },
   {
-    id: 'E003', name: 'archer', tier: 1, rank: 'common', limit: 200,
+    id: 'E003', name: 'archer', tier: 1, rank: 'common', limit: 50,
     base: { maxHp: 80, attackSpeed: 0 },
     skills: [{ skill: 'S03', level: 1 }],
     rewards: [
@@ -73,12 +72,12 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S03', level: 1, at: 'first' },
-      { skill: 'S03', level: 2, at: 50 },
+      { skill: 'S03', level: 2, at: 13 },
       { skill: 'S03', level: 3, at: 'final' },
     ],
   },
   {
-    id: 'E012', name: 'dropout sorcerer', tier: 1, rank: 'common', limit: 200,
+    id: 'E012', name: 'dropout sorcerer', tier: 1, rank: 'common', limit: 50,
     base: { maxHp: 80, magicPower: 1, manaRegen: 0.5 },
     skills: [{ skill: 'S13', level: 1 }, { skill: 'S15', level: 1 }],
     rewards: [
@@ -86,12 +85,12 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S12', level: 1, at: 'first' },
-      { skill: 'S12', level: 2, at: 100 },
+      { skill: 'S12', level: 2, at: 25 },
       { skill: 'S12', level: 3, at: 'final' },
     ],
   },
   {
-    id: 'E004', name: 'fire wizard apprentice', tier: 1, rank: 'elite', limit: 25,
+    id: 'E004', name: 'fire wizard apprentice', tier: 1, rank: 'elite', limit: 5,
     base: { maxHp: 300, magicPower: 1, magicSpeed: 0, maxMana: 0, manaRegen: 0.5 },
     skills: [{ skill: 'S04', level: 1 }, { skill: 'S14', level: 1 }],
     rewards: [
@@ -103,7 +102,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E010', name: 'werewolf', tier: 1, rank: 'boss', limit: 5,
+    id: 'E010', name: 'werewolf', tier: 1, rank: 'boss', limit: 1,
     base: { maxHp: 300, armor: 10, damage: 0, attackSpeed: -0.1667, lifesteal: 1.5 },
     skills: [{ skill: 'S01', level: 1 }, { skill: 'S10', level: 1 }],
     rewards: [
@@ -118,7 +117,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E005', name: 'assassin', tier: 2, rank: 'elite', limit: 25,
+    id: 'E005', name: 'assassin', tier: 2, rank: 'elite', limit: 5,
     base: { maxHp: 180, damage: 0.5 },
     skills: [{ skill: 'S01', level: 1 }, { skill: 'S06', level: 1 }],
     rewards: [
@@ -130,7 +129,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E006', name: 'ogre', tier: 2, rank: 'common', limit: 200,
+    id: 'E006', name: 'ogre', tier: 2, rank: 'common', limit: 50,
     base: { maxHp: 400, damage: 2, attackSpeed: -0.444, regenFlat: 2 },
     skills: [{ skill: 'S01', level: 1 }],
     rewards: [
@@ -138,11 +137,11 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S06', level: 1, at: 'first' },
-      { skill: 'S05', level: 2, at: 50 },
+      { skill: 'S05', level: 2, at: 13 },
     ],
   },
   {
-    id: 'E007', name: 'guard', tier: 2, rank: 'elite', limit: 25,
+    id: 'E007', name: 'guard', tier: 2, rank: 'elite', limit: 5,
     base: { maxHp: 400, armor: 50, block: 2, damage: 1, attackSpeed: -0.5, magicSpeed: -0.0833, manaRegen: 1 },
     skills: [{ skill: 'S01', level: 1 }, { skill: 'S04', level: 1 }],
     rewards: [
@@ -154,7 +153,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E008', name: 'satyr archer', tier: 2, rank: 'common', limit: 200,
+    id: 'E008', name: 'satyr archer', tier: 2, rank: 'common', limit: 50,
     base: { maxHp: 300, damage: 5, attackSpeed: 0.25 },
     skills: [{ skill: 'S03', level: 1 }, { skill: 'S08', level: 1 }],
     rewards: [
@@ -162,11 +161,11 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S08', level: 1, at: 'first' },
-      { skill: 'S08', level: 2, at: 50 },
+      { skill: 'S08', level: 2, at: 13 },
     ],
   },
   {
-    id: 'E009', name: 'arcane wizard apprentice', tier: 2, rank: 'elite', limit: 25,
+    id: 'E009', name: 'arcane wizard apprentice', tier: 2, rank: 'elite', limit: 5,
     base: { maxHp: 350, magicPower: 5, manaRegen: 1 },
     skills: [{ skill: 'S13', level: 1 }, { skill: 'S09', level: 1 }],
     rewards: [

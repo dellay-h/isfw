@@ -277,7 +277,6 @@ function rewardsBreakdown(e) {
       rows.push(['earned', show(t * G.rewardShare(e, n))]);
       if (n < e.limit) rows.push(['next kill', show(G.rewardStep(e, n + 1, r))]);
     }
-    if (G.rankOf(e) === 'common') rows.push(['waves', 'half by kill 50, rest by the last kill']);
   }
   if (!rows.length) rows.push(['none', '']);
   return rows;
