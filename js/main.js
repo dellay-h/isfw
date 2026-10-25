@@ -418,12 +418,34 @@ function bar(cur, max) {
   return `<span class="bar"><span style="width:${pct}%"></span></span>`;
 }
 
+// New-skill notices: a "new" tag on the row, a count next to the library /
+// special headers and on the phone's skills tab. Hovering a row (or loading
+// the skill) marks it seen; on phones, leaving the skills tab marks all seen.
+const newTag = (id) => (G.isFresh(s, id) ? '<span class="badge" title="new">•</span>' : '');
+const freshAttr = (id) => (G.isFresh(s, id) ? ` data-fresh="${id}"` : '');
+function renderNew() {
+  const lib = G.playerSkills().filter((k) => G.isFresh(s, k.id)).length;
+  const sp = G.specials().filter((k) => G.isFresh(s, k.id)).length;
+  const put = (sel, n, text) => {
+    const el = $(sel);
+    el.hidden = !n;
+    if (n && el.textContent !== text) el.textContent = text;
+  };
+  put('#new-lib', lib, `${lib} new`);
+  put('#new-sp', sp, `${sp} new`);
+  put('#m-new', lib + sp, `${lib + sp}`);
+}
+$('#skills').addEventListener('mouseover', (ev) => {
+  const tr = ev.target.closest('tr[data-fresh]');
+  if (tr && !narrow() && G.seeSkill(s, tr.dataset.fresh)) render();
+});
+
 function renderSkills(d) {
   // Rebuild only when something changed, so buttons stay clickable.
   const lib = G.playerSkills();
   const sps = G.specials();
   const levels = lib.map((k) => G.skillLevel(s, k.id));
-  const key = JSON.stringify([s.slots, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
+  const key = JSON.stringify([s.slots, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
   if (key === lastSkillKey) return;
   lastSkillKey = key;
 
@@ -445,7 +467,7 @@ function renderSkills(d) {
     const btn = s.slots.includes(k.id)
       ? '<span class="muted">loaded</span>'
       : `<button data-act="equip" data-id="${k.id}" ${full ? 'disabled' : ''}>load</button>`;
-    return `<tr><td></td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td><td>${btn}</td></tr>`;
+    return `<tr${freshAttr(k.id)}><td>${newTag(k.id)}</td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td><td>${btn}</td></tr>`;
   }).join('');
 
   $('#special tbody').innerHTML = sps.map((x) => {
@@ -453,7 +475,7 @@ function renderSkills(d) {
     if (!lv) {
       return `<tr class="muted"><td></td><td>${x.id}</td><td>${x.name}</td><td>${reqText(G.unlockReq(x.id, 1), 1)}</td><td></td></tr>`;
     }
-    return `<tr><td></td><td>${x.id}</td><td>${x.name}</td><td>${levelLines(x, lv, d)}</td><td class="muted">active</td></tr>`;
+    return `<tr${freshAttr(x.id)}><td>${newTag(x.id)}</td><td>${x.id}</td><td>${x.name}</td><td>${levelLines(x, lv, d)}</td><td class="muted">active</td></tr>`;
   }).join('');
 
   $('#slot-count').textContent = `${s.slots.filter(Boolean).length}/${s.slots.length}`;
@@ -544,6 +566,7 @@ function render() {
   $('#auto').checked = s.repeat;
 
   renderSkills(d);
+  renderNew();
   renderShop();
 
   const lt = s.log.length ? s.log[s.log.length - 1].t : 0;
@@ -591,7 +614,7 @@ $('#btn-stop').addEventListener('click', stop);
 $('#skills').addEventListener('click', (ev) => {
   const btn = ev.target.closest('button[data-act]');
   if (!btn) return;
-  if (btn.dataset.act === 'equip') G.equip(s, btn.dataset.id);
+  if (btn.dataset.act === 'equip') { G.equip(s, btn.dataset.id); G.seeSkill(s, btn.dataset.id); }
   if (btn.dataset.act === 'unequip') G.unequip(s, Number(btn.dataset.i));
   render();
 });
@@ -679,6 +702,8 @@ $('#btn-reset').addEventListener('click', () => {
 // Only visible on narrow screens (css): one section of the monitor at a time.
 const MTAB_KEY = key('isfw.mtab');
 function setMtab(t) {
+  // leaving the skills tab: its new skills have been seen
+  if (document.body.dataset.mtab === 'skills' && t !== 'skills') G.seeAllSkills(s);
   document.body.dataset.mtab = t;
   for (const b of document.querySelectorAll('#mtabs [data-mtab]')) b.classList.toggle('on', b.dataset.mtab === t);
   try { localStorage.setItem(MTAB_KEY, t); } catch {}

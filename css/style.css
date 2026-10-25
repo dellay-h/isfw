@@ -367,3 +367,9 @@ button.armed { color: var(--err); border-color: var(--err); }
 #targets .nw { white-space: nowrap; }
 /* max kills change indicator: its explanation wraps instead of one long line */
 #targets .tip::after { white-space: normal; width: 260px; text-align: left; }
+
+/* new-skill notices */
+.badge { color: var(--warn); font-size: 11px; }
+.badge[hidden] { display: none; }
+#m-new { margin-left: 4px; }
+#m-new::before { content: '·'; margin-right: 2px; }

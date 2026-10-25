@@ -43,6 +43,8 @@ export function newState() {
     retry: null,                         // enemy id to rerun once hp is full (repeat after a defeat)
     log: [],
     stats: { fights: 0, wins: 0, losses: 0 },
+    known: {},                           // skills (and specials) ever unlocked: { id: true }
+    fresh: {},                           // unlocked for the first time, not looked at yet: { id: true }
     prestige: { points: 0, count: 0, shop: {}, maxKills: {}, capped: {}, unlocked: {} }, // kept through prestiges; only a full reset clears it
                                          // shop: { item id: level bought }
                                          // maxKills: { enemy id: max kills after LIMIT_GROWTH }
@@ -86,6 +88,10 @@ export function load() {
       s.repeat = !!saved.repeat;
       s.retry = saved.retry || null;
       s.hpMax = typeof saved.hpMax === 'number' ? saved.hpMax : null;
+      s.known = { ...(saved.known || {}) };
+      s.fresh = { ...(saved.fresh || {}) };
+      // saves before v0.56 had no list: what is unlocked now counts as seen
+      noteSkills(s, !!saved.known);
     }
   } catch { /* corrupt or unavailable storage: fresh state */ }
   s.slots = s.slots.map((id) => (id && canLoad(s, id) ? id : null));
@@ -97,8 +103,8 @@ export function load() {
 
 export function save(s) {
   try {
-    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige } = s;
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige }));
+    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh } = s;
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh }));
   } catch { /* storage unavailable: run without saving */ }
 }
 
@@ -240,6 +246,29 @@ function shopEffects(s) {
     for (const e of x.effects || []) out.push({ group: 'prestige', label: `${x.id} ${x.name} lv${lv}`, stat: e.stat, kind: e.kind, v: e.v * lv });
   }
   return out;
+}
+
+// ---------- new-skill notices ----------
+// The first time a skill or special is unlocked (ever: unlocking it again
+// after a prestige doesn't count), it is marked fresh until the player looks
+// at it. Kept through prestiges; a full reset clears it.
+export function noteSkills(s, markFresh = true) {
+  for (const k of C.skills) {
+    if (s.known[k.id] || skillLevel(s, k.id) < 1) continue;
+    s.known[k.id] = true;
+    if (markFresh) s.fresh[k.id] = true;
+  }
+}
+export const isFresh = (s, id) => !!s.fresh[id];
+export function seeSkill(s, id) {
+  if (!s.fresh[id]) return false;
+  delete s.fresh[id];
+  return true;
+}
+export function seeAllSkills(s) {
+  const any = Object.keys(s.fresh).length > 0;
+  s.fresh = {};
+  return any;
 }
 
 // ---------- skill unlocks ----------
@@ -722,6 +751,7 @@ function win(s, e) {
   }).join(', ');
   log(s, `${e.id} ${e.name} cleared ${n}/${lim} in ${s.fight.elapsed.toFixed(1)}s  ${rText}${tag}`, 'ok');
   s.fight = null;
+  noteSkills(s);
   all.forEach((k, i) => {
     const lv = skillLevel(s, k.id);
     if (lv <= before[i]) return;
