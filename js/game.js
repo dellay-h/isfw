@@ -3,7 +3,7 @@
 // The player and enemies are both "units": base attributes plus a set of
 // active skills. A unit's attributes, attacks and spells are derived from
 // those (see unit()). Combat runs the same rules for both sides.
-import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, armorReduction } from './data.js';
+import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, armorReduction } from './data.js';
 import { key } from './site.js';
 
 const SAVE_KEY = key('isfw.save.v3');
@@ -43,9 +43,10 @@ export function newState() {
     retry: null,                         // enemy id to rerun once hp is full (repeat after a defeat)
     log: [],
     stats: { fights: 0, wins: 0, losses: 0 },
-    prestige: { points: 0, count: 0, shop: {}, limits: {}, unlocked: {} }, // kept through prestiges; only a full reset clears it
+    prestige: { points: 0, count: 0, shop: {}, maxKills: {}, capped: {}, unlocked: {} }, // kept through prestiges; only a full reset clears it
                                          // shop: { item id: level bought }
-                                         // limits: { enemy id: max kills added by LIMIT_GROWTH }
+                                         // maxKills: { enemy id: max kills after LIMIT_GROWTH }
+                                         // capped: { enemy id: true } reached its cap (now shrinking)
                                          // unlocked: { enemy id: true } enemies bought with prestige points
   };
 }
@@ -61,7 +62,16 @@ export function load() {
       Object.assign(s.stats, saved.stats || {});
       Object.assign(s.prestige, saved.prestige || {});
       s.prestige.shop = { ...(saved.prestige?.shop || {}) };
-      s.prestige.limits = { ...(saved.prestige?.limits || {}) };
+      s.prestige.maxKills = { ...(saved.prestige?.maxKills || {}) };
+      s.prestige.capped = { ...(saved.prestige?.capped || {}) };
+      // saves before v0.54 kept the kills added to the base limit
+      if (saved.prestige?.limits && !saved.prestige.maxKills) {
+        for (const [id, add] of Object.entries(saved.prestige.limits)) {
+          const e = enemyDef(id);
+          if (e && add > 0) s.prestige.maxKills[id] = e.limit + Math.floor(add);
+        }
+      }
+      delete s.prestige.limits;
       s.prestige.unlocked = { ...(saved.prestige?.unlocked || {}) };
       Object.assign(s.kills, saved.kills || {});
       // limits can be lowered: never keep more kills than an enemy allows
@@ -120,21 +130,28 @@ function clampPools(s) {
 // kept (and so are the specials they award). It gives 1 prestige point per
 // different boss defeated since the last prestige. Prestige points, shop
 // upgrades, totals, log and the repeat setting are kept.
-// ---------- max kills growth ----------
-// limitOf: an enemy's max kills this prestige (its base limit + growth from
-// earlier prestiges, at most LIMIT_GROWTH.max). Skill unlocks keep using the
-// base limit ('final' = base limit).
-export function limitOf(s, e) {
-  if (!e) return 0;
-  if (e.limit >= LIMIT_GROWTH.max) return e.limit;
-  return Math.min(LIMIT_GROWTH.max, e.limit + Math.max(0, Math.floor(s.prestige.limits[e.id] || 0)));
+// ---------- max kills growth (LIMIT_GROWTH in data.js) ----------
+// The rank's cap for max kills (never below the base limit).
+export const capOf = (e) => Math.max(e.limit, RANKS[rankOf(e)]?.cap ?? LIMIT_GROWTH.cap);
+// lim: max kills this prestige; capped: reached the cap once (shrinking
+// phase); pool: what all lim kills are worth, in base kills (grows with lim
+// until the cap, then stays at the cap).
+export function limitState(s, e) {
+  const cap = capOf(e);
+  if (rankOf(e) === 'challenge') return { lim: e.limit, cap, capped: false, pool: e.limit };
+  const stored = Math.floor(s.prestige.maxKills[e.id] || 0);
+  const lim = Math.max(1, stored > 0 ? Math.min(stored, cap) : e.limit);
+  const capped = !!s.prestige.capped[e.id] || lim >= cap;
+  return { lim, cap, capped, pool: capped ? cap : lim };
 }
-// Max kills this prestige's kills will add on the next prestige.
+export const limitOf = (s, e) => (e ? limitState(s, e).lim : 0);
+// Change in max kills the next prestige will apply: + while growing,
+// - after the cap (down to 1).
 export function limitGain(s, e) {
   if (!e || rankOf(e) === 'challenge') return 0;
-  const lim = limitOf(s, e);
-  const cap = Math.ceil(lim * LIMIT_GROWTH.share);
-  return Math.max(0, Math.min(s.kills[e.id] || 0, cap, LIMIT_GROWTH.max - lim));
+  const { lim, cap, capped } = limitState(s, e);
+  const step = Math.min(s.kills[e.id] || 0, Math.ceil(lim * LIMIT_GROWTH.share));
+  return capped ? -Math.max(0, Math.min(step, lim - 1)) : Math.max(0, Math.min(step, cap - lim));
 }
 
 // ---------- locked enemies ----------
@@ -158,12 +175,15 @@ export const prestigeGain = (s) => prestigeBosses(s).length;
 
 export function prestige(s) {
   const gain = prestigeGain(s);
-  let grown = 0;
+  let grown = 0, shrunk = 0;
   for (const e of C.enemies) {
     const g = limitGain(s, e);
     if (!g) continue;
-    s.prestige.limits[e.id] = limitOf(s, e) + g - e.limit;
-    grown++;
+    const st = limitState(s, e);
+    const lim = st.lim + g;
+    s.prestige.maxKills[e.id] = lim;
+    if (lim >= st.cap || st.capped) s.prestige.capped[e.id] = true;
+    if (g > 0) grown++; else shrunk++;
   }
   s.fight = null;
   s.retry = null;
@@ -176,7 +196,7 @@ export function prestige(s) {
   s.hp = d.maxHp;
   s.hpMax = d.maxHp;
   s.mana = 0;
-  log(s, `prestige ${s.prestige.count}: +${gain} point${gain === 1 ? '' : 's'} (${s.prestige.points} total), counts reset except challenges${grown ? `, max kills raised on ${grown} target${grown > 1 ? 's' : ''}` : ''}`, 'warn');
+  log(s, `prestige ${s.prestige.count}: +${gain} point${gain === 1 ? '' : 's'} (${s.prestige.points} total), counts reset except challenges${grown ? `, max kills raised on ${grown} target${grown > 1 ? 's' : ''}` : ''}${shrunk ? `, max kills lowered on ${shrunk} target${shrunk > 1 ? 's' : ''}` : ''}`, 'warn');
   return gain;
 }
 
@@ -231,15 +251,18 @@ export function unlockReq(skillId, level = 1) {
 // Requirement for level i (0-based) of a skill.
 export const levelReq = (k, i) => unlockReq(k.id, i + 1);
 
-// Kills needed for a requirement: 'first' = 1, 'final' = limit, or a number.
-export function reqKills(req) {
+// Kills needed for a requirement: 'first' = 1, 'final' = base limit, or a
+// number. With a state: never more than the enemy's current max kills (when
+// max kills have shrunk below it, the last kill meets it).
+export function reqKills(req, s = null) {
   const e = enemyDef(req.enemy);
   if (!e) return Infinity;
-  return typeof req.at === 'number' ? req.at : req.at === 'final' ? e.limit : 1;
+  const n = typeof req.at === 'number' ? req.at : req.at === 'final' ? e.limit : 1;
+  return s ? Math.min(n, limitOf(s, e)) : n;
 }
 
 export function reqMet(s, req) {
-  return (s.kills[req.enemy] || 0) >= reqKills(req);
+  return (s.kills[req.enemy] || 0) >= reqKills(req, s);
 }
 
 // Level is derived from kills: levels are reached in order while their
@@ -397,13 +420,15 @@ function unit(base, active, extra = [], idleFlat = 0) {
   };
 }
 
-// Share of an enemy's total rewards earned after n kills.
-// n can be above the base limit (kills added by LIMIT_GROWTH): the share goes
-// above 1, each kill still giving 1 / limit.
-export function rewardShare(e, n) {
-  n = Math.min(n, Math.max(e.limit, LIMIT_GROWTH.max));
+// Share of an enemy's base total earned after n kills. Without a state: the
+// base max kills (each kill 1 / limit). With a state: the current max kills
+// (LIMIT_GROWTH), each kill giving pool / lim of a base kill, so the share at
+// lim kills is pool / limit (above 1 once max kills have grown).
+export function rewardShare(e, n, s = null) {
   if (!(n > 0) || !(e.limit > 0)) return 0;
-  return n / e.limit; // every kill gives the same share
+  if (!s) return Math.min(n, e.limit) / e.limit;
+  const { lim, pool } = limitState(s, e);
+  return (Math.min(n, lim) * pool) / (lim * e.limit);
 }
 
 // Balancing heuristic: the total a common enemy's reward should have so that
@@ -421,12 +446,12 @@ export function suggestTotal(e, r) {
 }
 
 // Kill-reward effects for a kill set.
-export function killEffects(kills) {
+export function killEffects(kills, s = null) {
   const out = [];
   for (const e of C.enemies) {
     const n = kills[e.id] || 0;
     if (!n) continue;
-    const share = rewardShare(e, n);
+    const share = rewardShare(e, n, s);
     for (const r of rewardsOf(e)) {
       out.push({
         group: 'enemies',
@@ -452,7 +477,7 @@ export function derived(s) {
     const L = id && levelData(s, id);
     if (L) active.push({ id, L });
   }
-  return unit(PLAYER(), active, [...killEffects(s.kills), ...shopEffects(s)], REGEN.outOfCombatFlat);
+  return unit(PLAYER(), active, [...killEffects(s.kills, s), ...shopEffects(s)], REGEN.outOfCombatFlat);
 }
 
 // Enemy: its base attributes + its skills (always active, at the listed level).
@@ -466,8 +491,8 @@ export function enemyUnit(e) {
 }
 
 // Size of each reward's increase from the n-th kill (for the log).
-export function rewardStep(e, n, r = rewardsOf(e)[0]) {
-  return r ? (r.total || 0) * (rewardShare(e, n) - rewardShare(e, n - 1)) : 0;
+export function rewardStep(e, n, r = rewardsOf(e)[0], s = null) {
+  return r ? (r.total || 0) * (rewardShare(e, n, s) - rewardShare(e, n - 1, s)) : 0;
 }
 
 // Sustained damage per second of an enemy's actions, before the player's
@@ -682,7 +707,7 @@ function win(s, e) {
   const lim = limitOf(s, e);
   const tag = n === 1 ? ' [first]' : n === lim ? ' [final]' : '';
   const rText = rewardsOf(e).map((r) => {
-    const g = rewardStep(e, n, r);
+    const g = rewardStep(e, n, r, s);
     return `${STAT_LABEL[r.stat]} +${r.type === 'percent' ? `${(g * 100).toFixed(2)}%` : g.toFixed(3)}`;
   }).join(', ');
   log(s, `${e.id} ${e.name} cleared ${n}/${lim} in ${s.fight.elapsed.toFixed(1)}s  ${rText}${tag}`, 'ok');

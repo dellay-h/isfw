@@ -28,26 +28,31 @@ export const REGEN = {
 export const SKILL_SLOTS = 2;
 
 // Enemy ranks. limit is the default max kills for the rank (set when the
-// rank is picked in dev/enemies).
+// rank is picked in dev/enemies). cap is the highest max kills reachable by
+// LIMIT_GROWTH (default LIMIT_GROWTH.cap).
 export const RANKS = {
-  challenge: { label: 'challenge', limit: 1 }, // shown above tier 0, award specials
+  challenge: { label: 'challenge', limit: 1 }, // shown above tier 0, award specials; max kills never change
   tutorial: { label: 'tutorial', limit: 10 },
-  common: { label: 'common', limit: 50 },
-  elite: { label: 'elite', limit: 5 },
-  boss: { label: 'boss', limit: 1 },
+  common: { label: 'common', limit: 50, cap: 1000 },
+  elite: { label: 'elite', limit: 5, cap: 500 },
+  boss: { label: 'boss', limit: 1, cap: 20 },
 };
 
-// Max kills grow with prestiges: each kill in a prestige adds 1 to that
-// enemy's max kills, up to `share` of its max kills at the start of the
-// prestige (rounded up), applied on the next prestige; never above `max`.
-// Challenges don't grow.
-export const LIMIT_GROWTH = { share: 0.1, max: 1000 };
+// Max kills change with prestiges, in two phases, applied on the next
+// prestige. Each kill in a prestige moves that enemy's max kills by 1, up to
+// `share` of its max kills at the start of the prestige (rounded up).
+//   growing:   +1 per kill until the rank's cap (RANKS cap, default `cap`).
+//              Every kill gives the same reward, so the total grows with the
+//              max kills (base 100 -> 110 = +10% total).
+//   shrinking: once the cap is reached, -1 per kill, down to 1. The total
+//              stays at its cap value and is spread over fewer kills.
+// Challenges never change.
+export const LIMIT_GROWTH = { share: 0.1, cap: 1000 };
 
 // Kill rewards. Each enemy lists rewards: [{ stat, total, type? }]. total is
-// what the player gains over all kills; every kill (the first included) gives
-// the same share: after n kills the player has total x n / limit. Kills added
-// by LIMIT_GROWTH give the same amount each, so they raise the total
-// proportionally (limit 100 + 10 = +10% total).
+// what the player gains over its base max kills; every kill (the first
+// included) gives the same share: after n kills the player has
+// total x n / limit (see LIMIT_GROWTH for grown and shrunk max kills).
 
 // Balancing heuristic (dev/enemies "20% suggestion"): a common enemy, fully
 // defeated, should raise the player's attribute by `share`, measured when the

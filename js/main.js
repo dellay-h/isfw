@@ -156,7 +156,7 @@ function describe(L, total, prev, d) {
 // "lv2 req E002 3/50", or "lv2 not awarded" when no enemy awards it.
 function reqText(r, level) {
   if (!r.enemy || !G.enemyDef(r.enemy)) return `lv${level} not awarded`;
-  const need = G.reqKills(r);
+  const need = G.reqKills(r, s);
   return `lv${level} req ${r.enemy} ${Math.min(s.kills[r.enemy] || 0, need)}/${need}`;
 }
 
@@ -244,7 +244,7 @@ function rewardCounter(e) {
   return G.rewardsOf(e).map((r) => {
     const pct = r.type === 'percent';
     const t = r.total || 0;
-    return `<div>${amount(t * G.rewardShare(e, n), pct)}/${amount(t * G.rewardShare(e, G.limitOf(s, e)), pct)} ${G.STAT_LABEL[r.stat]}</div>`;
+    return `<div>${amount(t * G.rewardShare(e, n, s), pct)}/${amount(t * G.rewardShare(e, G.limitOf(s, e), s), pct)} ${G.STAT_LABEL[r.stat]}</div>`;
   }).join('');
 }
 
@@ -254,8 +254,9 @@ function unlocksBreakdown(e) {
   const n = s.kills[e.id] || 0;
   for (const u of e.skillRewards || []) {
     const k = G.skillDef(u.skill);
-    const need = G.reqKills({ enemy: e.id, at: u.at });
-    const at = u.at === 'first' ? 'first kill' : u.at === 'final' ? `kill ${e.limit}${G.limitOf(s, e) === e.limit ? ' (final)' : ''}` : `kill ${u.at}`;
+    const need = G.reqKills({ enemy: e.id, at: u.at }, s);
+    const raw = G.reqKills({ enemy: e.id, at: u.at });
+    const at = u.at === 'first' ? 'first kill' : need < raw ? `kill ${need} (last, was ${raw})` : u.at === 'final' ? `kill ${e.limit}${G.limitOf(s, e) === e.limit ? ' (final)' : ''}` : `kill ${u.at}`;
     const label = k ? `${k.id} ${k.name}${k.levels.length > 1 ? ` lv${u.level}` : ''}${k.special ? ' <span class="muted">special</span>' : ''}` : u.skill;
     rows.push([label, n >= need ? `<span class="ok">${at} ✓</span>` : at]);
   }
@@ -274,18 +275,20 @@ function rewardsBreakdown(e) {
       const pct = r.type === 'percent';
       const show = (v) => (pct ? `+${fmt(v * 100, 2)}%` : `+${fmt(v, v < 1 ? 3 : 2)}`);
       const t = r.total || 0;
-      rows.push([G.STAT_LABEL[r.stat], `${show(t * G.rewardShare(e, lim))} total`, 'grp']);
-      if (lim > e.limit) rows.push(['base', `${show(t)} over ${e.limit} kills`, 'sub']);
-      rows.push(['earned', show(t * G.rewardShare(e, n))]);
-      rows.push(['per kill', show(G.rewardStep(e, 1, r))]);
+      rows.push([G.STAT_LABEL[r.stat], `${show(t * G.rewardShare(e, lim, s))} total`, 'grp']);
+      if (lim !== e.limit) rows.push(['base', `${show(t)} over ${e.limit} kills`, 'sub']);
+      rows.push(['earned', show(t * G.rewardShare(e, n, s))]);
+      rows.push(['per kill', show(G.rewardStep(e, 1, r, s))]);
     }
   }
   if (!rows.length) rows.push(['none', '']);
   const g = G.limitGain(s, e);
-  if (lim > e.limit || g) {
+  const st = G.limitState(s, e);
+  if (G.rankOf(e) !== 'challenge') {
     rows.push(['max kills', `${lim}`, 'head']);
-    if (lim > e.limit) rows.push(['base', `${e.limit} +${lim - e.limit} from prestiges`]);
-    if (g) rows.push(['next prestige', `+${g}`]);
+    rows.push(['base', `${e.limit}`]);
+    rows.push([st.capped ? 'shrinking' : 'growing', st.capped ? `cap ${st.cap} reached, down to 1` : `up to ${st.cap}`]);
+    if (g) rows.push(['next prestige', `${g > 0 ? '+' : ''}${g}`]);
   }
   return rows;
 }
@@ -488,7 +491,8 @@ function render() {
     const lim = G.limitOf(s, e);
     const g = G.limitGain(s, e);
     const kc = tr.querySelector('[data-f=kills]');
-    const kt = `${k || 0}/${lim}${g ? ` <span class="muted" title="max kills +${g} on the next prestige">+${g}</span>` : ''}`;
+    const gs = g > 0 ? `+${g}` : `${g}`;
+    const kt = `${k || 0}/${lim}${g ? ` <span class="muted" title="max kills ${gs} on the next prestige">${gs}</span>` : ''}`;
     if (kc.dataset.v !== kt) { kc.dataset.v = kt; kc.innerHTML = kt; }
     const rc = tr.querySelector('[data-f=rewards]');
     if (rc) { const html = rewardCounter(e); if (rc.dataset.v !== html) { rc.dataset.v = html; rc.innerHTML = html; } }
@@ -593,8 +597,10 @@ $('#skills').addEventListener('click', (ev) => {
 function renderPrestige() {
   const b = $('#btn-prestige');
   const bosses = G.prestigeBosses(s);
-  const grow = ENEMIES.reduce((a, e) => a + G.limitGain(s, e), 0);
-  b.title = `resets every count except challenges; +1 point per boss defeated${bosses.length ? `: ${bosses.map((e) => `${e.id} ${e.name}`).join(', ')}` : ' (none yet)'}; max kills +${grow} in total`;
+  const gains = ENEMIES.map((e) => G.limitGain(s, e));
+  const up = gains.filter((g) => g > 0).reduce((a, g) => a + g, 0);
+  const down = gains.filter((g) => g < 0).reduce((a, g) => a - g, 0);
+  b.title = `resets every count except challenges; +1 point per boss defeated${bosses.length ? `: ${bosses.map((e) => `${e.id} ${e.name}`).join(', ')}` : ' (none yet)'}; max kills +${up}${down ? ` / -${down}` : ''} in total`;
   if (!b.dataset.armed) {
     const label = `prestige +${bosses.length}`;
     if (b.textContent !== label) b.textContent = label;

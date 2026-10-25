@@ -1,6 +1,6 @@
 // dev/enemies: create and edit enemies, plus a preview of the player's
 // attributes for a chosen set of kills.
-import { ATTRS, RANKS, HEURISTIC, LIMIT_GROWTH } from '../data.js';
+import { ATTRS, RANKS, HEURISTIC } from '../data.js';
 import * as G from '../game.js';
 import { store, persist, statusText, appliedToGame } from './store.js';
 import {
@@ -57,8 +57,8 @@ function problems() {
       if (!k) { p.push(`skill reward: unknown skill ${u.skill}`); continue; }
       if (u.level < 1 || u.level > k.levels.length) p.push(`${u.skill} has no level ${u.level} (max ${k.levels.length})`);
       const n = killsOf(e, u.at);
-      // kills above max kills are allowed: max kills grow with prestiges (up to LIMIT_GROWTH.max)
-      const top = Math.max(e.limit, LIMIT_GROWTH.max);
+      // kills above max kills are allowed: max kills grow with prestiges (up to the rank's cap)
+      const top = G.capOf(e);
       if (!(n >= 1) || n > top) p.push(`${u.skill} lv${u.level} is awarded at kill ${u.at}, outside 1–${top}`);
       const key = `${u.skill} lv${u.level}`;
       awarded.set(key, [...(awarded.get(key) || []), e.id]);
