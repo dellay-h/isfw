@@ -56,7 +56,7 @@ main {
   #skills { grid-column: 1 / -1; }
 }
 @media (max-width: 640px) {
-  main { grid-template-columns: 1fr; }
+  main { grid-template-columns: minmax(0, 1fr); }
 }
 #p-hpbar .bar { display: block; max-width: none; }
 #slot-count { float: right; }
@@ -284,3 +284,82 @@ button.armed { color: var(--err); border-color: var(--err); }
 #shop .grid tr:first-child { border-top: 0; }
 #targets tr.locked td:not(:last-child) { color: var(--muted); }
 #targets tr.locked .hov { color: var(--muted); }
+
+/* ---------- phones ---------- */
+#mtabs, .m-only { display: none; }
+.tip:focus { outline: none; }
+.tip:focus::after {
+  content: attr(data-tip);
+  position: absolute; right: 0; top: 100%; z-index: 10;
+  margin-top: 2px; padding: 2px 6px;
+  white-space: pre;
+  color: var(--fg); background: var(--panel);
+  border: 1px solid var(--line);
+  font-size: 11px;
+}
+@media (max-width: 640px) {
+  header { padding: 0 12px; }
+  main { padding: 0 12px 16px; gap: 0; }
+  #mtabs {
+    display: flex; align-items: stretch;
+    position: sticky; top: 0; z-index: 15;
+    margin: 0 -12px; padding: 0 6px;
+    background: var(--bg); border-bottom: 1px solid var(--line);
+  }
+  #mtabs button {
+    border: 0; border-bottom: 1px solid transparent; margin-bottom: -1px;
+    background: none; color: var(--muted); padding: 8px 8px; min-height: 0;
+  }
+  #mtabs button.on { color: var(--fg); border-bottom-color: var(--accent); }
+  #m-hp { margin-left: auto; align-self: center; padding-right: 6px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* one section at a time */
+  #view-monitor > section { display: none; }
+  body[data-mtab=run] #center, body[data-mtab=log] #center { display: flex; flex-direction: column; }
+  body[data-mtab=src] #unit, body[data-mtab=skills] #skills, body[data-mtab=shop] #shop { display: block; }
+  body[data-mtab=run] #center .m-log,
+  body[data-mtab=log] #center .m-targets, body[data-mtab=log] #center .m-proc { display: none; }
+  #center .m-proc { order: -1; }
+  #center h2.m-proc { margin-top: 10px; }
+  #center h2.m-targets { margin-top: 16px; }
+  #view-monitor h2 { margin-top: 12px; }
+  #view-monitor section > h2:first-child { margin-top: 12px; }
+  body[data-mtab=log] #log { height: calc(100vh - 110px); }
+
+  /* touch-sized controls */
+  button { min-height: 30px; padding: 0 10px; }
+  input[type=checkbox] { width: 16px; height: 16px; }
+  .controls { flex-wrap: wrap; }
+  #proc .v { width: 96px; }
+  #proc .bar { min-width: 40px; }
+
+  /* targets: tier, unlocks and status columns hidden (unlocks moves under stats) */
+  .m-only { display: inline; }
+  #targets { font-size: 11px; }
+  #targets td, #targets th { padding: 3px 3px; }
+  #targets th:nth-child(2), #targets td:nth-child(2),
+  #targets th:nth-child(5), #targets td:nth-child(5),
+  #targets th:nth-child(8), #targets td:nth-child(8) { display: none; }
+  /* fixed columns so the table fits the screen; text wraps inside them */
+  #targets { table-layout: fixed; }
+  #targets th:nth-child(1) { width: 34px; }
+  #targets th:nth-child(4) { width: 58px; }
+  #targets .hov { white-space: nowrap; }
+  #targets th:nth-child(6) { width: 84px; }
+  #targets th:nth-child(7) { width: 46px; }
+  #targets th:nth-child(9) { width: 56px; }
+  #targets td { white-space: normal; overflow-wrap: anywhere; }
+  #targets td:nth-child(3) { min-width: 0; }
+  #targets td:last-child { text-align: right; }
+  #targets button { padding: 0 4px; width: 100%; white-space: normal; line-height: 1.2; }
+
+  /* skills */
+  #skills col.c-n { width: 16px; }
+  #skills col.c-name { width: 84px; }
+  #skills col.c-act { width: 64px; }
+  #skills button, #shop button { padding: 0 6px; }
+
+  /* tap tooltips and breakdowns stay inside the screen */
+  .tip:hover::after, .tip:focus::after { white-space: pre-wrap; width: max-content; max-width: 70vw; }
+  #popup { max-width: calc(100vw - 16px); }
+}

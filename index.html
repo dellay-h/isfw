@@ -17,10 +17,14 @@
     </nav>
     <span class="spacer"></span>
     <span id="draft-tag" class="warn" title="enemies/skills come from dev edits that are not saved to their files yet" hidden>dev draft&nbsp;&nbsp;</span>
-    <span class="muted" id="version">v0.52</span>
+    <span class="muted" id="version">v0.53</span>
   </header>
 
   <main id="view-monitor">
+    <nav id="mtabs" aria-label="sections">
+      <button data-mtab="run">run</button><button data-mtab="src">src</button><button data-mtab="skills">skills</button><button data-mtab="shop">shop</button><button data-mtab="log">log</button>
+      <span id="m-hp"></span>
+    </nav>
     <section id="unit">
       <h2>src</h2>
       <table class="kv">
@@ -49,8 +53,8 @@
     </section>
 
     <section id="center">
-      <h2>targets</h2>
-      <div class="scroll-x">
+      <h2 class="m-targets">targets</h2>
+      <div class="scroll-x m-targets">
       <table id="targets" class="grid">
         <thead>
           <tr>
@@ -61,9 +65,9 @@
       </table>
       </div>
 
-      <h2>process</h2>
-      <div id="proc"></div>
-      <div class="controls">
+      <h2 class="m-proc">process</h2>
+      <div id="proc" class="m-proc"></div>
+      <div class="controls m-proc">
         <label><input type="checkbox" id="auto"> repeat</label>
         <button id="btn-stop">stop</button>
         <span class="spacer"></span>
@@ -71,8 +75,8 @@
         <button id="btn-reset" class="quiet">reset</button>
       </div>
 
-      <h2>log</h2>
-      <div id="log"></div>
+      <h2 class="m-log">log</h2>
+      <div id="log" class="m-log"></div>
     </section>
 
     <section id="skills">

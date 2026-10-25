@@ -2,7 +2,7 @@
 import { ENEMIES, REGEN, USING_DRAFT, armorReduction } from './data.js';
 import * as G from './game.js';
 import { initDev, showDev } from './dev.js';
-import { SITE } from './site.js';
+import { SITE, key } from './site.js';
 
 let s = G.load();
 const $ = (sel) => document.querySelector(sel);
@@ -30,7 +30,7 @@ function buildTargets() {
       <td>${e.id}</td>
       <td class="num">${rank === 'challenge' ? '—' : tierOf(e)}</td>
       <td>${e.name}${tag[rank] ? ` <span class="${tag[rank]}">${rank}</span>` : ''}</td>
-      <td><span class="hov" data-bd="stats:${e.id}">stats</span></td>
+      <td><span class="hov" data-bd="stats:${e.id}">stats</span>${(e.skillRewards || []).length ? `<span class="m-only"><br><span class="hov" data-bd="unlocks:${e.id}">unlocks</span></span>` : ''}</td>
       <td>${(e.skillRewards || []).length ? `<span class="hov" data-bd="unlocks:${e.id}" data-f="unlocks">unlocks</span>` : '<span class="muted">—</span>'}</td>
       <td class="num">${G.rewardsOf(e).length ? `<span class="hov" data-bd="rewards:${e.id}" data-f="rewards"></span>` : '<span class="muted">—</span>'}</td>
       <td class="num" data-f="kills"></td>
@@ -123,7 +123,7 @@ function describeAction(kind, L, total, prev, d) {
     lines.unshift(`adds ${added(L[kind]).join(', ')}`, '');
   }
   if (tip.length) lines.push('', ...tip);
-  return `<span class="tip" data-tip="${esc(lines.join('\n'))}">${kind}</span>`;
+  return `<span class="tip" tabindex="0" data-tip="${esc(lines.join('\n'))}">${kind}</span>`;
 }
 
 // One level's effect. L is what this level adds; total is the skill's data
@@ -134,7 +134,7 @@ function describe(L, total, prev, d) {
   if (L.onHit) {
     const o = total.onHit;
     const f = formula('on hit', G.actionHit(o, d.damage), o.base, o.scaling, 'dmg');
-    parts.push(`<span class="tip" data-tip="${esc(f)}">on hit ${fmt(G.actionHit(o, d.damage))} per attack hit</span>`);
+    parts.push(`<span class="tip" tabindex="0" data-tip="${esc(f)}">on hit ${fmt(G.actionHit(o, d.damage))} per attack hit</span>`);
   }
   if (L.empower) {
     const p = L.empower;
@@ -347,13 +347,23 @@ function renderPopup(d) {
     .join('') + '</table>';
 }
 
-document.addEventListener('mouseover', (ev) => {
-  const q = ev.target.closest('[data-bd]');
-  if (!q || q === popAnchor) return;
+// Phones: no hover. A tap opens the breakdown below the marker (kept inside
+// the screen); tapping it again or anywhere else closes it.
+const narrow = () => window.innerWidth <= 640;
+let popOpened = 0;
+function openPopup(q) {
   popAnchor = q;
   popKey = q.dataset.bd;
+  popOpened = Date.now();
   renderPopup(G.derived(s));
   const r = q.getBoundingClientRect();
+  if (narrow()) {
+    popup.hidden = false;
+    const w = popup.offsetWidth;
+    popup.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + window.scrollX}px`;
+    popup.style.top = `${r.bottom + window.scrollY + 4}px`;
+    return;
+  }
   if (/^(enemy|stats|rewards|unlocks):/.test(popKey)) {
     // below the marker, kept inside the window
     const w = 260;
@@ -365,12 +375,25 @@ document.addEventListener('mouseover', (ev) => {
     popup.style.top = `${r.top + window.scrollY - 4}px`;
   }
   popup.hidden = false;
+}
+function closePopup() {
+  popAnchor = popKey = null;
+  popup.hidden = true;
+}
+document.addEventListener('mouseover', (ev) => {
+  const q = ev.target.closest('[data-bd]');
+  if (q && q !== popAnchor) openPopup(q);
+});
+document.addEventListener('click', (ev) => {
+  const q = ev.target.closest('[data-bd]');
+  if (!q) { if (popAnchor) closePopup(); return; }
+  // a tap also sends mouseover just before the click: only a later tap closes
+  if (q === popAnchor && Date.now() - popOpened > 400) closePopup();
+  else if (q !== popAnchor) openPopup(q);
 });
 document.addEventListener('mouseout', (ev) => {
-  if (popAnchor && ev.target.closest('[data-bd]') === popAnchor && !popAnchor.contains(ev.relatedTarget)) {
-    popAnchor = popKey = null;
-    popup.hidden = true;
-  }
+  if (narrow()) return; // phones close on the next tap instead
+  if (popAnchor && ev.target.closest('[data-bd]') === popAnchor && !popAnchor.contains(ev.relatedTarget)) closePopup();
 });
 
 // ---------- render ----------
@@ -437,6 +460,8 @@ function render() {
   const d = G.derived(s);
 
   $('#p-hp').textContent = `${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 0)}`;
+  const mhp = `hp ${fmt(Math.max(0, s.hp), 0)}/${fmt(d.maxHp, 0)}${s.fight ? ` · ${s.fight.enemyId}` : s.retry ? ' · regen' : ''}`;
+  if ($('#m-hp').textContent !== mhp) $('#m-hp').textContent = mhp;
   $('#p-hpbar').innerHTML = bar(s.hp, d.maxHp);
   $('#p-dmg').textContent = fmt(d.damage, 3);
   $('#p-aspd').textContent = fmt(d.attackSpeed, 3);
@@ -639,6 +664,23 @@ $('#btn-reset').addEventListener('click', () => {
   lastLogKey = lastSkillKey = lastShopKey = '';
   render();
 });
+
+// ---------- phone section tabs ----------
+// Only visible on narrow screens (css): one section of the monitor at a time.
+const MTAB_KEY = key('isfw.mtab');
+function setMtab(t) {
+  document.body.dataset.mtab = t;
+  for (const b of document.querySelectorAll('#mtabs [data-mtab]')) b.classList.toggle('on', b.dataset.mtab === t);
+  try { localStorage.setItem(MTAB_KEY, t); } catch {}
+  closePopup();
+}
+$('#mtabs').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-mtab]');
+  if (b) { setMtab(b.dataset.mtab); window.scrollTo(0, 0); }
+});
+let mtab = 'run';
+try { mtab = localStorage.getItem(MTAB_KEY) || 'run'; } catch {}
+setMtab(document.querySelector(`#mtabs [data-mtab="${mtab}"]`) ? mtab : 'run');
 
 // ---------- loop ----------
 const TICK = 50;          // ms between simulation updates
