@@ -48,7 +48,7 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S11', level: 1, at: 'first' },
-      { skill: 'S11', level: 2, at: 25 },
+      { skill: 'S11', level: 2, at: 100 },
       { skill: 'S11', level: 3, at: 'final' },
     ],
   },
@@ -61,7 +61,7 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S02', level: 1, at: 'first' },
-      { skill: 'S02', level: 2, at: 13 },
+      { skill: 'S02', level: 2, at: 100 },
       { skill: 'S02', level: 3, at: 'final' },
     ],
   },
@@ -74,7 +74,7 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S03', level: 1, at: 'first' },
-      { skill: 'S03', level: 2, at: 13 },
+      { skill: 'S03', level: 2, at: 100 },
       { skill: 'S03', level: 3, at: 'final' },
     ],
   },
@@ -87,7 +87,7 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S12', level: 1, at: 'first' },
-      { skill: 'S12', level: 2, at: 25 },
+      { skill: 'S12', level: 2, at: 100 },
       { skill: 'S12', level: 3, at: 'final' },
     ],
   },
@@ -139,7 +139,7 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S06', level: 1, at: 'first' },
-      { skill: 'S05', level: 2, at: 13 },
+      { skill: 'S05', level: 2, at: 100 },
     ],
   },
   {
@@ -163,7 +163,7 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S08', level: 1, at: 'first' },
-      { skill: 'S08', level: 2, at: 13 },
+      { skill: 'S08', level: 2, at: 100 },
     ],
   },
   {
