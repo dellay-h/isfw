@@ -61,6 +61,21 @@ export const HEURISTIC = {
   offset: { damage: 2, attackSpeed: 1, magicSpeed: 0.25, magicPower: 1 },
 };
 
+// Prestige shop: permanent upgrades bought with prestige points. They are
+// kept through prestiges (only a full reset clears them).
+//   id, name
+//   max       highest level
+//   cost      points for the next level = cost.base + cost.step x current level
+//   effects   per level: [{ stat, kind: 'flat' | 'pct', v }] (stats as in ATTRS)
+//   slots     per level: extra skill slots
+export const PRESTIGE_SHOP = [
+  { id: 'P01', name: 'whetstone', max: 5, cost: { base: 1, step: 1 }, effects: [{ stat: 'damage', kind: 'pct', v: 0.1 }] },
+  { id: 'P02', name: 'thick skin', max: 5, cost: { base: 1, step: 1 }, effects: [{ stat: 'maxHp', kind: 'pct', v: 0.1 }] },
+  { id: 'P03', name: 'quick hands', max: 5, cost: { base: 1, step: 1 }, effects: [{ stat: 'attackSpeed', kind: 'pct', v: 0.05 }] },
+  { id: 'P04', name: 'focus', max: 5, cost: { base: 1, step: 1 }, effects: [{ stat: 'magicPower', kind: 'pct', v: 0.1 }] },
+  { id: 'P05', name: 'spare slot', max: 1, cost: { base: 3, step: 0 }, slots: 1 },
+];
+
 // Attributes shared by the player and enemies (enemy `base` uses these keys).
 export const ATTRS = [
   { key: 'maxHp', label: 'max hp' },

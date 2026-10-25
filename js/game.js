@@ -3,7 +3,7 @@
 // The player and enemies are both "units": base attributes plus a set of
 // active skills. A unit's attributes, attacks and spells are derived from
 // those (see unit()). Combat runs the same rules for both sides.
-import { PLAYER_BASE, ENEMIES, SKILLS, REWARD, REGEN, SKILL_SLOTS, MODS, HEURISTIC, armorReduction } from './data.js';
+import { PLAYER_BASE, ENEMIES, SKILLS, REWARD, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, armorReduction } from './data.js';
 import { key } from './site.js';
 
 const SAVE_KEY = key('isfw.save.v3');
@@ -43,7 +43,8 @@ export function newState() {
     retry: null,                         // enemy id to rerun once hp is full (repeat after a defeat)
     log: [],
     stats: { fights: 0, wins: 0, losses: 0 },
-    prestige: { points: 0, count: 0 },   // kept through prestiges; only a full reset clears it
+    prestige: { points: 0, count: 0, shop: {} }, // kept through prestiges; only a full reset clears it
+                                         // shop: { item id: level bought }
   };
 }
 
@@ -58,6 +59,7 @@ export function load() {
       Object.assign(s.kills, saved.kills || {});
       Object.assign(s.stats, saved.stats || {});
       Object.assign(s.prestige, saved.prestige || {});
+      s.prestige.shop = { ...(saved.prestige?.shop || {}) };
       syncSlots(s);
       if (Array.isArray(saved.slots)) {
         saved.slots.slice(0, s.slots.length).forEach((id, i) => { s.slots[i] = skillDef(id) ? id : null; });
@@ -107,19 +109,19 @@ function clampPools(s) {
 }
 
 // ---------- prestige ----------
-// A soft reset: every kill count goes back to 0 (and with it every kill reward
-// and skill level). It gives 1 prestige point per different boss defeated
-// since the last prestige. Prestige points, totals, log and the repeat
-// setting are kept.
+// A soft reset, allowed at any time: every kill count goes back to 0 (and with
+// it every kill reward and skill level), except challenge kills, which are
+// kept (and so are the specials they award). It gives 1 prestige point per
+// different boss defeated since the last prestige. Prestige points, shop
+// upgrades, totals, log and the repeat setting are kept.
 export const prestigeBosses = (s) => C.enemies.filter((e) => rankOf(e) === 'boss' && (s.kills[e.id] || 0) > 0);
 export const prestigeGain = (s) => prestigeBosses(s).length;
 
 export function prestige(s) {
   const gain = prestigeGain(s);
-  if (!gain) return 0;
   s.fight = null;
   s.retry = null;
-  s.kills = Object.fromEntries(C.enemies.map((e) => [e.id, 0]));
+  s.kills = Object.fromEntries(C.enemies.map((e) => [e.id, rankOf(e) === 'challenge' ? s.kills[e.id] || 0 : 0]));
   s.slots = Array(SKILL_SLOTS).fill(null);
   syncSlots(s);
   s.prestige.points += gain;
@@ -128,8 +130,43 @@ export function prestige(s) {
   s.hp = d.maxHp;
   s.hpMax = d.maxHp;
   s.mana = 0;
-  log(s, `prestige ${s.prestige.count}: +${gain} point${gain > 1 ? 's' : ''} (${s.prestige.points} total), all counts reset`, 'warn');
+  log(s, `prestige ${s.prestige.count}: +${gain} point${gain === 1 ? '' : 's'} (${s.prestige.points} total), counts reset except challenges`, 'warn');
   return gain;
+}
+
+// ---------- prestige shop ----------
+export const shopItems = () => PRESTIGE_SHOP;
+export const shopDef = (id) => PRESTIGE_SHOP.find((x) => x.id === id);
+export const shopLevel = (s, id) => Math.min(s.prestige.shop[id] || 0, shopDef(id)?.max ?? 0);
+// Points for the next level, or null at max level.
+export function shopCost(s, id) {
+  const x = shopDef(id);
+  const lv = shopLevel(s, id);
+  if (!x || lv >= x.max) return null;
+  return (x.cost?.base || 0) + (x.cost?.step || 0) * lv;
+}
+export const canBuy = (s, id) => { const c = shopCost(s, id); return c !== null && s.prestige.points >= c; };
+
+export function buy(s, id) {
+  if (!canBuy(s, id)) return false;
+  const x = shopDef(id);
+  s.prestige.points -= shopCost(s, id);
+  s.prestige.shop[id] = shopLevel(s, id) + 1;
+  syncSlots(s);
+  syncHp(s);
+  log(s, `prestige shop: ${x.id} ${x.name} lv${s.prestige.shop[id]} (${s.prestige.points} point${s.prestige.points === 1 ? '' : 's'} left)`, 'warn');
+  return true;
+}
+
+// Attribute effects of the shop upgrades bought.
+function shopEffects(s) {
+  const out = [];
+  for (const x of PRESTIGE_SHOP) {
+    const lv = shopLevel(s, x.id);
+    if (!lv) continue;
+    for (const e of x.effects || []) out.push({ group: 'prestige', label: `${x.id} ${x.name} lv${lv}`, stat: e.stat, kind: e.kind, v: e.v * lv });
+  }
+  return out;
 }
 
 // ---------- skill unlocks ----------
@@ -198,6 +235,7 @@ export function slotCount(s) {
     const L = levelData(s, k.id);
     if (L) n += L.slots || 0;
   }
+  for (const x of PRESTIGE_SHOP) n += (x.slots || 0) * shopLevel(s, x.id);
   return n;
 }
 
@@ -236,7 +274,8 @@ export const actionRate = (a, speed) => (a.time ? 1 / a.time : 0) + (a.speedScal
 
 // Attributes are never modified directly. Everything that changes one is an
 // effect { group, label, stat, kind: 'flat' | 'pct', v }.
-// group is 'enemies' (kill rewards) or 'skills' (active skills).
+// group is 'enemies' (kill rewards), 'skills' (active skills) or 'prestige'
+// (prestige shop).
 // Each attribute = (base + sum of flat effects) x (1 + sum of pct effects).
 const STATS = ['maxHp', 'damage', 'attackSpeed', 'magicPower', 'magicSpeed', 'maxMana', 'manaRegen',
   'armor', 'block', 'blockShred', 'regenFlat', 'regenIn', 'regenOut', 'lifesteal'];
@@ -366,7 +405,8 @@ export function killEffects(kills) {
   return out;
 }
 
-// Player: base attributes + kill rewards + unlocked specials + loaded skills.
+// Player: base attributes + kill rewards + prestige shop + unlocked specials
+// + loaded skills.
 export function derived(s) {
   const active = [];
   for (const k of specials()) {
@@ -377,7 +417,7 @@ export function derived(s) {
     const L = id && levelData(s, id);
     if (L) active.push({ id, L });
   }
-  return unit(PLAYER(), active, killEffects(s.kills), REGEN.outOfCombatFlat);
+  return unit(PLAYER(), active, [...killEffects(s.kills), ...shopEffects(s)], REGEN.outOfCombatFlat);
 }
 
 // Enemy: its base attributes + its skills (always active, at the listed level).

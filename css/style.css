@@ -42,10 +42,14 @@ header {
 
 main {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr) 380px;
+  grid-template-columns: 200px minmax(0, 1fr) 380px 280px;
   gap: 16px;
   padding: 16px;
-  max-width: 1400px;
+  max-width: 1700px;
+}
+@media (max-width: 1300px) {
+  main { grid-template-columns: 200px minmax(0, 1fr) 380px; }
+  #shop { grid-column: 1 / -1; }
 }
 @media (max-width: 1000px) {
   main { grid-template-columns: 200px minmax(0, 1fr); }
@@ -269,3 +273,12 @@ button.armed { color: var(--err); border-color: var(--err); }
 .dev-view button { white-space: nowrap; }
 .hov { border-bottom: 1px dotted var(--muted); color: var(--muted); cursor: help; }
 .hov:hover { color: var(--fg); border-bottom-color: var(--accent); }
+
+/* prestige shop */
+#shop-points { float: right; }
+#shop td { vertical-align: top; white-space: normal; padding: 2px 4px; }
+#shop td:first-child { width: 40px; }
+#shop td:nth-child(2) { white-space: nowrap; }
+#shop-items { max-width: 520px; }
+#shop td:last-child { text-align: right; white-space: nowrap; }
+#shop .grid tr:first-child { border-top: 0; }

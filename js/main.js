@@ -176,7 +176,7 @@ function levelLines(k, lv, d) {
 
 // ---------- attribute breakdowns ----------
 // Rows: [label, value, class]
-const GROUPS = ['enemies', 'skills'];
+const GROUPS = ['enemies', 'prestige', 'skills'];
 const sumV = (a) => a.reduce((x, y) => x + y.v, 0);
 
 // Rows for a list of effects: ungrouped items (base) first, then one total
@@ -496,6 +496,7 @@ function render() {
   $('#auto').checked = s.repeat;
 
   renderSkills(d);
+  renderShop();
 
   const lt = s.log.length ? s.log[s.log.length - 1].t : 0;
   const logKey = `${s.log.length}:${lt}`;
@@ -544,16 +545,13 @@ $('#skills').addEventListener('click', (ev) => {
 });
 
 // Prestige button: "prestige +N" (N = different bosses defeated this
-// prestige), disabled at 0. Two clicks, like reset.
+// prestige). Always allowed. Two clicks, like reset.
 function renderPrestige() {
   const b = $('#btn-prestige');
   const bosses = G.prestigeBosses(s);
-  b.disabled = !bosses.length;
-  b.title = bosses.length
-    ? `resets every count; +1 point per boss defeated: ${bosses.map((e) => `${e.id} ${e.name}`).join(', ')}`
-    : 'defeat a boss to prestige';
+  b.title = `resets every count except challenges; +1 point per boss defeated${bosses.length ? `: ${bosses.map((e) => `${e.id} ${e.name}`).join(', ')}` : ' (none yet)'}`;
   if (!b.dataset.armed) {
-    const label = bosses.length ? `prestige +${bosses.length}` : 'prestige';
+    const label = `prestige +${bosses.length}`;
     if (b.textContent !== label) b.textContent = label;
   }
 }
@@ -569,8 +567,42 @@ $('#btn-prestige').addEventListener('click', () => {
   delete b.dataset.armed;
   G.prestige(s);
   G.save(s);
-  lastLogKey = lastSkillKey = '';
+  lastLogKey = lastSkillKey = lastShopKey = '';
   render();
+});
+
+// ---------- prestige shop ----------
+let lastShopKey = '';
+const effectText = (e) => `${G.STAT_LABEL[e.stat] || e.stat} +${e.kind === 'pct' ? `${exact(e.v * 100)}%` : exact(e.v)}`;
+function shopLines(x) {
+  const out = (x.effects || []).map(effectText);
+  if (x.slots) out.push(`skill slots +${x.slots}`);
+  return out.join(', ');
+}
+function renderShop() {
+  const items = G.shopItems();
+  const key = JSON.stringify([s.prestige.points, s.prestige.shop]);
+  if (key === lastShopKey) return;
+  lastShopKey = key;
+  $('#shop-points').textContent = `${s.prestige.points} pt${s.prestige.points === 1 ? '' : 's'}`;
+  $('#shop-items tbody').innerHTML = items.map((x) => {
+    const lv = G.shopLevel(s, x.id);
+    const cost = G.shopCost(s, x.id);
+    const btn = cost === null
+      ? '<span class="muted">max</span>'
+      : `<button data-act="buy" data-id="${x.id}" ${G.canBuy(s, x.id) ? '' : 'disabled'}>${cost} pt</button>`;
+    return `<tr${lv ? '' : ' class="muted"'}><td>${x.id}</td><td>${x.name}<div class="muted">lv ${lv}/${x.max}</div></td><td>${shopLines(x)}<span class="muted">/lv</span></td><td>${btn}</td></tr>`;
+  }).join('');
+}
+
+$('#shop').addEventListener('click', (ev) => {
+  const btn = ev.target.closest('button[data-act=buy]');
+  if (!btn) return;
+  if (G.buy(s, btn.dataset.id)) {
+    G.save(s);
+    lastSkillKey = '';
+    render();
+  }
 });
 
 $('#btn-reset').addEventListener('click', () => {
@@ -584,7 +616,7 @@ $('#btn-reset').addEventListener('click', () => {
   s = G.reset();
   delete b.dataset.armed;
   b.textContent = 'reset';
-  lastLogKey = lastSkillKey = '';
+  lastLogKey = lastSkillKey = lastShopKey = '';
   render();
 });
 
