@@ -3,7 +3,7 @@
 // The player and enemies are both "units": base attributes plus a set of
 // active skills. A unit's attributes, attacks and spells are derived from
 // those (see unit()). Combat runs the same rules for both sides.
-import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, armorReduction } from './data.js';
+import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, armorReduction } from './data.js';
 import { key } from './site.js';
 
 const SAVE_KEY = key('isfw.save.v3');
@@ -43,8 +43,9 @@ export function newState() {
     retry: null,                         // enemy id to rerun once hp is full (repeat after a defeat)
     log: [],
     stats: { fights: 0, wins: 0, losses: 0 },
-    prestige: { points: 0, count: 0, shop: {} }, // kept through prestiges; only a full reset clears it
+    prestige: { points: 0, count: 0, shop: {}, limits: {} }, // kept through prestiges; only a full reset clears it
                                          // shop: { item id: level bought }
+                                         // limits: { enemy id: max kills added by LIMIT_GROWTH }
   };
 }
 
@@ -56,12 +57,13 @@ export function load() {
       const saved = JSON.parse(raw);
       // Attributes are never stored: every effect is recomputed from kills,
       // skill levels and loaded skills.
-      Object.assign(s.kills, saved.kills || {});
-      // limits can be lowered: never keep more kills than an enemy allows
-      for (const e of C.enemies) s.kills[e.id] = Math.max(0, Math.min(e.limit, Math.floor(s.kills[e.id] || 0)));
       Object.assign(s.stats, saved.stats || {});
       Object.assign(s.prestige, saved.prestige || {});
       s.prestige.shop = { ...(saved.prestige?.shop || {}) };
+      s.prestige.limits = { ...(saved.prestige?.limits || {}) };
+      Object.assign(s.kills, saved.kills || {});
+      // limits can be lowered: never keep more kills than an enemy allows
+      for (const e of C.enemies) s.kills[e.id] = Math.max(0, Math.min(limitOf(s, e), Math.floor(s.kills[e.id] || 0)));
       syncSlots(s);
       if (Array.isArray(saved.slots)) {
         saved.slots.slice(0, s.slots.length).forEach((id, i) => { s.slots[i] = skillDef(id) ? id : null; });
@@ -116,11 +118,35 @@ function clampPools(s) {
 // kept (and so are the specials they award). It gives 1 prestige point per
 // different boss defeated since the last prestige. Prestige points, shop
 // upgrades, totals, log and the repeat setting are kept.
+// ---------- max kills growth ----------
+// limitOf: an enemy's max kills this prestige (its base limit + growth from
+// earlier prestiges, at most LIMIT_GROWTH.max). Skill unlocks keep using the
+// base limit ('final' = base limit).
+export function limitOf(s, e) {
+  if (!e) return 0;
+  if (e.limit >= LIMIT_GROWTH.max) return e.limit;
+  return Math.min(LIMIT_GROWTH.max, e.limit + Math.max(0, Math.floor(s.prestige.limits[e.id] || 0)));
+}
+// Max kills this prestige's kills will add on the next prestige.
+export function limitGain(s, e) {
+  if (!e || rankOf(e) === 'challenge') return 0;
+  const lim = limitOf(s, e);
+  const cap = Math.ceil(lim * LIMIT_GROWTH.share);
+  return Math.max(0, Math.min(s.kills[e.id] || 0, cap, LIMIT_GROWTH.max - lim));
+}
+
 export const prestigeBosses = (s) => C.enemies.filter((e) => rankOf(e) === 'boss' && (s.kills[e.id] || 0) > 0);
 export const prestigeGain = (s) => prestigeBosses(s).length;
 
 export function prestige(s) {
   const gain = prestigeGain(s);
+  let grown = 0;
+  for (const e of C.enemies) {
+    const g = limitGain(s, e);
+    if (!g) continue;
+    s.prestige.limits[e.id] = limitOf(s, e) + g - e.limit;
+    grown++;
+  }
   s.fight = null;
   s.retry = null;
   s.kills = Object.fromEntries(C.enemies.map((e) => [e.id, rankOf(e) === 'challenge' ? s.kills[e.id] || 0 : 0]));
@@ -132,7 +158,7 @@ export function prestige(s) {
   s.hp = d.maxHp;
   s.hpMax = d.maxHp;
   s.mana = 0;
-  log(s, `prestige ${s.prestige.count}: +${gain} point${gain === 1 ? '' : 's'} (${s.prestige.points} total), counts reset except challenges`, 'warn');
+  log(s, `prestige ${s.prestige.count}: +${gain} point${gain === 1 ? '' : 's'} (${s.prestige.points} total), counts reset except challenges${grown ? `, max kills raised on ${grown} target${grown > 1 ? 's' : ''}` : ''}`, 'warn');
   return gain;
 }
 
@@ -354,8 +380,10 @@ function unit(base, active, extra = [], idleFlat = 0) {
 }
 
 // Share of an enemy's total rewards earned after n kills.
+// n can be above the base limit (kills added by LIMIT_GROWTH): the share goes
+// above 1, each kill still giving 1 / limit.
 export function rewardShare(e, n) {
-  n = Math.min(n, e.limit);
+  n = Math.min(n, Math.max(e.limit, LIMIT_GROWTH.max));
   if (!(n > 0) || !(e.limit > 0)) return 0;
   return n / e.limit; // every kill gives the same share
 }
@@ -446,7 +474,7 @@ export function mitigate(dmg, armor, block) {
 // ---------- combat ----------
 export function canFight(s, id) {
   const e = enemyDef(id);
-  return e && (s.kills[id] || 0) < e.limit && s.hp > 0;
+  return e && (s.kills[id] || 0) < limitOf(s, e) && s.hp > 0;
 }
 
 export function startFight(s, id) {
@@ -633,12 +661,13 @@ function win(s, e) {
   syncHp(s);
   s.stats.fights++;
   s.stats.wins++;
-  const tag = n === 1 ? ' [first]' : n === e.limit ? ' [final]' : '';
+  const lim = limitOf(s, e);
+  const tag = n === 1 ? ' [first]' : n === lim ? ' [final]' : '';
   const rText = rewardsOf(e).map((r) => {
     const g = rewardStep(e, n, r);
     return `${STAT_LABEL[r.stat]} +${r.type === 'percent' ? `${(g * 100).toFixed(2)}%` : g.toFixed(3)}`;
   }).join(', ');
-  log(s, `${e.id} ${e.name} cleared ${n}/${e.limit} in ${s.fight.elapsed.toFixed(1)}s  ${rText}${tag}`, 'ok');
+  log(s, `${e.id} ${e.name} cleared ${n}/${lim} in ${s.fight.elapsed.toFixed(1)}s  ${rText}${tag}`, 'ok');
   s.fight = null;
   all.forEach((k, i) => {
     const lv = skillLevel(s, k.id);
@@ -646,7 +675,7 @@ function win(s, e) {
     const what = k.special ? 'special' : 'skill';
     log(s, lv === 1 ? `${what} ${k.id} ${k.name} unlocked` : `${what} ${k.id} ${k.name} upgraded to lv${lv}`, 'warn');
   });
-  if (n >= e.limit) {
+  if (n >= lim) {
     log(s, `${e.id} ${e.name} limit reached`, 'warn');
   } else if (s.repeat) {
     startFight(s, e.id); // repeat immediately with current hp

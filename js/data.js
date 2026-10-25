@@ -37,9 +37,17 @@ export const RANKS = {
   boss: { label: 'boss', limit: 1 },
 };
 
+// Max kills grow with prestiges: each kill in a prestige adds 1 to that
+// enemy's max kills, up to `share` of its max kills at the start of the
+// prestige (rounded up), applied on the next prestige; never above `max`.
+// Challenges don't grow.
+export const LIMIT_GROWTH = { share: 0.1, max: 1000 };
+
 // Kill rewards. Each enemy lists rewards: [{ stat, total, type? }]. total is
 // what the player gains over all kills; every kill (the first included) gives
-// the same share: after n kills the player has total x n / limit.
+// the same share: after n kills the player has total x n / limit. Kills added
+// by LIMIT_GROWTH give the same amount each, so they raise the total
+// proportionally (limit 100 + 10 = +10% total).
 
 // Balancing heuristic (dev/enemies "20% suggestion"): a common enemy, fully
 // defeated, should raise the player's attribute by `share`, measured when the

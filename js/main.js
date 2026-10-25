@@ -244,18 +244,18 @@ function rewardCounter(e) {
   return G.rewardsOf(e).map((r) => {
     const pct = r.type === 'percent';
     const t = r.total || 0;
-    return `<div>${amount(t * G.rewardShare(e, n), pct)}/${amount(t, pct)} ${G.STAT_LABEL[r.stat]}</div>`;
+    return `<div>${amount(t * G.rewardShare(e, n), pct)}/${amount(t * G.rewardShare(e, G.limitOf(s, e)), pct)} ${G.STAT_LABEL[r.stat]}</div>`;
   }).join('');
 }
 
 // Unlocks hover: the skills this enemy awards and at which kill.
 function unlocksBreakdown(e) {
-  const rows = [['unlocks', `${s.kills[e.id] || 0}/${e.limit} kills`, 'head']];
+  const rows = [['unlocks', `${s.kills[e.id] || 0}/${G.limitOf(s, e)} kills`, 'head']];
   const n = s.kills[e.id] || 0;
   for (const u of e.skillRewards || []) {
     const k = G.skillDef(u.skill);
     const need = G.reqKills({ enemy: e.id, at: u.at });
-    const at = u.at === 'first' ? 'first kill' : u.at === 'final' ? `kill ${e.limit} (final)` : `kill ${u.at}`;
+    const at = u.at === 'first' ? 'first kill' : u.at === 'final' ? `kill ${e.limit}${G.limitOf(s, e) === e.limit ? ' (final)' : ''}` : `kill ${u.at}`;
     const label = k ? `${k.id} ${k.name}${k.levels.length > 1 ? ` lv${u.level}` : ''}${k.special ? ' <span class="muted">special</span>' : ''}` : u.skill;
     rows.push([label, n >= need ? `<span class="ok">${at} ✓</span>` : at]);
   }
@@ -266,19 +266,27 @@ function unlocksBreakdown(e) {
 function rewardsBreakdown(e) {
   const rows = [];
   const n = s.kills[e.id] || 0;
+  const lim = G.limitOf(s, e);
   const rs = G.rewardsOf(e);
   if (rs.length) {
-    rows.push(['attributes', `${n}/${e.limit} kills`, 'head']);
+    rows.push(['attributes', `${n}/${lim} kills`, 'head']);
     for (const r of rs) {
       const pct = r.type === 'percent';
       const show = (v) => (pct ? `+${fmt(v * 100, 2)}%` : `+${fmt(v, v < 1 ? 3 : 2)}`);
       const t = r.total || 0;
-      rows.push([G.STAT_LABEL[r.stat], `${show(t)} total`, 'grp']);
+      rows.push([G.STAT_LABEL[r.stat], `${show(t * G.rewardShare(e, lim))} total`, 'grp']);
+      if (lim > e.limit) rows.push(['base', `${show(t)} over ${e.limit} kills`, 'sub']);
       rows.push(['earned', show(t * G.rewardShare(e, n))]);
-      if (n < e.limit) rows.push(['next kill', show(G.rewardStep(e, n + 1, r))]);
+      rows.push(['per kill', show(G.rewardStep(e, 1, r))]);
     }
   }
   if (!rows.length) rows.push(['none', '']);
+  const g = G.limitGain(s, e);
+  if (lim > e.limit || g) {
+    rows.push(['max kills', `${lim}`, 'head']);
+    if (lim > e.limit) rows.push(['base', `${e.limit} +${lim - e.limit} from prestiges`]);
+    if (g) rows.push(['next prestige', `+${g}`]);
+  }
   return rows;
 }
 
@@ -452,18 +460,22 @@ function render() {
   for (const tr of document.querySelectorAll('#targets tbody tr')) {
     const e = G.enemyDef(tr.dataset.id);
     const k = s.kills[e.id];
-    tr.querySelector('[data-f=kills]').textContent = `${k || 0}/${e.limit}`;
+    const lim = G.limitOf(s, e);
+    const g = G.limitGain(s, e);
+    const kc = tr.querySelector('[data-f=kills]');
+    const kt = `${k || 0}/${lim}${g ? ` <span class="muted" title="max kills +${g} on the next prestige">+${g}</span>` : ''}`;
+    if (kc.dataset.v !== kt) { kc.dataset.v = kt; kc.innerHTML = kt; }
     const rc = tr.querySelector('[data-f=rewards]');
     if (rc) { const html = rewardCounter(e); if (rc.dataset.v !== html) { rc.dataset.v = html; rc.innerHTML = html; } }
     // active: in a fight with it, or regenerating to retry it (repeat after a defeat)
     const active = s.fight ? s.fight.enemyId === e.id : s.retry === e.id;
     tr.querySelector('[data-f=status]').textContent =
-      active ? 'active' : k >= e.limit ? 'closed' : 'open';
+      active ? 'active' : k >= lim ? 'closed' : 'open';
     tr.classList.toggle('active', !!active);
     const b = tr.querySelector('button');
     const act = active ? 'stop' : 'run';
     if (b.dataset.act !== act) { b.dataset.act = act; b.textContent = act; }
-    b.disabled = !active && (!!s.fight || k >= e.limit || s.hp <= 0);
+    b.disabled = !active && (!!s.fight || k >= lim || s.hp <= 0);
   }
 
   const f = s.fight;
@@ -548,7 +560,8 @@ $('#skills').addEventListener('click', (ev) => {
 function renderPrestige() {
   const b = $('#btn-prestige');
   const bosses = G.prestigeBosses(s);
-  b.title = `resets every count except challenges; +1 point per boss defeated${bosses.length ? `: ${bosses.map((e) => `${e.id} ${e.name}`).join(', ')}` : ' (none yet)'}`;
+  const grow = ENEMIES.reduce((a, e) => a + G.limitGain(s, e), 0);
+  b.title = `resets every count except challenges; +1 point per boss defeated${bosses.length ? `: ${bosses.map((e) => `${e.id} ${e.name}`).join(', ')}` : ' (none yet)'}; max kills +${grow} in total`;
   if (!b.dataset.armed) {
     const label = `prestige +${bosses.length}`;
     if (b.textContent !== label) b.textContent = label;
