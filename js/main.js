@@ -491,8 +491,12 @@ function render() {
     const lim = G.limitOf(s, e);
     const g = G.limitGain(s, e);
     const kc = tr.querySelector('[data-f=kills]');
+    const step = G.limitStep(s, e);
     const gs = g > 0 ? `+${g}` : `${g}`;
-    const kt = `${k || 0}/${lim}${g ? ` <span class="muted" title="max kills ${gs} on the next prestige">${gs}</span>` : ''}`;
+    const help = step > 0
+      ? `Each kill increases maximum kills on next prestige, up to +${step}. Increases total attribute reward.`
+      : `Each kill decreases maximum kills on next prestige, up to ${step}. Doesn't decrease total attribute reward.`;
+    const kt = `<span class="nw">${k || 0}/${lim}</span>${g ? ` <span class="tip muted" tabindex="0" data-tip="${esc(help)}">(${gs})</span>` : ''}`;
     if (kc.dataset.v !== kt) { kc.dataset.v = kt; kc.innerHTML = kt; }
     const rc = tr.querySelector('[data-f=rewards]');
     if (rc) { const html = rewardCounter(e); if (rc.dataset.v !== html) { rc.dataset.v = html; rc.innerHTML = html; } }

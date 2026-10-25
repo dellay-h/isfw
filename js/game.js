@@ -145,13 +145,20 @@ export function limitState(s, e) {
   return { lim, cap, capped, pool: capped ? cap : lim };
 }
 export const limitOf = (s, e) => (e ? limitState(s, e).lim : 0);
-// Change in max kills the next prestige will apply: + while growing,
-// - after the cap (down to 1).
-export function limitGain(s, e) {
+// Largest change in max kills this prestige can bring (with enough kills):
+// + while growing, - after the cap (down to 1).
+export function limitStep(s, e) {
   if (!e || rankOf(e) === 'challenge') return 0;
   const { lim, cap, capped } = limitState(s, e);
-  const step = Math.min(s.kills[e.id] || 0, Math.ceil(lim * LIMIT_GROWTH.share));
+  const step = Math.ceil(lim * LIMIT_GROWTH.share);
   return capped ? -Math.max(0, Math.min(step, lim - 1)) : Math.max(0, Math.min(step, cap - lim));
+}
+// Change in max kills the next prestige will apply (1 per kill, up to
+// limitStep).
+export function limitGain(s, e) {
+  const max = limitStep(s, e);
+  const k = (e && s.kills[e.id]) || 0;
+  return max < 0 ? -Math.min(k, -max) : Math.min(k, max);
 }
 
 // ---------- locked enemies ----------
@@ -252,13 +259,16 @@ export function unlockReq(skillId, level = 1) {
 export const levelReq = (k, i) => unlockReq(k.id, i + 1);
 
 // Kills needed for a requirement: 'first' = 1, 'final' = base limit, or a
-// number. With a state: never more than the enemy's current max kills (when
-// max kills have shrunk below it, the last kill meets it).
+// number. With a state, once the enemy's max kills are shrinking (after the
+// cap): never more than its current max kills, so the last kill meets any
+// higher requirement. While growing, the requirement stands as it is.
 export function reqKills(req, s = null) {
   const e = enemyDef(req.enemy);
   if (!e) return Infinity;
   const n = typeof req.at === 'number' ? req.at : req.at === 'final' ? e.limit : 1;
-  return s ? Math.min(n, limitOf(s, e)) : n;
+  if (!s) return n;
+  const st = limitState(s, e);
+  return st.capped ? Math.min(n, st.lim) : n;
 }
 
 export function reqMet(s, req) {

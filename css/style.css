@@ -345,8 +345,8 @@ button.armed { color: var(--err); border-color: var(--err); }
   #targets th:nth-child(1) { width: 34px; }
   #targets th:nth-child(4) { width: 58px; }
   #targets .hov { white-space: nowrap; }
-  #targets th:nth-child(6) { width: 84px; }
-  #targets th:nth-child(7) { width: 46px; }
+  #targets th:nth-child(6) { width: 78px; }
+  #targets th:nth-child(7) { width: 54px; }
   #targets th:nth-child(9) { width: 56px; }
   #targets td { white-space: normal; overflow-wrap: anywhere; }
   #targets td:nth-child(3) { min-width: 0; }
@@ -363,3 +363,7 @@ button.armed { color: var(--err); border-color: var(--err); }
   .tip:hover::after, .tip:focus::after { white-space: pre-wrap; width: max-content; max-width: 70vw; }
   #popup { max-width: calc(100vw - 16px); }
 }
+
+#targets .nw { white-space: nowrap; }
+/* max kills change indicator: its explanation wraps instead of one long line */
+#targets .tip::after { white-space: normal; width: 260px; text-align: left; }
