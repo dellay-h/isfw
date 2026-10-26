@@ -34,9 +34,9 @@ const ACTION_PROPS = [
   { path: 'heal.scaling', label: 'heal: power scaling', def: 1 },
 ];
 const PARTS = {
-  attack: { label: 'attack (dmg, aspd; armor/block apply)', make: () => ({ base: 1, time: 1 }) },
-  spell: { label: 'spell (mag pwr, mag spd; ignores armor/block)', make: () => ({ base: 1, time: 2 }) },
-  onHit: { label: 'on-hit damage', make: () => ({ base: 1 }) },
+  attack: { label: 'attack (dmg, aspd; on-hit, empower)', make: () => ({ type: 'physical', base: 1, time: 1 }) },
+  spell: { label: 'spell (mag pwr, mag spd)', make: () => ({ type: 'magic', base: 1, time: 2 }) },
+  onHit: { label: 'on-hit damage', make: () => ({ type: 'physical', base: 1 }) },
   empower: { label: 'empower (next attack)', make: () => ({ mult: 1, cooldown: 5 }) },
   mods: { label: 'attribute bonuses', make: () => ({ damageFlat: 1 }) },
   slots: { label: 'skill slots', make: () => 1 },
@@ -85,9 +85,16 @@ function propRows(i, base, obj, props) {
   }).join('');
 }
 
+// Damage type select (physical: armor/block apply, lifesteal attribute;
+// magic: ignores armor/block). Shows the default when the level sets none.
+function typeRow(i, base, obj, kind) {
+  return `<div class="addrow"><span class="muted">damage</span> ${select(`data-i="${i}" data-p="${base}.type" data-t="text"`, [['physical', 'physical (armor/block apply)'], ['magic', 'magic (ignores armor/block)']], G.damageType(obj, kind))}</div>`;
+}
+
 function partBlock(k, i, L, l, part) {
   const base = `levels.${l}.${part}`;
   let body = '';
+  const typed = part === 'attack' || part === 'spell' || part === 'onHit';
   if (part === 'attack' || part === 'spell') {
     const a = L[part];
     const missing = ACTION_PROPS.filter((p) => getP(a, p.path) === undefined);
@@ -110,9 +117,12 @@ function partBlock(k, i, L, l, part) {
   } else if (part === 'slots') {
     body = `<table class="dev-table"><tr><td class="lbl">extra slots</td><td>${numInput(i, base, L.slots, { int: true })}</td></tr></table>`;
   }
+  // later levels of an action inherit its type; only the level that adds it shows the select
+  const merged = G.mergeLevels(k.levels, l);
+  const typeSel = typed && !(merged[part] && merged[part].type) ? typeRow(i, base, L[part], part) : '';
   return `<div class="act">
     <div class="ident"><b>${PARTS[part]?.label || part}</b><span class="spacer"></span>${xBtn('part-del', `data-i="${i}" data-l="${l}" data-part="${part}"`)}</div>
-    ${body}
+    ${typeSel}${body}
   </div>`;
 }
 

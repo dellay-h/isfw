@@ -104,7 +104,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E010', name: 'werewolf', tier: 1, rank: 'boss', limit: 1,
+    id: 'E010', name: 'vampire', tier: 1, rank: 'boss', limit: 1,
     base: { maxHp: 300, armor: 10, damage: 0, attackSpeed: -0.1667, lifesteal: 1.5 },
     skills: [{ skill: 'S01', level: 1 }, { skill: 'S10', level: 1 }],
     rewards: [

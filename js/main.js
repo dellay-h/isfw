@@ -61,6 +61,7 @@ const MOD_TEXT = {
   regenIn: (v) => `regen in process +${exact(v * 100)}% max hp/s`,
   regenOut: (v) => `regen idle +${exact(v * 100)}% max hp/s`,
   regenPct: (v) => `regen +${exact(v * 100)}% max hp/s`,
+  lifesteal: (v) => `lifesteal +${exact(v * 100)}% of physical dmg`,
 };
 const modText = (k, v) => (MOD_TEXT[k] ? MOD_TEXT[k](v) : `${k} ${v}`);
 
@@ -115,7 +116,8 @@ function describeAction(kind, L, total, prev, d) {
   if (a.cost) bits.push(`cost ${fmt(a.cost, 0)} mp`);
   // Only the word "attack" / "spell" is shown; its description and formulas
   // are in the hover.
-  const lines = [...bits];
+  const type = G.damageType(a, kind);
+  const lines = [`${type} damage`, ...bits];
   if (prev[kind]) {
     // later level: what it adds, then the resulting action
     const added = (obj, pre = '') => Object.entries(obj).flatMap(([k, v]) =>
@@ -123,7 +125,7 @@ function describeAction(kind, L, total, prev, d) {
     lines.unshift(`adds ${added(L[kind]).join(', ')}`, '');
   }
   if (tip.length) lines.push('', ...tip);
-  return `<span class="tip" tabindex="0" data-tip="${esc(lines.join('\n'))}">${kind}</span>`;
+  return `<span class="tip" tabindex="0" data-tip="${esc(lines.join('\n'))}">${kind}</span> <span class="muted">${type === 'physical' ? 'phys' : 'mag'}</span>`;
 }
 
 // One level's effect. L is what this level adds; total is the skill's data
@@ -134,7 +136,7 @@ function describe(L, total, prev, d) {
   if (L.onHit) {
     const o = total.onHit;
     const f = formula('on hit', G.actionHit(o, d.damage), o.base, o.scaling, 'dmg');
-    parts.push(`<span class="tip" tabindex="0" data-tip="${esc(f)}">on hit ${fmt(G.actionHit(o, d.damage))} per attack hit</span>`);
+    parts.push(`<span class="tip" tabindex="0" data-tip="${esc(f)}">on hit ${fmt(G.actionHit(o, d.damage))} ${G.damageType(o, 'onHit')} per attack hit</span>`);
   }
   if (L.empower) {
     const p = L.empower;
@@ -192,13 +194,15 @@ function grouped(items, show, rows, skipZero = false) {
 function enemyBreakdown(e, d) {
   const rows = [];
   const { total, parts, unit: u } = G.enemyDps(e, d.maxHp);
-  const vs = (a, raw) => (a.kind === 'attack' ? G.mitigate(raw, d.armor, d.block) : raw);
-  const vsText = (a, raw) => (vs(a, raw) !== raw ? ` <span class="muted">(${fmt(vs(a, raw))} vs you)</span>` : '');
+  // physical damage is reduced by your armor and block; magic isn't
+  const vsT = (type, raw) => (type === 'physical' ? G.mitigate(raw, d.armor, d.block) : raw);
+  const vsOnHit = u.onHits.reduce((x, o) => x + vsT(o.type, o.dmg), 0);
+  const vsText = (v, raw) => (v !== raw ? ` <span class="muted">(${fmt(v)} vs you)</span>` : '');
   let vsYou = 0;
   for (const { a, onHit, hit, dot } of parts) {
-    rows.push([a.name + (a.countdown ? ' (special)' : ''), `${a.kind}, every ${fmt(a.interval, 1)}s`, 'head']);
-    if (a.hit) rows.push(['hit', `${fmt(a.hit)}${a.hits > 1 ? ` ×${a.hits}` : ''}${vsText(a, a.hit)}`]);
-    if (onHit) rows.push(['on hit', `${fmt(onHit)}${a.hits > 1 ? ` ×${a.hits}` : ''}${vsText(a, onHit)}`]);
+    rows.push([a.name + (a.countdown ? ' (special)' : ''), `${a.kind}, ${a.type}, every ${fmt(a.interval, 1)}s`, 'head']);
+    if (a.hit) rows.push(['hit', `${fmt(a.hit)}${a.hits > 1 ? ` ×${a.hits}` : ''}${vsText(vsT(a.type, a.hit), a.hit)}`]);
+    if (onHit) rows.push(['on hit', `${fmt(onHit)}${a.hits > 1 ? ` ×${a.hits}` : ''}${vsText(vsOnHit, onHit)}`]);
     if (a.dot) {
       const p = [];
       if (a.dot.pct) p.push(`${exact(a.dot.pct * 100)}% max hp`);
@@ -210,7 +214,7 @@ function enemyBreakdown(e, d) {
     if (a.heal) rows.push(['heals itself', fmt(a.heal)]);
     if (a.cost) rows.push(['mana', `${fmt(a.cost, 0)} per use`]);
     if (hit || dot) rows.push(['dps', a.countdown ? `${fmt(hit + dot)} <span class="muted">not in total</span>` : fmt(hit + dot)]);
-    if (!a.countdown) vsYou += a.rate * a.hits * (vs(a, a.hit) + vs(a, onHit)) + dot;
+    if (!a.countdown) vsYou += a.rate * a.hits * (vsT(a.type, a.hit) + (onHit ? vsOnHit : 0)) + dot;
   }
   if (u.empowers.length) rows.push(['empowered attacks', u.empowers.map((p) => `+${fmt(p.mult * 100, 0)}% / ${fmt(p.cooldown, 0)}s`).join(', ')]);
   rows.push(['total', fmt(total), 'total']);
@@ -223,12 +227,12 @@ function statsBreakdown(e, d) {
   const u = G.enemyUnit(e);
   const rows = [['attributes', '', 'head'], ['hp', fmt(u.maxHp, 0)]];
   if (u.regenInHp) rows.push([u.regenInHp < 0 ? 'decay' : 'regen', `${signed(u.regenInHp, 1)}/s${u.regenIn ? ` <span class="muted">(${fmt(u.regenIn * 100, 1)}% max hp)</span>` : ''}`]);
-  if (u.armor) rows.push(['armor', `${fmt(u.armor, 0)} <span class="muted">(-${fmt(armorReduction(u.armor) * 100, 0)}% attack dmg)</span>`]);
+  if (u.armor) rows.push(['armor', `${fmt(u.armor, 0)} <span class="muted">(-${fmt(armorReduction(u.armor) * 100, 0)}% physical dmg)</span>`]);
   if (u.block) rows.push(['block', fmt(u.block, 1)]);
   for (const [k, label, dp] of [['damage', 'dmg', 2], ['attackSpeed', 'aspd', 2], ['magicPower', 'mag pwr', 2], ['magicSpeed', 'mag spd', 2], ['maxMana', 'max mp', 0], ['manaRegen', 'mp regen', 2], ['blockShred', 'block shred', 1]]) {
     if (u[k]) rows.push([label, fmt(u[k], dp)]);
   }
-  if (u.lifesteal) rows.push(['lifesteal', `${fmt(u.lifesteal * 100, 0)}% on attacks`]);
+  if (u.lifesteal) rows.push(['lifesteal', `${fmt(u.lifesteal * 100, 0)}% of physical dmg dealt`]);
   if (!u.actions.length) {
     rows.push(['actions', '', 'head'], ['none', 'does not attack']);
     return rows;
@@ -314,7 +318,7 @@ function breakdown(key, d) {
   } else if (key === 'dps') {
     if (!d.actions.length) rows.push(['no attack or spell loaded', '0']);
     for (const a of d.actions) {
-      rows.push([`${a.id} ${G.skillDef(a.id).name}`, a.kind, 'head']);
+      rows.push([`${a.id} ${G.skillDef(a.id).name}`, `${a.kind}, ${a.type}`, 'head']);
       if (a.hit) rows.push(['hit / interval', `${fmt(a.hit)}${a.hits > 1 ? ` ×${a.hits}` : ''} / ${secs(a.interval)}s = ${fmt(a.hit * a.hits * a.rate)}`]);
       if (a.kind === 'attack' && d.onHit) rows.push(['on hit / interval', `${fmt(d.onHit)}${a.hits > 1 ? ` ×${a.hits}` : ''} / ${secs(a.interval)}s = ${fmt(d.onHit * a.hits * a.rate)}`]);
       if (a.dot) rows.push(['burn (not in total)', `${a.dot.pct ? `${exact(a.dot.pct * 100)}% target hp + ` : ''}${fmt(a.dot.dps)}/s`]);

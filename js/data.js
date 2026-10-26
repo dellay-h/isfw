@@ -8,8 +8,8 @@ export const PLAYER_BASE = {
   magicSpeed: 0,    // added to each spell's rate, times its speed scaling
   maxMana: 0,
   manaRegen: 0,     // mana per second (in and out of combat)
-  armor: 0,         // % reduction of attack hits taken = armor / (armor + 100)
-  block: 0,         // flat reduction of each attack hit taken (after armor)
+  armor: 0,         // % reduction of physical hits taken = armor / (armor + 100)
+  block: 0,         // flat reduction of each physical hit taken (after armor)
   blockShred: 0,    // each of your attack hits lowers the target's block by
                     // this amount for the rest of the fight
 };
@@ -94,7 +94,7 @@ export const ATTRS = [
   { key: 'blockShred', label: 'block shred' },
   { key: 'regenFlat', label: 'regen (hp/s)' },
   { key: 'regenIn', label: 'regen % max hp/s (in fights)' },
-  { key: 'lifesteal', label: 'lifesteal on all attacks (1 = 100%)' },
+  { key: 'lifesteal', label: 'lifesteal on physical damage (1 = 100%)' },
 ];
 
 // Skill mods (attribute bonuses while a skill is active):
@@ -117,6 +117,7 @@ export const MODS = {
   regenPct: { label: 'regen +% max hp/s (0.01 = 1%)', to: [['regenIn', 'flat'], ['regenOut', 'flat']] },
   regenIn: { label: 'regen in process +% max hp/s', to: [['regenIn', 'flat']] },
   regenOut: { label: 'regen idle +% max hp/s', to: [['regenOut', 'flat']] },
+  lifesteal: { label: 'lifesteal on physical dmg (0.1 = 10%)', to: [['lifesteal', 'flat']] },
 };
 
 // ---------- enemies and skills ----------

@@ -390,6 +390,12 @@ const STATS = ['maxHp', 'damage', 'attackSpeed', 'magicPower', 'magicSpeed', 'ma
 const ZERO = Object.fromEntries(STATS.map((k) => [k, 0]));
 const PLAYER = () => ({ ...ZERO, ...PLAYER_BASE, regenIn: REGEN.inCombat, regenOut: REGEN.outOfCombat });
 
+// Damage types. Every attack, spell and on-hit has one: physical (reduced
+// by armor and block, feeds the lifesteal attribute) or magic (ignores armor
+// and block). Defaults: attacks and on-hit physical, spells magic.
+export const DAMAGE_TYPES = ['physical', 'magic'];
+export const damageType = (def, kind) => (DAMAGE_TYPES.includes(def?.type) ? def.type : kind === 'spell' ? 'magic' : 'physical');
+
 const modEffects = (label, mods) => Object.entries(mods || {}).flatMap(([k, v]) =>
   (MODS[k] ? MODS[k].to : []).map(([stat, kind]) => ({ group: 'skills', label, stat, kind, v })));
 
@@ -417,7 +423,7 @@ function unit(base, active, extra = [], idleFlat = 0) {
     if (L.empower) {
       empowers.push({ id, mult: L.empower.mult || 0, cooldown: L.empower.cooldown || 0, armorPen: L.empower.armorPen || 0 });
     }
-    if (L.onHit) onHits.push({ id, dmg: actionHit(L.onHit, val.damage) });
+    if (L.onHit) onHits.push({ id, dmg: actionHit(L.onHit, val.damage), type: damageType(L.onHit, 'onHit') });
     for (const kind of ['attack', 'spell']) {
       const def = L[kind];
       if (!def) continue;
@@ -427,14 +433,16 @@ function unit(base, active, extra = [], idleFlat = 0) {
       if (rate <= 0) continue;
       actions.push({
         id, kind, def, name,
+        type: damageType(def, kind),
         key: `${id}:${kind}`,
         hit: actionHit(def, power),
         hits: def.hits || 1,
         rate,
         interval: 1 / rate,
         cost: def.cost || 0,
-        // the skill's own lifesteal, plus the unit's lifesteal attribute on attacks
-        lifesteal: (def.lifesteal || 0) + (kind === 'attack' ? val.lifesteal : 0),
+        // the skill's own lifesteal (on all its damage); the unit's lifesteal
+        // attribute is added on physical damage when it hits (use())
+        lifesteal: def.lifesteal || 0,
         countdown: !!def.countdown,
         // % of target max hp per second = pctMaxHp + power x pctScaling; plus a flat base + power x scaling
         dot: def.dot ? { pct: (def.dot.pctMaxHp || 0) + power * (def.dot.pctScaling || 0), dps: actionHit(def.dot, power), duration: def.dot.duration || 0 } : null,
@@ -720,17 +728,23 @@ function use(src, dst, a) {
     }
   }
   let dealt = 0;
+  let physical = 0;
   for (let h = 0; h < a.hits; h++) {
-    const sources = attack ? [a.hit * mult, ...src.u.onHits.map((o) => o.dmg)] : [a.hit];
+    const sources = attack
+      ? [{ raw: a.hit * mult, type: a.type }, ...src.u.onHits.map((o) => ({ raw: o.dmg, type: o.type }))]
+      : [{ raw: a.hit, type: a.type }];
     if (attack && src.u.blockShred) dst.shred = Math.min(dst.u.block, dst.shred + src.u.blockShred);
-    for (const raw of sources) {
+    for (const { raw, type } of sources) {
       if (!raw) continue;
-      const dmg = attack ? mitigate(raw, dst.u.armor - pen, dst.u.block - dst.shred) : raw;
+      // physical: armor (minus armor pen) then block; magic: unreduced
+      const dmg = type === 'physical' ? mitigate(raw, dst.u.armor - pen, dst.u.block - dst.shred) : raw;
       dealt += dmg;
+      if (type === 'physical') physical += dmg;
       dst.hp -= absorb(dst.shield, dmg);
     }
   }
-  if (a.lifesteal && dealt) src.hp = Math.min(src.u.maxHp, src.hp + dealt * a.lifesteal);
+  const healed = dealt * a.lifesteal + physical * (src.u.lifesteal || 0);
+  if (healed > 0) src.hp = Math.min(src.u.maxHp, src.hp + healed);
   return dst.hp <= 0;
 }
 

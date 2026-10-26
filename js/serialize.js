@@ -33,9 +33,13 @@ const SKILLS_HEADER = `// Skill data, shared by the player and enemies. Written 
 //
 // Per level:
 //   attack / spell   an action:
-//     attack: scales with damage and attack speed; reduced by armor and block;
-//             triggers on-hit damage and empower
-//     spell:  scales with magic power and magic speed; ignores armor and block
+//     attack: scales with damage and attack speed; triggers on-hit damage,
+//             empower and block shred
+//     spell:  scales with magic power and magic speed
+//     type                damage type: 'physical' (reduced by armor and block;
+//                         the lifesteal attribute heals from it) or 'magic'
+//                         (ignores armor and block). Default: attacks
+//                         physical, spells magic
 //     base, scaling       hit = base + power x scaling
 //     time, speedScaling  uses per second = 1 / time + speed x speedScaling
 //     hits                hits per use (default 1)
@@ -47,14 +51,15 @@ const SKILLS_HEADER = `// Skill data, shared by the player and enemies. Written 
 //     shield: { base, scaling, duration }          temporary hp, absorbs first
 //     heal: { pctMaxHp, base, scaling }            heals the user
 //     countdown           shows a countdown in the process panel
-//   onHit:   { base, scaling } extra damage on each attack hit (scaling x damage)
+//   onHit:   { type, base, scaling } extra damage on each attack hit (scaling x
+//            damage); type default physical
 //   empower: { mult, cooldown, armorPen } next attack deals +mult x damage
 //   mods:    attribute bonuses (keys in data.js MODS)
 //   slots:   extra skill slots (player)
 `;
 
 const ENEMY_ORDER = ['id', 'name', 'tier', 'rank', 'boss', 'limit', 'unlockCost', 'base', 'skills', 'rewards', 'skillRewards'];
-const ACTION_ORDER = ['base', 'scaling', 'time', 'speedScaling', 'hits', 'cost', 'lifesteal', 'dot', 'shield', 'heal', 'countdown'];
+const ACTION_ORDER = ['type', 'base', 'scaling', 'time', 'speedScaling', 'hits', 'cost', 'lifesteal', 'dot', 'shield', 'heal', 'countdown'];
 const LEVEL_ORDER = ['attack', 'spell', 'onHit', 'empower', 'mods', 'slots'];
 
 const key = (k) => (/^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k));
