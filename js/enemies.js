@@ -44,7 +44,7 @@ export const ENEMIES = [
     base: { maxHp: 30, attackSpeed: -0.333 },
     skills: [{ skill: 'S03', level: 1 }],
     rewards: [
-      { stat: 'damage', total: 0.8 },
+      { stat: 'damage', total: 1 },
     ],
     skillRewards: [
       { skill: 'S11', level: 1, at: 'first' },
@@ -57,7 +57,7 @@ export const ENEMIES = [
     base: { maxHp: 60, attackSpeed: -0.09 },
     skills: [{ skill: 'S01', level: 1 }],
     rewards: [
-      { stat: 'maxHp', total: 4 },
+      { stat: 'maxHp', total: 5 },
     ],
     skillRewards: [
       { skill: 'S02', level: 1, at: 'first' },
