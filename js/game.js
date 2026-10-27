@@ -43,7 +43,7 @@ export function newState() {
     retry: null,                         // enemy id to rerun once hp is full (repeat after a defeat)
     log: [],
     stats: { fights: 0, wins: 0, losses: 0 },
-    level: 1,                            // player level (kept through prestiges)
+    level: 0,                            // player level, from 0 (kept through prestiges)
     xp: 0,                               // xp towards the next level
     known: {},                           // skills (and specials) ever unlocked: { id: true }
     fresh: {},                           // unlocked for the first time, not looked at yet: { id: true }
@@ -109,7 +109,8 @@ export function load() {
       s.repeat = !!saved.repeat;
       s.retry = saved.retry || null;
       s.hpMax = typeof saved.hpMax === 'number' ? saved.hpMax : null;
-      s.level = Math.max(1, Math.floor(saved.level || 1));
+      // saves before v0.66 counted levels from 1 (same xp steps, one level higher)
+      s.level = Math.max(0, Math.floor(saved.level || 0) - (saved.level0 ? 0 : 1));
       s.xp = Math.max(0, Number(saved.xp) || 0);
       s.known = { ...(saved.known || {}) };
       s.fresh = { ...(saved.fresh || {}) };
@@ -131,7 +132,7 @@ export function load() {
 export function save(s) {
   try {
     const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, xp } = s;
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, xp }));
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, level0: true, xp }));
   } catch { /* storage unavailable: run without saving */ }
 }
 
@@ -364,9 +365,9 @@ function shopEffects(s) {
 }
 
 // ---------- player level (LEVELS in data.js) ----------
-export const xpToNext = (s) => LEVELS.xpPer * s.level;
+export const xpToNext = (s) => LEVELS.xpPer * (s.level + 1);
 // Attribute bonus factor from the player level (1.02 = +2%).
-export const levelBonus = (s) => 1 + LEVELS.attrPer * (s.level - 1);
+export const levelBonus = (s) => 1 + LEVELS.attrPer * s.level;
 // Applies a bonus factor in the player's favour: positive values grow,
 // negative ones shrink towards 0.
 export const favour = (v, m) => (v >= 0 ? v * m : v / m);

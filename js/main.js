@@ -323,7 +323,7 @@ function breakdown(key, d) {
       rows.push(['subtotal', fmt(sum(P.flat[key]), dp), 'sep']);
       grouped(P.pct[key], (v) => `${v >= 0 ? '+' : ''}${fmt(v * 100, 0)}%`, rows);
     }
-    if (P.lvl > 1) rows.push([`lvl ${s.level} bonus`, levelText(sum(P.flat[key]) * (1 + sum(P.pct[key])), P.lvl), 'sep']);
+    if (P.lvl !== 1) rows.push([`lvl ${s.level} bonus`, levelText(sum(P.flat[key]) * (1 + sum(P.pct[key])), P.lvl), 'sep']);
     rows.push(['total', fmt(d[key], dp), 'total']);
     if (key === 'armor') rows.push(['hit reduction', `${fmt(armorReduction(d.armor) * 100, 1)}%`]);
     if (key === 'block' && d.blockShred) rows.push(['your block shred', `${fmt(d.blockShred, 1)}/hit`]);
@@ -349,7 +349,7 @@ function breakdown(key, d) {
       if (baseFlat) rows.push(['base flat', signed(baseFlat, 2)]);
       grouped(P.flat.regenFlat, (v) => signed(v, 2), rows, true);
       grouped(P.pct.regenFlat, (v) => `${v >= 0 ? '+' : ''}${fmt(v * 100, 0)}% flat regen`, rows);
-      if (P.lvl > 1 && total) rows.push([`lvl ${s.level} bonus`, levelText(total, P.lvl), 'sep']);
+      if (P.lvl !== 1 && total) rows.push([`lvl ${s.level} bonus`, levelText(total, P.lvl), 'sep']);
       rows.push(['total', `${fmt(total, 2)}/s`, 'total']);
     };
     block('idle', 'regenOut', d.regenOutHp, REGEN.outOfCombatFlat);
