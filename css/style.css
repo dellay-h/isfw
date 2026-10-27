@@ -373,3 +373,4 @@ button.armed { color: var(--err); border-color: var(--err); }
 .badge[hidden] { display: none; }
 #m-new { margin-left: 4px; }
 #m-new::before { content: '·'; margin-right: 2px; }
+#shop .tip::after { white-space: normal; width: 240px; text-align: left; }

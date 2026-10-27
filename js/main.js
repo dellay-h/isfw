@@ -449,7 +449,7 @@ function renderSkills(d) {
   const lib = G.playerSkills();
   const sps = G.specials();
   const levels = lib.map((k) => G.skillLevel(s, k.id));
-  const key = JSON.stringify([s.slots, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
+  const key = JSON.stringify([s.slots, s.prestige.free, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
   if (key === lastSkillKey) return;
   lastSkillKey = key;
 
@@ -460,6 +460,13 @@ function renderSkills(d) {
     const lv = G.skillLevel(s, id);
     return `<tr><td class="muted">${i}</td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td>
       <td><button data-act="unequip" data-i="${i}">unload</button></td></tr>`;
+  }).join('') + G.freeSkills(s).map((id) => {
+    // free skills (prestige shop): active without a slot once unlocked
+    const k = G.skillDef(id);
+    const lv = G.skillLevel(s, id);
+    const tip = 'chosen at random on the last prestige: active without a slot once unlocked';
+    if (!lv) return `<tr class="muted"><td><span class="tip" tabindex="0" data-tip="${esc(tip)}">f</span></td><td>${k.id}</td><td>${k.name}</td><td>${reqText(G.levelReq(k, 0), 1)}</td><td>free</td></tr>`;
+    return `<tr><td class="muted"><span class="tip" tabindex="0" data-tip="${esc(tip)}">f</span></td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td><td class="muted">free</td></tr>`;
   }).join('');
 
   const full = !s.slots.includes(null);
@@ -468,7 +475,9 @@ function renderSkills(d) {
     if (!lv) {
       return `<tr class="muted"><td></td><td>${k.id}</td><td>${k.name}</td><td>${reqText(G.levelReq(k, 0), 1)}</td><td></td></tr>`;
     }
-    const btn = s.slots.includes(k.id)
+    const btn = G.isFree(s, k.id)
+      ? '<span class="muted">free</span>'
+      : s.slots.includes(k.id)
       ? '<span class="muted">loaded</span>'
       : `<button data-act="equip" data-id="${k.id}" ${full ? 'disabled' : ''}>load</button>`;
     return `<tr${freshAttr(k.id)}><td>${newTag(k.id)}</td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td><td>${btn}</td></tr>`;
@@ -659,6 +668,7 @@ const effectText = (e) => `${G.STAT_LABEL[e.stat] || e.stat} +${e.kind === 'pct'
 function shopLines(x) {
   const out = (x.effects || []).map(effectText);
   if (x.slots) out.push(`skill slots +${x.slots}`);
+  if (x.free) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`On every prestige, ${x.free === 1 ? 'one skill' : `${x.free} skills`} chosen at random from the skills unlocked in the prestige that ended will not occupy a skill slot: active as soon as unlocked again. Applies from the next prestige.`)}">free skill +${x.free}</span>`);
   return out.join(', ');
 }
 function renderShop() {

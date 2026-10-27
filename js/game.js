@@ -45,11 +45,12 @@ export function newState() {
     stats: { fights: 0, wins: 0, losses: 0 },
     known: {},                           // skills (and specials) ever unlocked: { id: true }
     fresh: {},                           // unlocked for the first time, not looked at yet: { id: true }
-    prestige: { points: 0, count: 0, shop: {}, maxKills: {}, capped: {}, unlocked: {} }, // kept through prestiges; only a full reset clears it
+    prestige: { points: 0, count: 0, shop: {}, maxKills: {}, capped: {}, unlocked: {}, free: [] }, // kept through prestiges; only a full reset clears it
                                          // shop: { item id: level bought }
                                          // maxKills: { enemy id: max kills after LIMIT_GROWTH }
                                          // capped: { enemy id: true } reached its cap (now shrinking)
                                          // unlocked: { enemy id: true } enemies bought with prestige points
+                                         // free: [skill id] active without a slot this prestige (P06)
   };
 }
 
@@ -75,6 +76,7 @@ export function load() {
       }
       delete s.prestige.limits;
       s.prestige.unlocked = { ...(saved.prestige?.unlocked || {}) };
+      s.prestige.free = Array.isArray(saved.prestige?.free) ? saved.prestige.free.filter((id) => skillDef(id) && !skillDef(id).special) : [];
       Object.assign(s.kills, saved.kills || {});
       // limits can be lowered: never keep more kills than an enemy allows
       for (const e of C.enemies) s.kills[e.id] = Math.max(0, Math.min(limitOf(s, e), Math.floor(s.kills[e.id] || 0)));
@@ -188,6 +190,12 @@ export const prestigeGain = (s) => prestigeBosses(s).length;
 
 export function prestige(s) {
   const gain = prestigeGain(s);
+  // free skills for the next prestige: random picks among the skills
+  // unlocked in this one
+  const pool = playerSkills().filter((k) => skillLevel(s, k.id) > 0).map((k) => k.id);
+  const free = [];
+  for (let n = freeCount(s); n > 0 && pool.length; n--) free.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  s.prestige.free = free;
   let grown = 0, shrunk = 0;
   for (const e of C.enemies) {
     const g = limitGain(s, e);
@@ -205,6 +213,7 @@ export function prestige(s) {
   syncSlots(s);
   s.prestige.points += gain;
   s.prestige.count++;
+  if (free.length) log(s, `free skill${free.length > 1 ? 's' : ''} this prestige (no slot needed): ${free.map((id) => `${id} ${skillDef(id).name}`).join(', ')}`, 'warn');
   const d = derived(s);
   s.hp = d.maxHp;
   s.hpMax = d.maxHp;
@@ -317,7 +326,12 @@ export function skillLevel(s, id) {
 // Skills the player can ever get (awarded by some enemy), not specials.
 export const playerSkills = () => C.skills.filter((k) => !k.special && k.levels.some((_, i) => levelReq(k, i).enemy));
 export const specialUnlocked = (s, id) => !!specialDef(id) && skillLevel(s, id) > 0;
-const canLoad = (s, id) => { const k = skillDef(id); return !!k && !k.special && skillLevel(s, id) > 0; };
+// Free skills (prestige shop P06): active without a slot once unlocked, so
+// they can't be loaded into one.
+export const freeCount = (s) => PRESTIGE_SHOP.reduce((n, x) => n + (x.free || 0) * shopLevel(s, x.id), 0);
+export const freeSkills = (s) => s.prestige.free.filter((id) => skillDef(id));
+export const isFree = (s, id) => s.prestige.free.includes(id);
+const canLoad = (s, id) => { const k = skillDef(id); return !!k && !k.special && !isFree(s, id) && skillLevel(s, id) > 0; };
 
 // Sum of levels 1..lv: numbers add, nested objects merge, other values replace.
 function addInto(dst, src) {
@@ -522,6 +536,10 @@ export function derived(s) {
   }
   for (const id of s.slots) {
     const L = id && levelData(s, id);
+    if (L) active.push({ id, L });
+  }
+  for (const id of freeSkills(s)) {
+    const L = !s.slots.includes(id) && levelData(s, id);
     if (L) active.push({ id, L });
   }
   return unit(PLAYER(), active, [...killEffects(s.kills, s), ...shopEffects(s)], REGEN.outOfCombatFlat);
