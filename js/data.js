@@ -31,8 +31,8 @@ export const SKILL_SLOTS = 2;
 // rank is picked in dev/enemies). cap is the highest max kills reachable by
 // LIMIT_GROWTH (default LIMIT_GROWTH.cap).
 export const RANKS = {
-  challenge: { label: 'challenge', limit: 1 }, // shown above tier 0, award specials; max kills never change
-  tutorial: { label: 'tutorial', limit: 10 },
+  challenge: { label: 'challenge', limit: 1, fixed: true }, // shown above tier 0, award specials; max kills never change
+  tutorial: { label: 'tutorial', limit: 10, fixed: true }, // max kills never change
   common: { label: 'common', limit: 50, cap: 1000 },
   elite: { label: 'elite', limit: 5, cap: 500 },
   boss: { label: 'boss', limit: 1, cap: 20 },
@@ -46,7 +46,7 @@ export const RANKS = {
 //              max kills (base 100 -> 110 = +10% total).
 //   shrinking: once the cap is reached, -1 per kill, down to 1. The total
 //              stays at its cap value and is spread over fewer kills.
-// Challenges never change.
+// Ranks with `fixed` (challenge, tutorial) never change.
 export const LIMIT_GROWTH = { share: 0.1, cap: 1000 };
 
 // Kill rewards. Each enemy lists rewards: [{ stat, total, type? }]. total is
@@ -82,6 +82,8 @@ export const LEVELS = { xpPer: 100, speedPer: 0.01 };
 //             in the next one: lv1 without unlocking it (higher levels need
 //             their usual requirements), active without a slot, can be
 //             unloaded and loaded again
+//   startKills per level: { enemy, n } every prestige starts with n more kills
+//             of that enemy (never above its max kills)
 export const PRESTIGE_SHOP = [
   { id: 'P01', name: 'whetstone', max: 5, cost: { base: 1, step: 1 }, effects: [{ stat: 'damage', kind: 'pct', v: 0.1 }] },
   { id: 'P02', name: 'thick skin', max: 5, cost: { base: 1, step: 1 }, effects: [{ stat: 'maxHp', kind: 'pct', v: 0.1 }] },
@@ -89,6 +91,7 @@ export const PRESTIGE_SHOP = [
   { id: 'P04', name: 'focus', max: 5, cost: { base: 1, step: 1 }, effects: [{ stat: 'magicPower', kind: 'pct', v: 0.1 }] },
   { id: 'P05', name: 'spare slot', max: 1, cost: { base: 3, step: 0 }, slots: 1 },
   { id: 'P06', name: 'muscle memory', max: 1, cost: { base: 3, step: 0 }, free: 1 },
+  { id: 'P07', name: 'head start', max: 10, cost: { base: 1, step: 0 }, startKills: { enemy: 'E001', n: 1 } },
 ];
 
 // Attributes shared by the player and enemies (enemy `base` uses these keys).

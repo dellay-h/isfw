@@ -288,7 +288,9 @@ function rewardsBreakdown(e) {
   if (!rows.length) rows.push(['none', '']);
   const g = G.limitGain(s, e);
   const st = G.limitState(s, e);
-  if (G.rankOf(e) !== 'challenge') {
+  if (G.isFixed(e)) {
+    if (G.rankOf(e) !== 'challenge') rows.push(['max kills', `${lim} (fixed)`, 'head']);
+  } else {
     rows.push(['max kills', `${lim}`, 'head']);
     rows.push(['base', `${e.limit}`]);
     rows.push([st.capped ? 'shrinking' : 'growing', st.capped ? `cap ${st.cap} reached, down to 1` : `up to ${st.cap}`]);
@@ -674,6 +676,11 @@ const effectText = (e) => `${G.STAT_LABEL[e.stat] || e.stat} +${e.kind === 'pct'
 function shopLines(x) {
   const out = (x.effects || []).map(effectText);
   if (x.slots) out.push(`skill slots +${x.slots}`);
+  if (x.startKills) {
+    const e = G.enemyDef(x.startKills.enemy);
+    const name = e ? e.name : x.startKills.enemy;
+    out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Every prestige starts with ${x.startKills.n} ${name} kill${x.startKills.n === 1 ? '' : 's'} per level already done (never above its max kills), with the rewards and unlocks of those kills. Applies from the next prestige.`)}">start kills +${x.startKills.n}</span>`);
+  }
   if (x.free) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`On every prestige, ${x.free === 1 ? 'one skill' : `${x.free} skills`} chosen at random from the skills unlocked in the prestige that ended is free in the next one: level 1 without unlocking it (higher levels need their usual unlocks), active without using a skill slot, and can be unloaded. Applies from the next prestige.`)}">free skill +${x.free}</span>`);
   return out.join(', ');
 }

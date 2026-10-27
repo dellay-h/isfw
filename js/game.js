@@ -146,13 +146,15 @@ function clampPools(s) {
 // upgrades, totals, log and the repeat setting are kept.
 // ---------- max kills growth (LIMIT_GROWTH in data.js) ----------
 // The rank's cap for max kills (never below the base limit).
-export const capOf = (e) => Math.max(e.limit, RANKS[rankOf(e)]?.cap ?? LIMIT_GROWTH.cap);
+// Ranks marked `fixed` (challenge, tutorial) never change max kills.
+export const isFixed = (e) => !!RANKS[rankOf(e)]?.fixed;
+export const capOf = (e) => (isFixed(e) ? e.limit : Math.max(e.limit, RANKS[rankOf(e)]?.cap ?? LIMIT_GROWTH.cap));
 // lim: max kills this prestige; capped: reached the cap once (shrinking
 // phase); pool: what all lim kills are worth, in base kills (grows with lim
 // until the cap, then stays at the cap).
 export function limitState(s, e) {
   const cap = capOf(e);
-  if (rankOf(e) === 'challenge') return { lim: e.limit, cap, capped: false, pool: e.limit };
+  if (isFixed(e)) return { lim: e.limit, cap, capped: false, pool: e.limit };
   const stored = Math.floor(s.prestige.maxKills[e.id] || 0);
   const lim = Math.max(1, stored > 0 ? Math.min(stored, cap) : e.limit);
   const capped = !!s.prestige.capped[e.id] || lim >= cap;
@@ -162,7 +164,7 @@ export const limitOf = (s, e) => (e ? limitState(s, e).lim : 0);
 // Largest change in max kills this prestige can bring (with enough kills):
 // + while growing, - after the cap (down to 1).
 export function limitStep(s, e) {
-  if (!e || rankOf(e) === 'challenge') return 0;
+  if (!e || isFixed(e)) return 0;
   const { lim, cap, capped } = limitState(s, e);
   const step = Math.ceil(lim * LIMIT_GROWTH.share);
   return capped ? -Math.max(0, Math.min(step, lim - 1)) : Math.max(0, Math.min(step, cap - lim));
@@ -216,10 +218,13 @@ export function prestige(s) {
   s.fight = null;
   s.retry = null;
   s.kills = Object.fromEntries(C.enemies.map((e) => [e.id, rankOf(e) === 'challenge' ? s.kills[e.id] || 0 : 0]));
+  const started = applyStartKills(s);
   s.slots = Array(SKILL_SLOTS).fill(null);
   syncSlots(s);
+  noteSkills(s);
   s.prestige.points += gain;
   s.prestige.count++;
+  for (const [e, n] of started) log(s, `${e.id} ${e.name} starts at ${n}/${limitOf(s, e)} kills (head start)`, 'warn');
   if (free.length) log(s, `free skill${free.length > 1 ? 's' : ''} this prestige (no slot needed): ${free.map((id) => `${id} ${skillDef(id).name}`).join(', ')}`, 'warn');
   const d = derived(s);
   s.hp = d.maxHp;
@@ -227,6 +232,30 @@ export function prestige(s) {
   s.mana = 0;
   log(s, `prestige ${s.prestige.count}: +${gain} point${gain === 1 ? '' : 's'} (${s.prestige.points} total), counts reset except challenges${grown ? `, max kills raised on ${grown} target${grown > 1 ? 's' : ''}` : ''}${shrunk ? `, max kills lowered on ${shrunk} target${shrunk > 1 ? 's' : ''}` : ''}`, 'warn');
   return gain;
+}
+
+// Kills every prestige starts with (shop startKills), per enemy id.
+export function startKillsOf(s) {
+  const out = {};
+  for (const x of PRESTIGE_SHOP) {
+    const lv = shopLevel(s, x.id);
+    if (!lv || !x.startKills) continue;
+    out[x.startKills.enemy] = (out[x.startKills.enemy] || 0) + x.startKills.n * lv;
+  }
+  return out;
+}
+// Adds them to the (just reset) kill counts; returns [[enemy, kills]] changed.
+function applyStartKills(s) {
+  const out = [];
+  for (const [id, n] of Object.entries(startKillsOf(s))) {
+    const e = enemyDef(id);
+    if (!e || n <= 0) continue;
+    const k = Math.min(limitOf(s, e), (s.kills[id] || 0) + Math.floor(n));
+    if (k <= (s.kills[id] || 0)) continue;
+    s.kills[id] = k;
+    out.push([e, k]);
+  }
+  return out;
 }
 
 // ---------- prestige shop ----------
