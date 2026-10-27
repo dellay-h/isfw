@@ -73,8 +73,10 @@ export const HEURISTIC = {
 //   effects   per level: [{ stat, kind: 'flat' | 'pct', v }] (stats as in ATTRS)
 //   slots     per level: extra skill slots
 //   free      per level: on every prestige, this many skills chosen at random
-//             from the ones unlocked in the prestige that just ended are
-//             active without a slot in the next one (once unlocked again)
+//             from the ones unlocked in the prestige that just ended are free
+//             in the next one: lv1 without unlocking it (higher levels need
+//             their usual requirements), active without a slot, can be
+//             unloaded and loaded again
 export const PRESTIGE_SHOP = [
   { id: 'P01', name: 'whetstone', max: 5, cost: { base: 1, step: 1 }, effects: [{ stat: 'damage', kind: 'pct', v: 0.1 }] },
   { id: 'P02', name: 'thick skin', max: 5, cost: { base: 1, step: 1 }, effects: [{ stat: 'maxHp', kind: 'pct', v: 0.1 }] },

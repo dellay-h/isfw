@@ -449,7 +449,7 @@ function renderSkills(d) {
   const lib = G.playerSkills();
   const sps = G.specials();
   const levels = lib.map((k) => G.skillLevel(s, k.id));
-  const key = JSON.stringify([s.slots, s.prestige.free, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
+  const key = JSON.stringify([s.slots, s.prestige.free, s.prestige.freeOff, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
   if (key === lastSkillKey) return;
   lastSkillKey = key;
 
@@ -461,12 +461,13 @@ function renderSkills(d) {
     return `<tr><td class="muted">${i}</td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td>
       <td><button data-act="unequip" data-i="${i}">unload</button></td></tr>`;
   }).join('') + G.freeSkills(s).map((id) => {
-    // free skills (prestige shop): active without a slot once unlocked
+    // free skills (prestige shop): lv1 without unlocking, no slot; can be unloaded
     const k = G.skillDef(id);
     const lv = G.skillLevel(s, id);
-    const tip = 'chosen at random on the last prestige: active without a slot once unlocked';
-    if (!lv) return `<tr class="muted"><td><span class="tip" tabindex="0" data-tip="${esc(tip)}">f</span></td><td>${k.id}</td><td>${k.name}</td><td>${reqText(G.levelReq(k, 0), 1)}</td><td>free</td></tr>`;
-    return `<tr><td class="muted"><span class="tip" tabindex="0" data-tip="${esc(tip)}">f</span></td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td><td class="muted">free</td></tr>`;
+    const on = G.freeActive(s, id);
+    const tip = 'free skill, chosen at random on the last prestige: lv1 without unlocking it, uses no slot';
+    const b = on ? `<button data-act="free-off" data-id="${id}">unload</button>` : `<button data-act="free-on" data-id="${id}">load</button>`;
+    return `<tr${on ? '' : ' class="muted"'}><td class="muted"><span class="tip" tabindex="0" data-tip="${esc(tip)}">f</span></td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td><td>${b}</td></tr>`;
   }).join('');
 
   const full = !s.slots.includes(null);
@@ -476,7 +477,7 @@ function renderSkills(d) {
       return `<tr class="muted"><td></td><td>${k.id}</td><td>${k.name}</td><td>${reqText(G.levelReq(k, 0), 1)}</td><td></td></tr>`;
     }
     const btn = G.isFree(s, k.id)
-      ? '<span class="muted">free</span>'
+      ? (G.freeActive(s, k.id) ? '<span class="muted">free</span>' : `<button data-act="free-on" data-id="${k.id}">load</button>`)
       : s.slots.includes(k.id)
       ? '<span class="muted">loaded</span>'
       : `<button data-act="equip" data-id="${k.id}" ${full ? 'disabled' : ''}>load</button>`;
@@ -629,6 +630,8 @@ $('#skills').addEventListener('click', (ev) => {
   if (!btn) return;
   if (btn.dataset.act === 'equip') { G.equip(s, btn.dataset.id); G.seeSkill(s, btn.dataset.id); }
   if (btn.dataset.act === 'unequip') G.unequip(s, Number(btn.dataset.i));
+  if (btn.dataset.act === 'free-on') G.setFreeActive(s, btn.dataset.id, true);
+  if (btn.dataset.act === 'free-off') G.setFreeActive(s, btn.dataset.id, false);
   render();
 });
 
@@ -668,7 +671,7 @@ const effectText = (e) => `${G.STAT_LABEL[e.stat] || e.stat} +${e.kind === 'pct'
 function shopLines(x) {
   const out = (x.effects || []).map(effectText);
   if (x.slots) out.push(`skill slots +${x.slots}`);
-  if (x.free) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`On every prestige, ${x.free === 1 ? 'one skill' : `${x.free} skills`} chosen at random from the skills unlocked in the prestige that ended will not occupy a skill slot: active as soon as unlocked again. Applies from the next prestige.`)}">free skill +${x.free}</span>`);
+  if (x.free) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`On every prestige, ${x.free === 1 ? 'one skill' : `${x.free} skills`} chosen at random from the skills unlocked in the prestige that ended is free in the next one: level 1 without unlocking it (higher levels need their usual unlocks), active without using a skill slot, and can be unloaded. Applies from the next prestige.`)}">free skill +${x.free}</span>`);
   return out.join(', ');
 }
 function renderShop() {
