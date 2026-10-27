@@ -49,7 +49,7 @@ export const ENEMIES = [
     skillRewards: [
       { skill: 'S11', level: 1, at: 'first' },
       { skill: 'S11', level: 2, at: 100 },
-      { skill: 'S11', level: 3, at: 'final' },
+      { skill: 'S11', level: 3, at: 100 },
     ],
   },
   {
