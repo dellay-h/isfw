@@ -84,6 +84,9 @@ export const LEVELS = { xpPer: 100, speedPer: 0.01 };
 //             unloaded and loaded again
 //   startKills per level: { enemy, n } every prestige starts with n more kills
 //             of that enemy (never above its max kills)
+//   autoEquip true: skills already unlocked when a prestige starts get an
+//             auto-equip toggle; toggled skills are loaded into the slots at
+//             the start of every prestige (no more than the slots it starts with)
 export const PRESTIGE_SHOP = [
   { id: 'P01', name: 'whetstone', max: 5, cost: { base: 1, step: 1 }, effects: [{ stat: 'damage', kind: 'pct', v: 0.1 }] },
   { id: 'P02', name: 'thick skin', max: 5, cost: { base: 1, step: 1 }, effects: [{ stat: 'maxHp', kind: 'pct', v: 0.1 }] },
@@ -92,6 +95,7 @@ export const PRESTIGE_SHOP = [
   { id: 'P05', name: 'spare slot', max: 1, cost: { base: 3, step: 0 }, slots: 1 },
   { id: 'P06', name: 'muscle memory', max: 1, cost: { base: 3, step: 0 }, free: 1 },
   { id: 'P07', name: 'head start', max: 10, cost: { base: 1, step: 0 }, startKills: { enemy: 'E001', n: 1 } },
+  { id: 'P08', name: 'routine', max: 1, cost: { base: 10, step: 0 }, autoEquip: true },
 ];
 
 // Attributes shared by the player and enemies (enemy `base` uses these keys).

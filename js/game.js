@@ -47,13 +47,14 @@ export function newState() {
     xp: 0,                               // xp towards the next level
     known: {},                           // skills (and specials) ever unlocked: { id: true }
     fresh: {},                           // unlocked for the first time, not looked at yet: { id: true }
-    prestige: { points: 0, count: 0, shop: {}, maxKills: {}, capped: {}, unlocked: {}, free: [], freeOff: {} }, // kept through prestiges; only a full reset clears it
+    prestige: { points: 0, count: 0, shop: {}, maxKills: {}, capped: {}, unlocked: {}, free: [], freeOff: {}, auto: [] }, // kept through prestiges; only a full reset clears it
                                          // shop: { item id: level bought }
                                          // maxKills: { enemy id: max kills after LIMIT_GROWTH }
                                          // capped: { enemy id: true } reached its cap (now shrinking)
                                          // unlocked: { enemy id: true } enemies bought with prestige points
                                          // free: [skill id] free skills this prestige (P06)
                                          // freeOff: { skill id: true } free skills the player unloaded
+                                         // auto: [skill id] auto-equipped at the start of a prestige (P08), in toggle order
   };
 }
 
@@ -81,6 +82,7 @@ export function load() {
       s.prestige.unlocked = { ...(saved.prestige?.unlocked || {}) };
       s.prestige.free = Array.isArray(saved.prestige?.free) ? saved.prestige.free.filter((id) => skillDef(id) && !skillDef(id).special) : [];
       s.prestige.freeOff = { ...(saved.prestige?.freeOff || {}) };
+      s.prestige.auto = Array.isArray(saved.prestige?.auto) ? saved.prestige.auto.filter((id) => skillDef(id) && !skillDef(id).special) : [];
       Object.assign(s.kills, saved.kills || {});
       // limits can be lowered: never keep more kills than an enemy allows
       for (const e of C.enemies) s.kills[e.id] = Math.max(0, Math.min(limitOf(s, e), Math.floor(s.kills[e.id] || 0)));
@@ -222,9 +224,11 @@ export function prestige(s) {
   s.slots = Array(SKILL_SLOTS).fill(null);
   syncSlots(s);
   noteSkills(s);
+  const auto = applyAutoEquip(s);
   s.prestige.points += gain;
   s.prestige.count++;
   for (const [e, n] of started) log(s, `${e.id} ${e.name} starts at ${n}/${limitOf(s, e)} kills (head start)`, 'warn');
+  if (auto.length) log(s, `auto-equipped: ${auto.map((id) => `${id} ${skillDef(id).name}`).join(', ')}`, 'warn');
   if (free.length) log(s, `free skill${free.length > 1 ? 's' : ''} this prestige (no slot needed): ${free.map((id) => `${id} ${skillDef(id).name}`).join(', ')}`, 'warn');
   const d = derived(s);
   s.hp = d.maxHp;
@@ -254,6 +258,54 @@ function applyStartKills(s) {
     if (k <= (s.kills[id] || 0)) continue;
     s.kills[id] = k;
     out.push([e, k]);
+  }
+  return out;
+}
+
+// ---------- auto-equip (prestige shop autoEquip, P08) ----------
+// What the next prestige starts with: challenge kills kept plus start kills
+// (free skills are random, so they are left out).
+function startState(s) {
+  const kills = Object.fromEntries(C.enemies.map((e) => [e.id, rankOf(e) === 'challenge' ? s.kills[e.id] || 0 : 0]));
+  for (const [id, n] of Object.entries(startKillsOf(s))) {
+    const e = enemyDef(id);
+    if (e && n > 0) kills[id] = Math.min(limitOf(s, e), kills[id] + Math.floor(n));
+  }
+  return { ...s, kills, prestige: { ...s.prestige, free: [] } };
+}
+export const autoEquipOwned = (s) => PRESTIGE_SHOP.some((x) => x.autoEquip && shopLevel(s, x.id) > 0);
+// A player skill already unlocked when the next prestige starts.
+export function startUnlocked(s, id) {
+  const k = skillDef(id);
+  return !!k && !k.special && skillLevel(startState(s), id) > 0;
+}
+// Skill slots the next prestige starts with.
+export const startSlots = (s) => slotCount(startState(s));
+export const canAuto = (s, id) => autoEquipOwned(s) && startUnlocked(s, id);
+export const autoSkills = (s) => (autoEquipOwned(s) ? s.prestige.auto.filter((id) => startUnlocked(s, id)) : []);
+export const isAuto = (s, id) => autoSkills(s).includes(id);
+// Turning one on needs a free place: never more than the starting slots.
+export const canAutoOn = (s, id) => canAuto(s, id) && !isAuto(s, id) && autoSkills(s).length < startSlots(s);
+export function setAuto(s, id, on) {
+  if (on) {
+    if (!canAutoOn(s, id)) return false;
+    s.prestige.auto = [...s.prestige.auto.filter((x) => x !== id), id];
+  } else {
+    if (!s.prestige.auto.includes(id)) return false;
+    s.prestige.auto = s.prestige.auto.filter((x) => x !== id);
+  }
+  return true;
+}
+// Loads the toggled skills (just reset slots); returns the ids loaded.
+function applyAutoEquip(s) {
+  if (!autoEquipOwned(s)) return [];
+  const out = [];
+  for (const id of s.prestige.auto) {
+    if (!canLoad(s, id) || s.slots.includes(id)) continue;
+    const i = s.slots.indexOf(null);
+    if (i < 0) break;
+    s.slots[i] = id;
+    out.push(id);
   }
   return out;
 }

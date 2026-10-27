@@ -190,6 +190,8 @@ input[type=checkbox] { accent-color: var(--accent); margin: 0 4px 0 0; vertical-
 #p-mpbar .bar { display: block; max-width: none; }
 #proc .row > span:last-child.muted { margin-left: 4px; }
 #library { margin-bottom: 16px; }
+#library button.auto { margin-top: 2px; white-space: nowrap; padding-left: 4px; padding-right: 4px; }
+#library button.auto:not(.on) { border-color: transparent; color: var(--muted); }
 #special { margin-bottom: 8px; }
 .scroll-x { overflow-x: auto; }
 #targets td:nth-child(3) { white-space: normal; min-width: 70px; }

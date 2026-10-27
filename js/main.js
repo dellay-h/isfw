@@ -451,7 +451,7 @@ function renderSkills(d) {
   const lib = G.playerSkills();
   const sps = G.specials();
   const levels = lib.map((k) => G.skillLevel(s, k.id));
-  const key = JSON.stringify([s.slots, s.prestige.free, s.prestige.freeOff, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
+  const key = JSON.stringify([s.slots, s.prestige.free, s.prestige.freeOff, s.prestige.auto, s.prestige.shop, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
   if (key === lastSkillKey) return;
   lastSkillKey = key;
 
@@ -473,17 +473,29 @@ function renderSkills(d) {
   }).join('');
 
   const full = !s.slots.includes(null);
+  // auto-equip toggle (prestige shop P08): skills already unlocked when the
+  // next prestige starts, no more than the slots it starts with
+  const autoN = G.autoSkills(s).length;
+  const autoMax = G.startSlots(s);
+  const autoBtn = (k) => {
+    if (!G.canAuto(s, k.id)) return '';
+    const on = G.isAuto(s, k.id);
+    const tip = on
+      ? 'Loaded into a slot at the start of every prestige. Click to turn off.'
+      : `Load into a slot at the start of every prestige (up to ${autoMax}, the slots a prestige starts with).`;
+    return `<div><button class="auto${on ? ' on' : ''}" data-act="${on ? 'auto-off' : 'auto-on'}" data-id="${k.id}" title="${esc(tip)}" ${on || G.canAutoOn(s, k.id) ? '' : 'disabled'}>auto ${on ? 'on' : 'off'}</button></div>`;
+  };
   $('#library tbody').innerHTML = lib.map((k, idx) => {
     const lv = levels[idx];
     if (!lv) {
-      return `<tr class="muted"><td></td><td>${k.id}</td><td>${k.name}</td><td>${reqText(G.levelReq(k, 0), 1)}</td><td></td></tr>`;
+      return `<tr class="muted"><td></td><td>${k.id}</td><td>${k.name}</td><td>${reqText(G.levelReq(k, 0), 1)}</td><td>${autoBtn(k)}</td></tr>`;
     }
     const btn = G.isFree(s, k.id)
       ? (G.freeActive(s, k.id) ? '<span class="muted">free</span>' : `<button data-act="free-on" data-id="${k.id}">load</button>`)
       : s.slots.includes(k.id)
       ? '<span class="muted">loaded</span>'
       : `<button data-act="equip" data-id="${k.id}" ${full ? 'disabled' : ''}>load</button>`;
-    return `<tr${freshAttr(k.id)}><td>${newTag(k.id)}</td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td><td>${btn}</td></tr>`;
+    return `<tr${freshAttr(k.id)}><td>${newTag(k.id)}</td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td><td>${btn}${autoBtn(k)}</td></tr>`;
   }).join('');
 
   $('#special tbody').innerHTML = sps.map((x) => {
@@ -495,6 +507,10 @@ function renderSkills(d) {
   }).join('');
 
   $('#slot-count').textContent = `${s.slots.filter(Boolean).length}/${s.slots.length}`;
+  const ac = $('#auto-count');
+  ac.hidden = !G.autoEquipOwned(s);
+  ac.textContent = `auto ${autoN}/${autoMax}`;
+  ac.title = 'skills auto-equipped at the start of a prestige / slots a prestige starts with';
 }
 
 function render() {
@@ -637,6 +653,7 @@ $('#skills').addEventListener('click', (ev) => {
   if (btn.dataset.act === 'unequip') G.unequip(s, Number(btn.dataset.i));
   if (btn.dataset.act === 'free-on') G.setFreeActive(s, btn.dataset.id, true);
   if (btn.dataset.act === 'free-off') G.setFreeActive(s, btn.dataset.id, false);
+  if (btn.dataset.act === 'auto-on' || btn.dataset.act === 'auto-off') { G.setAuto(s, btn.dataset.id, btn.dataset.act === 'auto-on'); G.save(s); }
   render();
 });
 
@@ -681,6 +698,7 @@ function shopLines(x) {
     const name = e ? e.name : x.startKills.enemy;
     out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Every prestige starts with ${x.startKills.n} ${name} kill${x.startKills.n === 1 ? '' : 's'} per level already done (never above its max kills), with the rewards and unlocks of those kills. Applies from the next prestige.`)}">start kills +${x.startKills.n}</span>`);
   }
+  if (x.autoEquip) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Skills already unlocked when a prestige starts (challenge specials and head start kills) get an auto-equip toggle in the library: toggled skills are loaded into the slots at the start of every prestige, no more than the slots a prestige starts with.')}">auto-equip</span>`);
   if (x.free) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`On every prestige, ${x.free === 1 ? 'one skill' : `${x.free} skills`} chosen at random from the skills unlocked in the prestige that ended is free in the next one: level 1 without unlocking it (higher levels need their usual unlocks), active without using a skill slot, and can be unloaded. Applies from the next prestige.`)}">free skill +${x.free}</span>`);
   return out.join(', ');
 }
