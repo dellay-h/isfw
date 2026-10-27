@@ -3,7 +3,7 @@
 // The player and enemies are both "units": base attributes plus a set of
 // active skills. A unit's attributes, attacks and spells are derived from
 // those (see unit()). Combat runs the same rules for both sides.
-import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, LEVELS, REVEAL, armorReduction } from './data.js';
+import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, LEVELS, REVEAL, RETIRED_SHOP, armorReduction } from './data.js';
 import { key } from './site.js';
 
 const SAVE_KEY = key('isfw.save.v3');
@@ -70,6 +70,17 @@ export function load() {
       Object.assign(s.stats, saved.stats || {});
       Object.assign(s.prestige, saved.prestige || {});
       s.prestige.shop = { ...(saved.prestige?.shop || {}) };
+      // removed shop items: refund what was spent on them
+      const refunds = [];
+      for (const [id, x] of Object.entries(RETIRED_SHOP)) {
+        const lv = Math.max(0, Math.floor(s.prestige.shop[id] || 0));
+        delete s.prestige.shop[id];
+        if (!lv) continue;
+        let pts = 0;
+        for (let i = 0; i < lv; i++) pts += (x.cost.base || 0) + (x.cost.step || 0) * i;
+        s.prestige.points += pts;
+        refunds.push(`prestige shop: ${id} ${x.name} removed, ${pts} point${pts === 1 ? '' : 's'} refunded`);
+      }
       s.prestige.maxKills = { ...(saved.prestige?.maxKills || {}) };
       s.prestige.capped = { ...(saved.prestige?.capped || {}) };
       // saves before v0.54 kept the kills added to the base limit
@@ -92,6 +103,7 @@ export function load() {
         saved.slots.slice(0, s.slots.length).forEach((id, i) => { s.slots[i] = skillDef(id) ? id : null; });
       }
       s.log = Array.isArray(saved.log) ? saved.log.slice(-LOG_MAX) : [];
+      for (const msg of refunds) log(s, msg, 'warn');
       s.hp = typeof saved.hp === 'number' ? saved.hp : PLAYER_BASE.maxHp;
       s.mana = typeof saved.mana === 'number' ? saved.mana : 0;
       s.repeat = !!saved.repeat;
