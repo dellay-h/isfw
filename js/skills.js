@@ -99,7 +99,7 @@ export const SKILLS = [
   {
     id: 'S10', name: 'lifesteal',
     levels: [
-      { mods: { lifesteal: 0.1 } },
+      { mods: { lifesteal: 0.05 } },
     ],
   },
   {

@@ -105,13 +105,11 @@ export const ENEMIES = [
   },
   {
     id: 'E010', name: 'vampire', tier: 1, rank: 'boss', limit: 1,
-    base: { maxHp: 300, armor: 10, damage: 0, attackSpeed: -0.1667, lifesteal: 1.5 },
+    base: { maxHp: 150, damage: 2, attackSpeed: -0.8, lifesteal: 3, armor: 100 },
     skills: [{ skill: 'S01', level: 1 }, { skill: 'S10', level: 1 }],
     rewards: [
-      { stat: 'damage', total: 2 },
-      { stat: 'attackSpeed', total: 0.3 },
-      { stat: 'armor', total: 15 },
-      { stat: 'block', total: 0.5 },
+      { stat: 'damage', total: 0.5 },
+      { stat: 'attackSpeed', total: 0.1 },
     ],
     skillRewards: [
       { skill: 'X02', level: 1, at: 'first' },
