@@ -220,7 +220,9 @@ export function prestige(s) {
   const gain = prestigeGain(s);
   // free skills for the next prestige: random picks among the skills
   // really unlocked in this one (a free skill's granted lv1 doesn't count)
-  const pool = playerSkills().filter((k) => earnedLevel(s, k.id) > 0).map((k) => k.id);
+  // (never the skills a shop item excludes: freeExclude, e.g. basic attack)
+  const excluded = new Set(PRESTIGE_SHOP.flatMap((x) => x.freeExclude || []));
+  const pool = playerSkills().filter((k) => earnedLevel(s, k.id) > 0 && !excluded.has(k.id)).map((k) => k.id);
   const free = [];
   for (let n = freeCount(s); n > 0 && pool.length; n--) free.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
   s.prestige.free = free;

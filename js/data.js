@@ -85,6 +85,7 @@ export const LEVELS = { xpPer: 100, attrPer: 0.01 };
 //             in the next one: lv1 without unlocking it (higher levels need
 //             their usual requirements), active without a slot, can be
 //             unloaded and loaded again
+//   freeExclude  skills the free picks never choose
 //   startKills per level: { enemy, n } every prestige starts with n more kills
 //             of that enemy (never above its max kills)
 //   autoEquip true: skills already unlocked when a prestige starts get an
@@ -100,7 +101,7 @@ export const RETIRED_SHOP = {
 };
 export const PRESTIGE_SHOP = [
   { id: 'P05', name: 'spare slot', max: 1, cost: { base: 3, step: 0 }, slots: 1 },
-  { id: 'P06', name: 'muscle memory', max: 1, cost: { base: 3, step: 0 }, free: 1 },
+  { id: 'P06', name: 'muscle memory', max: 1, cost: { base: 3, step: 0 }, free: 1, freeExclude: ['S01'] },
   { id: 'P07', name: 'head start', max: 10, cost: { base: 1, step: 0 }, startKills: { enemy: 'E001', n: 1 } },
   { id: 'P08', name: 'routine', max: 1, cost: { base: 10, step: 0 }, autoEquip: true },
 ];
