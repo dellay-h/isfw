@@ -175,4 +175,13 @@ export const ENEMIES = [
       { skill: 'S09', level: 1, at: 'final' },
     ],
   },
+  {
+    id: 'E014', name: 'squire', rank: 'challenge', limit: 1,
+    base: { maxHp: 50, block: 10, damage: 1, attackSpeed: -0.2, armor: 200 },
+    skills: [{ skill: 'S01', level: 1 }],
+    rewards: [],
+    skillRewards: [
+      { skill: 'S16', level: 1, at: 'first' },
+    ],
+  },
 ];
