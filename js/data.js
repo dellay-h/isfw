@@ -65,6 +65,11 @@ export const HEURISTIC = {
   offset: { damage: 2, attackSpeed: 1, magicSpeed: 0.25, magicPower: 1 },
 };
 
+// Player level: 1 xp per enemy defeated; going from level n to n + 1 takes
+// xpPer x n xp. Each level above 1 adds speedPer to the game speed (the whole
+// simulation runs that much faster). Kept through prestiges.
+export const LEVELS = { xpPer: 100, speedPer: 0.01 };
+
 // Prestige shop: permanent upgrades bought with prestige points. They are
 // kept through prestiges (only a full reset clears them).
 //   id, name

@@ -498,6 +498,9 @@ function renderSkills(d) {
 function render() {
   const d = G.derived(s);
 
+  $('#p-lvl').innerHTML = `<span class="muted">${fmt(s.xp, 0)}/${G.xpToNext(s)} xp</span> ${s.level}`;
+  $('#p-xpbar').innerHTML = bar(s.xp, G.xpToNext(s));
+  $('#p-gspd').textContent = `×${fmt(G.gameSpeed(s), 2)}`;
   $('#p-hp').textContent = `${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 0)}`;
   const mhp = `hp ${fmt(Math.max(0, s.hp), 0)}/${fmt(d.maxHp, 0)}${s.fight ? ` · ${s.fight.enemyId}` : s.retry ? ' · regen' : ''}`;
   if ($('#m-hp').textContent !== mhp) $('#m-hp').textContent = mhp;
@@ -743,7 +746,8 @@ let saveTimer = 0;
 
 function tick() {
   const now = performance.now();
-  let dt = Math.min((now - last) / 1000, MAX_CATCHUP);
+  // game speed (player level) scales the simulated time
+  let dt = Math.min((now - last) / 1000, MAX_CATCHUP) * G.gameSpeed(s);
   last = now;
   while (dt > 0) {
     const d = Math.min(dt, SUBSTEP);

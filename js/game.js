@@ -3,7 +3,7 @@
 // The player and enemies are both "units": base attributes plus a set of
 // active skills. A unit's attributes, attacks and spells are derived from
 // those (see unit()). Combat runs the same rules for both sides.
-import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, armorReduction } from './data.js';
+import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, LEVELS, armorReduction } from './data.js';
 import { key } from './site.js';
 
 const SAVE_KEY = key('isfw.save.v3');
@@ -43,6 +43,8 @@ export function newState() {
     retry: null,                         // enemy id to rerun once hp is full (repeat after a defeat)
     log: [],
     stats: { fights: 0, wins: 0, losses: 0 },
+    level: 1,                            // player level (kept through prestiges)
+    xp: 0,                               // xp towards the next level
     known: {},                           // skills (and specials) ever unlocked: { id: true }
     fresh: {},                           // unlocked for the first time, not looked at yet: { id: true }
     prestige: { points: 0, count: 0, shop: {}, maxKills: {}, capped: {}, unlocked: {}, free: [], freeOff: {} }, // kept through prestiges; only a full reset clears it
@@ -92,6 +94,8 @@ export function load() {
       s.repeat = !!saved.repeat;
       s.retry = saved.retry || null;
       s.hpMax = typeof saved.hpMax === 'number' ? saved.hpMax : null;
+      s.level = Math.max(1, Math.floor(saved.level || 1));
+      s.xp = Math.max(0, Number(saved.xp) || 0);
       s.known = { ...(saved.known || {}) };
       s.fresh = { ...(saved.fresh || {}) };
       // saves before v0.56 had no list: what is unlocked now counts as seen
@@ -107,8 +111,8 @@ export function load() {
 
 export function save(s) {
   try {
-    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh } = s;
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh }));
+    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, level, xp } = s;
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, level, xp }));
   } catch { /* storage unavailable: run without saving */ }
 }
 
@@ -258,6 +262,18 @@ function shopEffects(s) {
     for (const e of x.effects || []) out.push({ group: 'prestige', label: `${x.id} ${x.name} lv${lv}`, stat: e.stat, kind: e.kind, v: e.v * lv });
   }
   return out;
+}
+
+// ---------- player level (LEVELS in data.js) ----------
+export const xpToNext = (s) => LEVELS.xpPer * s.level;
+export const gameSpeed = (s) => 1 + LEVELS.speedPer * (s.level - 1);
+export function gainXp(s, n = 1) {
+  s.xp += n;
+  while (s.xp >= xpToNext(s)) {
+    s.xp -= xpToNext(s);
+    s.level++;
+    log(s, `level ${s.level} reached: game speed +${Math.round((gameSpeed(s) - 1) * 100)}%`, 'warn');
+  }
 }
 
 // ---------- new-skill notices ----------
@@ -796,6 +812,7 @@ function win(s, e) {
   syncHp(s);
   s.stats.fights++;
   s.stats.wins++;
+  gainXp(s, 1);
   const lim = limitOf(s, e);
   const tag = n === 1 ? ' [first]' : n === lim ? ' [final]' : '';
   const rText = rewardsOf(e).map((r) => {

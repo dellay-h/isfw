@@ -374,3 +374,4 @@ button.armed { color: var(--err); border-color: var(--err); }
 #m-new { margin-left: 4px; }
 #m-new::before { content: '·'; margin-right: 2px; }
 #shop .tip::after { white-space: normal; width: 240px; text-align: left; }
+#p-xpbar .bar { display: block; max-width: none; }
