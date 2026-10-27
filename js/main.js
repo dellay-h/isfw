@@ -14,12 +14,16 @@ const esc = (str) => String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').
 
 
 // ---------- static table rows ----------
+// Rebuilt when the set of enemies not hidden (REVEAL) changes.
+let targetsKey = '';
+const visibleKey = () => G.visibleEnemies(s).map((e) => e.id).join(',');
 function buildTargets() {
   const body = $('#targets tbody');
   body.innerHTML = '';
+  targetsKey = visibleKey();
   // challenges first, then grouped by tier (stable within a group)
   const tierOf = (e) => (G.rankOf(e) === 'challenge' ? -1 : e.tier || 0);
-  const byTier = ENEMIES.map((e, i) => [e, i]).sort((a, b) => tierOf(a[0]) - tierOf(b[0]) || a[1] - b[1]).map(([e]) => e);
+  const byTier = G.visibleEnemies(s).map((e, i) => [e, i]).sort((a, b) => tierOf(a[0]) - tierOf(b[0]) || a[1] - b[1]).map(([e]) => e);
   const tag = { boss: 'warn', elite: 'muted', challenge: 'ok' };
   for (const e of byTier) {
     const tr = document.createElement('tr');
@@ -158,6 +162,7 @@ function describe(L, total, prev, d) {
 // "lv2 req E002 3/50", or "lv2 not awarded" when no enemy awards it.
 function reqText(r, level) {
   if (!r.enemy || !G.enemyDef(r.enemy)) return `lv${level} not awarded`;
+  if (!G.enemyRevealed(s, G.enemyDef(r.enemy))) return `lv${level} req ???`;
   const need = G.reqKills(r, s);
   return `lv${level} req ${r.enemy} ${Math.min(s.kills[r.enemy] || 0, need)}/${need}`;
 }
@@ -430,8 +435,8 @@ function bar(cur, max) {
 const newTag = (id) => (G.isFresh(s, id) ? '<span class="badge" title="new">•</span>' : '');
 const freshAttr = (id) => (G.isFresh(s, id) ? ` data-fresh="${id}"` : '');
 function renderNew() {
-  const lib = G.playerSkills().filter((k) => G.isFresh(s, k.id)).length;
-  const sp = G.specials().filter((k) => G.isFresh(s, k.id)).length;
+  const lib = G.playerSkills().filter((k) => G.isFresh(s, k.id) && G.skillVisible(s, k.id)).length;
+  const sp = G.specials().filter((k) => G.isFresh(s, k.id) && G.skillVisible(s, k.id)).length;
   const put = (sel, n, text) => {
     const el = $(sel);
     el.hidden = !n;
@@ -448,10 +453,11 @@ $('#skills').addEventListener('mouseover', (ev) => {
 
 function renderSkills(d) {
   // Rebuild only when something changed, so buttons stay clickable.
-  const lib = G.playerSkills();
-  const sps = G.specials();
+  // skills / specials no enemy that is not hidden can award stay hidden
+  const lib = G.playerSkills().filter((k) => G.skillVisible(s, k.id));
+  const sps = G.specials().filter((k) => G.skillVisible(s, k.id));
   const levels = lib.map((k) => G.skillLevel(s, k.id));
-  const key = JSON.stringify([s.slots, s.prestige.free, s.prestige.freeOff, s.prestige.auto, s.prestige.shop, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
+  const key = JSON.stringify([s.slots, s.prestige.free, s.prestige.freeOff, s.prestige.auto, s.prestige.shop, s.revealed, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
   if (key === lastSkillKey) return;
   lastSkillKey = key;
 
@@ -514,6 +520,7 @@ function renderSkills(d) {
 }
 
 function render() {
+  if (visibleKey() !== targetsKey) buildTargets();
   const d = G.derived(s);
 
   $('#p-lvl').innerHTML = `<span class="muted">${fmt(s.xp, 0)}/${G.xpToNext(s)} xp</span> ${s.level}`;
@@ -703,8 +710,8 @@ function shopLines(x) {
   return out.join(', ');
 }
 function renderShop() {
-  const items = G.shopItems();
-  const key = JSON.stringify([s.prestige.points, s.prestige.shop]);
+  const items = G.visibleShop(s);
+  const key = JSON.stringify([s.prestige.points, s.prestige.shop, s.revealed]);
   if (key === lastShopKey) return;
   lastShopKey = key;
   $('#shop-points').textContent = `${s.prestige.points} pt${s.prestige.points === 1 ? '' : 's'}`;

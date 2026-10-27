@@ -98,6 +98,26 @@ export const PRESTIGE_SHOP = [
   { id: 'P08', name: 'routine', max: 1, cost: { base: 10, step: 0 }, autoEquip: true },
 ];
 
+// Reveal rules: what stays hidden from the monitor (and locked) until a
+// condition is met. Once met it stays revealed for good (kept through
+// prestiges; a full reset hides it again). The dev pages always show everything.
+//   tiers    { tier: condition } every enemy of that tier
+//   enemies  { enemy id: condition } one enemy (takes the place of its tier's rule)
+//   shop     { item id: condition } a prestige shop item
+// Conditions (a list = all of them):
+//   { enemy, kills }   that enemy defeated `kills` times in one prestige (default 1)
+//   { prestiges: n }   n prestiges done
+//   { level: n }       player level n reached
+// Skills and specials have no rule of their own: they show when an enemy that
+// is not hidden awards their lv1 (or the player has them).
+export const REVEAL = {
+  tiers: {
+    2: { enemy: 'E010', kills: 1 },      // tier 2 after the tier 1 boss (vampire)
+  },
+  enemies: {},
+  shop: {},
+};
+
 // Attributes shared by the player and enemies (enemy `base` uses these keys).
 export const ATTRS = [
   { key: 'maxHp', label: 'max hp' },

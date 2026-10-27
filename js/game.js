@@ -3,7 +3,7 @@
 // The player and enemies are both "units": base attributes plus a set of
 // active skills. A unit's attributes, attacks and spells are derived from
 // those (see unit()). Combat runs the same rules for both sides.
-import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, LEVELS, armorReduction } from './data.js';
+import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, LEVELS, REVEAL, armorReduction } from './data.js';
 import { key } from './site.js';
 
 const SAVE_KEY = key('isfw.save.v3');
@@ -47,6 +47,7 @@ export function newState() {
     xp: 0,                               // xp towards the next level
     known: {},                           // skills (and specials) ever unlocked: { id: true }
     fresh: {},                           // unlocked for the first time, not looked at yet: { id: true }
+    revealed: {},                        // hidden enemies / shop items revealed for good: { id: true } (REVEAL)
     prestige: { points: 0, count: 0, shop: {}, maxKills: {}, capped: {}, unlocked: {}, free: [], freeOff: {}, auto: [] }, // kept through prestiges; only a full reset clears it
                                          // shop: { item id: level bought }
                                          // maxKills: { enemy id: max kills after LIMIT_GROWTH }
@@ -102,19 +103,23 @@ export function load() {
       s.fresh = { ...(saved.fresh || {}) };
       // saves before v0.56 had no list: what is unlocked now counts as seen
       noteSkills(s, !!saved.known);
+      s.revealed = { ...(saved.revealed || {}) };
+      // saves before v0.63 had no list: reveal what the save shows was reached
+      if (!saved.revealed) updateReveals(s, true, false);
     }
   } catch { /* corrupt or unavailable storage: fresh state */ }
   s.slots = s.slots.map((id) => (id && canLoad(s, id) ? id : null));
   if (!s.hpMax) s.hpMax = derived(s).maxHp;
   syncHp(s);
   clampPools(s);
+  updateReveals(s, false, false);
   return s;
 }
 
 export function save(s) {
   try {
-    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, level, xp } = s;
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, level, xp }));
+    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, xp } = s;
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, xp }));
   } catch { /* storage unavailable: run without saving */ }
 }
 
@@ -184,7 +189,7 @@ export function limitGain(s, e) {
 // prestige points. Stays unlocked through prestiges.
 export const unlockCostOf = (e) => Math.max(0, Math.floor(e?.unlockCost || 0));
 export const isUnlocked = (s, e) => !unlockCostOf(e) || !!s.prestige.unlocked[e.id];
-export const canUnlock = (s, e) => !isUnlocked(s, e) && s.prestige.points >= unlockCostOf(e);
+export const canUnlock = (s, e) => enemyRevealed(s, e) && !isUnlocked(s, e) && s.prestige.points >= unlockCostOf(e);
 
 export function unlockEnemy(s, id) {
   const e = enemyDef(id);
@@ -234,6 +239,7 @@ export function prestige(s) {
   s.hp = d.maxHp;
   s.hpMax = d.maxHp;
   s.mana = 0;
+  updateReveals(s);
   log(s, `prestige ${s.prestige.count}: +${gain} point${gain === 1 ? '' : 's'} (${s.prestige.points} total), counts reset except challenges${grown ? `, max kills raised on ${grown} target${grown > 1 ? 's' : ''}` : ''}${shrunk ? `, max kills lowered on ${shrunk} target${shrunk > 1 ? 's' : ''}` : ''}`, 'warn');
   return gain;
 }
@@ -321,7 +327,7 @@ export function shopCost(s, id) {
   if (!x || lv >= x.max) return null;
   return (x.cost?.base || 0) + (x.cost?.step || 0) * lv;
 }
-export const canBuy = (s, id) => { const c = shopCost(s, id); return c !== null && s.prestige.points >= c; };
+export const canBuy = (s, id) => { const c = shopCost(s, id); return c !== null && shopRevealed(s, shopDef(id)) && s.prestige.points >= c; };
 
 export function buy(s, id) {
   if (!canBuy(s, id)) return false;
@@ -378,6 +384,53 @@ export function seeAllSkills(s) {
   const any = Object.keys(s.fresh).length > 0;
   s.fresh = {};
   return any;
+}
+
+// ---------- hidden content (REVEAL in data.js) ----------
+const revealRule = (e) => (Object.hasOwn(REVEAL.enemies, e.id) ? REVEAL.enemies[e.id] : REVEAL.tiers[e.tier || 0]);
+// legacy: also count what an old save shows was reached in an earlier
+// prestige (skills ever unlocked that the enemy awards by then, grown max kills).
+function condMet(s, c, legacy = false) {
+  if (!c) return true;
+  if (Array.isArray(c)) return c.every((x) => condMet(s, x, legacy));
+  if (c.enemy) {
+    const n = c.kills ?? 1;
+    if ((s.kills[c.enemy] || 0) >= n) return true;
+    if (!legacy) return false;
+    const e = enemyDef(c.enemy);
+    if (!e) return false;
+    if ((s.prestige.maxKills[c.enemy] || 0) > e.limit) return true;
+    return (e.skillRewards || []).some((u) => s.known[u.skill] && reqKills({ enemy: e.id, at: u.at ?? 'first' }) <= n);
+  }
+  if (c.prestiges !== undefined) return s.prestige.count >= c.prestiges;
+  if (c.level !== undefined) return s.level >= c.level;
+  return false;
+}
+export const enemyRevealed = (s, e) => !!e && (!revealRule(e) || !!s.revealed[e.id]);
+export const shopRevealed = (s, x) => !!x && (!REVEAL.shop[x.id] || !!s.revealed[x.id]);
+export const visibleEnemies = (s) => C.enemies.filter((e) => enemyRevealed(s, e));
+export const visibleShop = (s) => PRESTIGE_SHOP.filter((x) => shopRevealed(s, x));
+// A skill or special shows when an enemy that is not hidden awards its lv1,
+// or the player has it now.
+export function skillVisible(s, id) {
+  const req = unlockReq(id, 1);
+  return (!!req.enemy && enemyRevealed(s, enemyDef(req.enemy))) || skillLevel(s, id) > 0;
+}
+// Reveals what has met its condition; returns the newly revealed names.
+// legacy: old saves without a reveal list (see condMet).
+export function updateReveals(s, legacy = false, logIt = true) {
+  const out = [];
+  for (const e of C.enemies) {
+    if (enemyRevealed(s, e)) continue;
+    const own = legacy && ((s.kills[e.id] || 0) > 0 || s.prestige.maxKills[e.id] || s.prestige.unlocked[e.id]);
+    if (own || condMet(s, revealRule(e), legacy)) { s.revealed[e.id] = true; out.push(`${e.id} ${e.name}`); }
+  }
+  for (const x of PRESTIGE_SHOP) {
+    if (shopRevealed(s, x)) continue;
+    if ((legacy && s.prestige.shop[x.id]) || condMet(s, REVEAL.shop[x.id], legacy)) { s.revealed[x.id] = true; out.push(`${x.id} ${x.name}`); }
+  }
+  if (out.length && logIt) log(s, `revealed: ${out.join(', ')}`, 'warn');
+  return out;
 }
 
 // ---------- skill unlocks ----------
@@ -700,7 +753,7 @@ export function mitigate(dmg, armor, block) {
 // ---------- combat ----------
 export function canFight(s, id) {
   const e = enemyDef(id);
-  return e && isUnlocked(s, e) && (s.kills[id] || 0) < limitOf(s, e) && s.hp > 0;
+  return e && enemyRevealed(s, e) && isUnlocked(s, e) && (s.kills[id] || 0) < limitOf(s, e) && s.hp > 0;
 }
 
 export function startFight(s, id) {
@@ -903,6 +956,7 @@ function win(s, e) {
   log(s, `${e.id} ${e.name} cleared ${n}/${lim} in ${s.fight.elapsed.toFixed(1)}s  ${rText}${tag}`, 'ok');
   s.fight = null;
   noteSkills(s);
+  updateReveals(s);
   all.forEach((k, i) => {
     const lv = skillLevel(s, k.id);
     if (lv <= before[i]) return;
