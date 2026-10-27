@@ -304,6 +304,10 @@ function rewardsBreakdown(e) {
   return rows;
 }
 
+// Level bonus text: "+2%" on a positive value, "÷1.02" on a negative one
+// (it shrinks towards 0, in the player's favour).
+const levelText = (v, m) => (v >= 0 ? `+${fmt((m - 1) * 100, 0)}%` : `÷${fmt(m, 2)} (towards 0)`);
+
 function breakdown(key, d) {
   if (key.startsWith('enemy:')) return enemyBreakdown(G.enemyDef(key.slice(6)), d);
   if (key.startsWith('stats:')) return statsBreakdown(G.enemyDef(key.slice(6)), d);
@@ -319,6 +323,7 @@ function breakdown(key, d) {
       rows.push(['subtotal', fmt(sum(P.flat[key]), dp), 'sep']);
       grouped(P.pct[key], (v) => `${v >= 0 ? '+' : ''}${fmt(v * 100, 0)}%`, rows);
     }
+    if (P.lvl > 1) rows.push([`lvl ${s.level} bonus`, levelText(sum(P.flat[key]) * (1 + sum(P.pct[key])), P.lvl), 'sep']);
     rows.push(['total', fmt(d[key], dp), 'total']);
     if (key === 'armor') rows.push(['hit reduction', `${fmt(armorReduction(d.armor) * 100, 1)}%`]);
     if (key === 'block' && d.blockShred) rows.push(['your block shred', `${fmt(d.blockShred, 1)}/hit`]);
@@ -338,10 +343,13 @@ function breakdown(key, d) {
       rows.push([title, '', 'head']);
       grouped(P.flat[st], (v) => `${fmt(v * 100, 1)}% max hp`, rows, true);
       grouped(P.pct[st], (v) => `${v >= 0 ? '+' : ''}${fmt(v * 100, 0)}% of that`, rows);
-      if (d[st]) rows.push([`× ${fmt(d.maxHp, 0)} max hp`, fmt(d[st] * d.maxHp, 2)]);
+      // the % before the level bonus (the bonus row below applies to the whole sum)
+      const pre = sum(P.flat[st]) * (1 + sum(P.pct[st]));
+      if (pre) rows.push([`× ${fmt(d.maxHp, 0)} max hp`, fmt(pre * d.maxHp, 2)]);
       if (baseFlat) rows.push(['base flat', signed(baseFlat, 2)]);
       grouped(P.flat.regenFlat, (v) => signed(v, 2), rows, true);
       grouped(P.pct.regenFlat, (v) => `${v >= 0 ? '+' : ''}${fmt(v * 100, 0)}% flat regen`, rows);
+      if (P.lvl > 1 && total) rows.push([`lvl ${s.level} bonus`, levelText(total, P.lvl), 'sep']);
       rows.push(['total', `${fmt(total, 2)}/s`, 'total']);
     };
     block('idle', 'regenOut', d.regenOutHp, REGEN.outOfCombatFlat);
@@ -525,7 +533,7 @@ function render() {
 
   $('#p-lvl').innerHTML = `<span class="muted">${fmt(s.xp, 0)}/${G.xpToNext(s)} xp</span> ${s.level}`;
   $('#p-xpbar').innerHTML = bar(s.xp, G.xpToNext(s));
-  $('#p-gspd').textContent = `×${fmt(G.gameSpeed(s), 2)}`;
+  $('#p-lbonus').textContent = `+${fmt((G.levelBonus(s) - 1) * 100, 0)}%`;
   $('#p-hp').textContent = `${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 0)}`;
   const mhp = `hp ${fmt(Math.max(0, s.hp), 0)}/${fmt(d.maxHp, 0)}${s.fight ? ` · ${s.fight.enemyId}` : s.retry ? ' · regen' : ''}`;
   if ($('#m-hp').textContent !== mhp) $('#m-hp').textContent = mhp;
@@ -778,8 +786,7 @@ let saveTimer = 0;
 
 function tick() {
   const now = performance.now();
-  // game speed (player level) scales the simulated time
-  let dt = Math.min((now - last) / 1000, MAX_CATCHUP) * G.gameSpeed(s);
+  let dt = Math.min((now - last) / 1000, MAX_CATCHUP);
   last = now;
   while (dt > 0) {
     const d = Math.min(dt, SUBSTEP);

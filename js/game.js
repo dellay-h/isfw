@@ -365,14 +365,20 @@ function shopEffects(s) {
 
 // ---------- player level (LEVELS in data.js) ----------
 export const xpToNext = (s) => LEVELS.xpPer * s.level;
-export const gameSpeed = (s) => 1 + LEVELS.speedPer * (s.level - 1);
+// Attribute bonus factor from the player level (1.02 = +2%).
+export const levelBonus = (s) => 1 + LEVELS.attrPer * (s.level - 1);
+// Applies a bonus factor in the player's favour: positive values grow,
+// negative ones shrink towards 0.
+export const favour = (v, m) => (v >= 0 ? v * m : v / m);
 export function gainXp(s, n = 1) {
+  const before = s.level;
   s.xp += n;
   while (s.xp >= xpToNext(s)) {
     s.xp -= xpToNext(s);
     s.level++;
-    log(s, `level ${s.level} reached: game speed +${Math.round((gameSpeed(s) - 1) * 100)}%`, 'warn');
+    log(s, `level ${s.level} reached: all attributes +${Math.round((levelBonus(s) - 1) * 100)}%`, 'warn');
   }
+  if (s.level !== before) syncHp(s);
 }
 
 // ---------- new-skill notices ----------
@@ -598,7 +604,9 @@ const modEffects = (label, mods) => Object.entries(mods || {}).flatMap(([k, v]) 
 
 // base: attribute values; active: [{ id, L }] merged level data of each active
 // skill; extra: other effects (kill rewards).
-function unit(base, active, extra = [], idleFlat = 0) {
+// lvl: final bonus factor on every attribute (player level), in the unit's
+// favour (see favour()).
+function unit(base, active, extra = [], idleFlat = 0, lvl = 1) {
   const flat = {}, pct = {};
   for (const st of STATS) {
     flat[st] = [{ label: 'base', v: base[st] || 0 }];
@@ -610,7 +618,8 @@ function unit(base, active, extra = [], idleFlat = 0) {
 
   const sum = (arr) => arr.reduce((a, x) => a + x.v, 0);
   const val = {};
-  for (const st of STATS) val[st] = sum(flat[st]) * (1 + sum(pct[st]));
+  for (const st of STATS) val[st] = favour(sum(flat[st]) * (1 + sum(pct[st])), lvl);
+  idleFlat = favour(idleFlat, lvl);
 
   const empowers = [];
   const onHits = [];
@@ -660,7 +669,7 @@ function unit(base, active, extra = [], idleFlat = 0) {
     // hp per second
     regenInHp: val.regenIn * val.maxHp + val.regenFlat,
     regenOutHp: val.regenOut * val.maxHp + val.regenFlat + idleFlat,
-    parts: { flat, pct },
+    parts: { flat, pct, lvl, idleFlat },
   };
 }
 
@@ -725,7 +734,7 @@ export function derived(s) {
     const L = freeActive(s, id) && !s.slots.includes(id) && levelData(s, id);
     if (L) active.push({ id, L });
   }
-  return unit(PLAYER(), active, [...killEffects(s.kills, s), ...shopEffects(s)], REGEN.outOfCombatFlat);
+  return unit(PLAYER(), active, [...killEffects(s.kills, s), ...shopEffects(s)], REGEN.outOfCombatFlat, levelBonus(s));
 }
 
 // Enemy: its base attributes + its skills (always active, at the listed level).

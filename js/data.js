@@ -66,9 +66,11 @@ export const HEURISTIC = {
 };
 
 // Player level: 1 xp per enemy defeated; going from level n to n + 1 takes
-// xpPer x n xp. Each level above 1 adds speedPer to the game speed (the whole
-// simulation runs that much faster). Kept through prestiges.
-export const LEVELS = { xpPer: 100, speedPer: 0.01 };
+// xpPer x n xp. Each level above 1 adds attrPer to a bonus on every player
+// attribute, applied last (after all other bonuses) and always in the
+// player's favour: positive values grow by it, negative ones shrink towards 0
+// (divided by the same factor). Kept through prestiges.
+export const LEVELS = { xpPer: 100, attrPer: 0.01 };
 
 // Prestige shop: permanent upgrades bought with prestige points. They are
 // kept through prestiges (only a full reset clears them).
