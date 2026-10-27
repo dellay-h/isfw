@@ -534,7 +534,7 @@ function render() {
   $('#p-lvl').innerHTML = `<span class="muted">${fmt(s.xp, 0)}/${G.xpToNext(s)} xp</span> ${s.level}`;
   $('#p-xpbar').innerHTML = bar(s.xp, G.xpToNext(s));
   $('#p-lbonus').textContent = `+${fmt((G.levelBonus(s) - 1) * 100, 0)}%`;
-  $('#p-hp').textContent = `${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 0)}`;
+  $('#p-hp').textContent = `${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 1)}`;
   const mhp = `hp ${fmt(Math.max(0, s.hp), 0)}/${fmt(d.maxHp, 0)}${s.fight ? ` · ${s.fight.enemyId}` : s.retry ? ' · regen' : ''}`;
   if ($('#m-hp').textContent !== mhp) $('#m-hp').textContent = mhp;
   $('#p-hpbar').innerHTML = bar(s.hp, d.maxHp);
@@ -593,9 +593,9 @@ function render() {
     const e = G.enemyDef(f.enemyId);
     const u = G.enemyUnit(e);
     pane.innerHTML = `
-      <div class="row"><span class="k">src</span><span class="v">${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 0)}</span>${bar(s.hp, d.maxHp)}${dotText(f.pDots, d.maxHp)}${shieldText(f.pShield)}</div>
+      <div class="row"><span class="k">src</span><span class="v">${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 1)}</span>${bar(s.hp, d.maxHp)}${dotText(f.pDots, d.maxHp)}${shieldText(f.pShield)}</div>
       ${d.maxMana ? `<div class="row"><span class="k">mp</span><span class="v">${fmt(s.mana, 1)} / ${fmt(d.maxMana, 0)}</span>${bar(s.mana, d.maxMana)}</div>` : ''}
-      <div class="row"><span class="k">${e.id}</span><span class="v">${fmt(Math.max(0, f.eHp), 1)} / ${fmt(u.maxHp, 0)}</span>${bar(f.eHp, u.maxHp)}${dotText(f.eDots, u.maxHp)}${shieldText(f.eShield)}${u.block ? `<span class="muted">block ${fmt(f.eBlock, 1)}</span>` : ''}</div>
+      <div class="row"><span class="k">${e.id}</span><span class="v">${fmt(Math.max(0, f.eHp), 1)} / ${fmt(u.maxHp, 1)}</span>${bar(f.eHp, u.maxHp)}${dotText(f.eDots, u.maxHp)}${shieldText(f.eShield)}${u.block ? `<span class="muted">block ${fmt(f.eBlock, 1)}</span>` : ''}</div>
       <div class="row"><span class="k">t</span><span class="v">${fmt(f.elapsed, 1)}s</span>${d.actions.length ? '' : '<span class="muted">no attack or spell loaded</span>'}</div>
       ${d.empowers.map((p) => {
         const left = p.cooldown - (f.empower[p.id] || 0);
@@ -607,7 +607,7 @@ function render() {
       }).join('')}`;
   } else if (s.retry) {
     pane.innerHTML = `
-      <div class="row"><span class="k">src</span><span class="v">${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 0)}</span>${bar(s.hp, d.maxHp)}</div>
+      <div class="row"><span class="k">src</span><span class="v">${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 1)}</span>${bar(s.hp, d.maxHp)}</div>
       <div class="row muted">regenerating, retrying ${s.retry} at full hp</div>`;
   } else {
     pane.innerHTML = '<div class="row muted">idle</div>';
