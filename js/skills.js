@@ -59,7 +59,7 @@ export const SKILLS = [
   {
     id: 'S04', name: 'burn',
     levels: [
-      { spell: { type: 'magic', time: 4, speedScaling: 1, cost: 5, dot: { pctMaxHp: 0.03, pctScaling: 0.001, duration: 5 } }, mods: { manaFlat: 10 } },
+      { spell: { type: 'magic', time: 4, speedScaling: 1, cost: 5, dot: { duration: 3, base: 6 } }, mods: { manaFlat: 10 } },
     ],
   },
   {
