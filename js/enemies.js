@@ -101,7 +101,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E012', name: 'dropout sorcerer', tier: 2, rank: 'common', limit: 50, unlockCost: 1,
+    id: 'E012', name: 'dropout sorcerer', tier: -3, rank: 'common', limit: 50, unlockCost: 1,
     base: { maxHp: 80, magicPower: 1, manaRegen: 0.5 },
     skills: [{ skill: 'S13', level: 1 }, { skill: 'S15', level: 1 }],
     rewards: [
@@ -126,7 +126,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E005', name: 'assassin', tier: 2, rank: 'elite', limit: 5,
+    id: 'E005', name: 'assassin', tier: -3, rank: 'elite', limit: 5,
     base: { maxHp: 180, damage: 0.5 },
     skills: [{ skill: 'S01', level: 1 }, { skill: 'S06', level: 1 }],
     rewards: [
@@ -138,7 +138,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E006', name: 'ogre', tier: 2, rank: 'common', limit: 50,
+    id: 'E006', name: 'ogre', tier: -3, rank: 'common', limit: 50,
     base: { maxHp: 400, damage: 2, attackSpeed: -0.444, regenFlat: 2 },
     skills: [{ skill: 'S01', level: 1 }],
     rewards: [
@@ -150,7 +150,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E007', name: 'guard', tier: 2, rank: 'elite', limit: 5,
+    id: 'E007', name: 'guard', tier: -3, rank: 'elite', limit: 5,
     base: { maxHp: 400, armor: 50, block: 2, damage: 1, attackSpeed: -0.5, magicSpeed: -0.0833, manaRegen: 1 },
     skills: [{ skill: 'S01', level: 1 }, { skill: 'S04', level: 1 }],
     rewards: [
@@ -162,7 +162,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E008', name: 'satyr archer', tier: 2, rank: 'common', limit: 50,
+    id: 'E008', name: 'satyr archer', tier: -3, rank: 'common', limit: 50,
     base: { maxHp: 300, damage: 5, attackSpeed: 0.25 },
     skills: [{ skill: 'S03', level: 1 }, { skill: 'S08', level: 1 }],
     rewards: [
@@ -174,7 +174,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E009', name: 'arcane wizard apprentice', tier: 2, rank: 'elite', limit: 5,
+    id: 'E009', name: 'arcane wizard apprentice', tier: -3, rank: 'elite', limit: 5,
     base: { maxHp: 350, magicPower: 5, manaRegen: 1 },
     skills: [{ skill: 'S13', level: 1 }, { skill: 'S09', level: 1 }],
     rewards: [
