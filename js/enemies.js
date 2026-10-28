@@ -19,12 +19,21 @@
 //                 at: 'first' | 'final' | kill count. Levels are reached in order.
 export const ENEMIES = [
   {
-    id: 'E013', name: 'elder sapling', tier: 0, rank: 'challenge', limit: 1,
+    id: 'E013', name: 'elder sapling', tier: 1, rank: 'challenge', limit: 1,
     base: { maxHp: 60, regenFlat: 4, block: 4 },
     skills: [],
     rewards: [],
     skillRewards: [
       { skill: 'X03', level: 1, at: 'first' },
+    ],
+  },
+  {
+    id: 'E014', name: 'squire', tier: 2, rank: 'challenge', limit: 1,
+    base: { maxHp: 50, block: 10, damage: 1, attackSpeed: -0.2, armor: 200 },
+    skills: [{ skill: 'S01', level: 1 }],
+    rewards: [],
+    skillRewards: [
+      { skill: 'S16', level: 1, at: 'first' },
     ],
   },
   {
@@ -79,7 +88,20 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E012', name: 'dropout sorcerer', tier: 1, rank: 'common', limit: 50, unlockCost: 1,
+    id: 'E010', name: 'vampire', tier: 1, rank: 'boss', limit: 1,
+    base: { maxHp: 150, damage: 2, attackSpeed: -0.8, lifesteal: 3, armor: 100 },
+    skills: [{ skill: 'S01', level: 1 }, { skill: 'S10', level: 1 }],
+    rewards: [
+      { stat: 'damage', total: 0.5 },
+      { stat: 'attackSpeed', total: 0.1 },
+    ],
+    skillRewards: [
+      { skill: 'X02', level: 1, at: 'first' },
+      { skill: 'S10', level: 1, at: 'final' },
+    ],
+  },
+  {
+    id: 'E012', name: 'dropout sorcerer', tier: 2, rank: 'common', limit: 50, unlockCost: 1,
     base: { maxHp: 80, magicPower: 1, manaRegen: 0.5 },
     skills: [{ skill: 'S13', level: 1 }, { skill: 'S15', level: 1 }],
     rewards: [
@@ -92,7 +114,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E004', name: 'fire wizard apprentice', tier: 1, rank: 'elite', limit: 5, unlockCost: 1,
+    id: 'E004', name: 'fire wizard apprentice', tier: 2, rank: 'elite', limit: 5, unlockCost: 1,
     base: { maxHp: 300, magicPower: 1, magicSpeed: 0, maxMana: 0, manaRegen: 0.5 },
     skills: [{ skill: 'S04', level: 1 }, { skill: 'S14', level: 1 }],
     rewards: [
@@ -101,19 +123,6 @@ export const ENEMIES = [
     skillRewards: [
       { skill: 'S04', level: 1, at: 'first' },
       { skill: 'X01', level: 1, at: 'final' },
-    ],
-  },
-  {
-    id: 'E010', name: 'vampire', tier: 1, rank: 'boss', limit: 1,
-    base: { maxHp: 150, damage: 2, attackSpeed: -0.8, lifesteal: 3, armor: 100 },
-    skills: [{ skill: 'S01', level: 1 }, { skill: 'S10', level: 1 }],
-    rewards: [
-      { stat: 'damage', total: 0.5 },
-      { stat: 'attackSpeed', total: 0.1 },
-    ],
-    skillRewards: [
-      { skill: 'X02', level: 1, at: 'first' },
-      { skill: 'S10', level: 1, at: 'final' },
     ],
   },
   {
@@ -173,15 +182,6 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S09', level: 1, at: 'final' },
-    ],
-  },
-  {
-    id: 'E014', name: 'squire', rank: 'challenge', limit: 1,
-    base: { maxHp: 50, block: 10, damage: 1, attackSpeed: -0.2, armor: 200 },
-    skills: [{ skill: 'S01', level: 1 }],
-    rewards: [],
-    skillRewards: [
-      { skill: 'S16', level: 1, at: 'first' },
     ],
   },
 ];
