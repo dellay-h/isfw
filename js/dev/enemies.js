@@ -212,8 +212,7 @@ export function renderEnemies() {
   const tiers = [...new Set(E().map(G.tierAbs))].sort((a, b) => a - b);
   $('#de-list').innerHTML = tiers.map((t) => {
     const list = E().map((e, i) => [e, i]).filter(([e]) => G.tierAbs(e) === t);
-    const wip = list.filter(([e]) => G.inDev(e)).length;
-    return `<h3 class="de-tier">tier ${t} <span class="muted">· ${list.length - wip} in game${wip ? ` · <span class="wip">${wip} in development</span>` : ''}</span></h3>`
+    return `<h3 class="de-tier">tier ${t}</h3>`
       + list.map(([e, i]) => enemyBlock(e, i, per.get(e))).join('');
   }).join('');
   $('#de-warn').innerHTML = out.map((w) => `<div>${esc(w)}</div>`).join('');
