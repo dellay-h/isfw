@@ -32,7 +32,7 @@ function buildTargets() {
     if (body.lastElementChild && tierOf(G.enemyDef(body.lastElementChild.dataset.id)) !== tierOf(e)) tr.classList.add('tier-start');
     tr.innerHTML = `
       <td>${e.id}</td>
-      <td class="num">${rank === 'challenge' ? '—' : tierOf(e)}</td>
+      <td class="num">${e.tier || 0}</td>
       <td>${e.name}${tag[rank] ? ` <span class="${tag[rank]}">${rank}</span>` : ''}</td>
       <td><span class="hov" data-bd="stats:${e.id}">stats</span>${(e.skillRewards || []).length ? `<span class="m-only"><br><span class="hov" data-bd="unlocks:${e.id}">unlocks</span></span>` : ''}</td>
       <td>${(e.skillRewards || []).length ? `<span class="hov" data-bd="unlocks:${e.id}" data-f="unlocks">unlocks</span>` : '<span class="muted">—</span>'}</td>
