@@ -9,9 +9,16 @@ import { key } from './site.js';
 const SAVE_KEY = key('isfw.save.v3');
 const LOG_MAX = 200;
 
-// The enemy and skill lists everything below reads. The dev screens swap in
-// their edited copies for previews (withContent).
-let C = { enemies: ENEMIES, skills: SKILLS };
+// Enemies in development: a negative tier (-X = being made for tier X). They
+// are left out of the game entirely (not listed, fought, awarding skills or
+// counted anywhere); dev/enemies still shows and previews them.
+export const inDev = (e) => (e?.tier || 0) < 0;
+export const tierAbs = (e) => Math.abs(e?.tier || 0);
+
+// The enemy and skill lists everything below reads (the game: enemies in
+// development left out). The dev screens swap in their edited copies, all of
+// them, for previews (withContent).
+let C = { enemies: ENEMIES.filter((e) => !inDev(e)), skills: SKILLS };
 export function withContent(content, fn) {
   const prev = C;
   C = { ...C, ...content };
@@ -693,7 +700,8 @@ export function rewardShare(e, n, s = null) {
 export function suggestTotal(e, r) {
   if (r.type === 'percent') return { total: HEURISTIC.share, value: null };
   const kills = {};
-  for (const x of C.enemies) if ((x.tier || 0) < (e.tier || 0)) kills[x.id] = x.limit;
+  // (enemies in development never count; one in development is measured for its intended tier)
+  for (const x of C.enemies) if (!inDev(x) && (x.tier || 0) < tierAbs(e)) kills[x.id] = x.limit;
   const s = newState();
   Object.assign(s.kills, kills);
   const d = derived(s);

@@ -20,7 +20,7 @@ const withC = (fn) => G.withContent(content(), fn);
 const ATTR_DEFS = [
   { key: 'maxHp', label: 'hp', path: 'base.maxHp', required: true, def: 100 },
   { key: 'limit', label: 'max kills', path: 'limit', required: true, def: 100, int: true },
-  { key: 'tier', label: 'tier', path: 'tier', def: 0, int: true },
+  { key: 'tier', label: 'tier (-X = in development for tier X)', path: 'tier', def: 0, int: true },
   { key: 'unlockCost', label: 'unlock cost (prestige pts)', path: 'unlockCost', def: 1, int: true },
   ...ATTRS.filter((a) => a.key !== 'maxHp').map((a) => ({
     key: a.key,
@@ -61,10 +61,17 @@ function problems() {
       const top = G.capOf(e);
       if (!(n >= 1) || n > top) p.push(`${u.skill} lv${u.level} is awarded at kill ${u.at}, outside 1–${top}`);
       const key = `${u.skill} lv${u.level}`;
-      awarded.set(key, [...(awarded.get(key) || []), e.id]);
+      if (!G.inDev(e)) awarded.set(key, [...(awarded.get(key) || []), e.id]);
     }
   }
   for (const [key, who] of awarded) if (who.length > 1) out.push(`${key} is awarded more than once (${who.join(', ')}); the first one counts`);
+  // enemies in development: note awards already given by an enemy in the game
+  for (const e of E().filter(G.inDev)) {
+    for (const u of e.skillRewards || []) {
+      const who = awarded.get(`${u.skill} lv${u.level}`);
+      if (who) per.get(e).push(`${u.skill} lv${u.level} is also awarded by ${who.join(', ')} (in the game)`);
+    }
+  }
   return { out, per };
 }
 
@@ -173,10 +180,11 @@ function skillRewardsField(e, i) {
 
 function enemyBlock(e, i, warns) {
   const u = withC(() => G.enemyUnit(e));
-  const summary = [`tier ${e.tier || 0}`, `hp ${num(u.maxHp)}`, `${e.limit} kills`, `${(e.skills || []).length} skills`]
+  const dev = G.inDev(e);
+  const summary = [dev ? `in development for tier ${G.tierAbs(e)}` : `tier ${e.tier || 0}`, `hp ${num(u.maxHp)}`, `${e.limit} kills`, `${(e.skills || []).length} skills`]
     .concat((e.rewards || []).map((r) => `${G.STAT_LABEL[r.stat] || '?'} +${r.type === 'percent' ? `${num((r.total || 0) * 100)}%` : num(r.total || 0)} total`));
   const n = E().length;
-  return `<details class="en" data-key="${esc(e.id)}"${open.has(e.id) ? ' open' : ''}>
+  return `<details class="en${dev ? ' wip' : ''}" data-key="${esc(e.id)}"${open.has(e.id) ? ' open' : ''}>
     <summary>${esc(e.id)} ${esc(e.name)}${G.rankOf(e) === 'common' ? '' : ` <span class="${G.rankOf(e) === 'boss' ? 'warn' : 'muted'}">${G.rankOf(e)}</span>`} <span class="muted">· ${summary.join(' · ')}</span>${warns.length ? ` <span class="warn">· ${warns.length} issue${warns.length > 1 ? 's' : ''}</span>` : ''}</summary>
     <div class="body">
       <div class="ident">
@@ -199,7 +207,15 @@ function enemyBlock(e, i, warns) {
 
 export function renderEnemies() {
   const { out, per } = problems();
-  $('#de-list').innerHTML = E().map((e, i) => enemyBlock(e, i, per.get(e))).join('');
+  // grouped by tier (absolute value: enemies in development sit with the tier
+  // they're made for), keeping the file order inside each group
+  const tiers = [...new Set(E().map(G.tierAbs))].sort((a, b) => a - b);
+  $('#de-list').innerHTML = tiers.map((t) => {
+    const list = E().map((e, i) => [e, i]).filter(([e]) => G.tierAbs(e) === t);
+    const wip = list.filter(([e]) => G.inDev(e)).length;
+    return `<h3 class="de-tier">tier ${t} <span class="muted">· ${list.length - wip} in game${wip ? ` · <span class="wip">${wip} in development</span>` : ''}</span></h3>`
+      + list.map(([e, i]) => enemyBlock(e, i, per.get(e))).join('');
+  }).join('');
   $('#de-warn').innerHTML = out.map((w) => `<div>${esc(w)}</div>`).join('');
   $('#de-count').textContent = `(${E().length})`;
   renderStatus();
@@ -382,7 +398,7 @@ function onPreviewAction(el) {
     const e = E().find((x) => !used.has(x.id)) || E()[0];
     preview.push({ enemy: e?.id || '', kills: e?.limit || 1 });
   } else if (act === 'pv-del') preview.splice(j, 1);
-  else if (act === 'pv-max') preview = E().map((e) => ({ enemy: e.id, kills: e.limit }));
+  else if (act === 'pv-max') preview = E().filter((e) => !G.inDev(e)).map((e) => ({ enemy: e.id, kills: e.limit })); // the game's enemies only
   else if (act === 'pv-clear') preview = [];
   else if (act === 'pv-game') {
     const gs = getGameState();

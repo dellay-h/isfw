@@ -8,6 +8,7 @@
   --ok: #4f6b57;
   --err: #8a5050;
   --warn: #7a6a40;
+  --wip: #66608f;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -20,6 +21,7 @@
     --ok: #86a08c;
     --err: #b08080;
     --warn: #ab9a6e;
+    --wip: #9d96c6;
   }
 }
 
@@ -250,6 +252,12 @@ details > summary::-webkit-details-marker { display: none; }
 details > summary::before { content: '+'; display: inline-block; width: 12px; color: var(--muted); }
 details[open] > summary::before { content: '−'; }
 details.en > .body { padding: 4px 6px 6px 18px; border-top: 1px solid var(--line); }
+/* enemies in development (negative tier) */
+details.en.wip { border-left: 3px solid var(--wip); }
+details.en.wip > summary { color: var(--wip); }
+.wip { color: var(--wip); }
+h3.de-tier { font-size: inherit; font-weight: normal; margin: 12px 0 4px; color: var(--fg); }
+h3.de-tier:first-child { margin-top: 0; }
 details.fld { margin-top: 4px; }
 details.fld > summary { cursor: pointer; list-style: none; color: var(--muted); }
 details.fld > summary b { font-weight: normal; color: var(--fg); }
