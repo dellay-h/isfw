@@ -1,6 +1,7 @@
 // dev/run: edit the current run of this browser's game save directly – kills
 // per enemy this run, their current max kills, the prestige points, the
-// player's level and the prestige shop upgrades (bought or not). Not
+// player's level and the prestige shop upgrades (bought or not), plus a dev
+// time speed (kept in this browser, not in the save). Not
 // tied to the data files, so it stays editable in the read-only dev version.
 import * as G from '../game.js';
 import { esc } from './ui.js';
@@ -8,6 +9,9 @@ import { esc } from './ui.js';
 const $ = (sel) => document.querySelector(sel);
 let getState = () => null;
 let save = () => {};
+let getSpeed = () => 1;
+let setSpeed = () => {};
+const SPEEDS = [1, 2, 5, 10, 25, 50, 100, 250];
 let visible = false;
 
 // challenges first, then by tier, keeping the file order (like the monitor)
@@ -37,6 +41,9 @@ export function renderRun() {
       <td>${fixed ? '' : `<label><input type="checkbox" data-run="shrink" ${s.prestige.capped[e.id] ? 'checked' : ''}> shrinking</label>`}</td>
     </tr>`;
   }).join('');
+  const sp = getSpeed();
+  $('#dr-speed').innerHTML = [...new Set([...SPEEDS, sp])].sort((a, b) => a - b)
+    .map((v) => `<option value="${v}" ${v === sp ? 'selected' : ''}>×${v}</option>`).join('');
   $('#dr-points').value = s.prestige.points;
   $('#dr-level').value = s.level;
   $('#dr-xp').value = Math.floor(s.xp);
@@ -79,7 +86,10 @@ function onChange(ev) {
   const s = getState();
   const el = ev.target;
   if (!s) return;
-  if (el.id === 'dr-points') {
+  if (el.id === 'dr-speed') {
+    setSpeed(Number(el.value));
+    return;
+  } else if (el.id === 'dr-points') {
     G.devSetPoints(s, el.value);
   } else if (el.id === 'dr-level') {
     G.devSetLevel(s, el.value);
@@ -108,6 +118,8 @@ export function showRun(on) {
 export function initRun(opts = {}) {
   if (opts.getState) getState = opts.getState;
   if (opts.save) save = opts.save;
+  if (opts.getSpeed) getSpeed = opts.getSpeed;
+  if (opts.setSpeed) setSpeed = opts.setSpeed;
   $('#view-dev-run').addEventListener('change', onChange);
   setInterval(refresh, 500);
 }

@@ -784,9 +784,27 @@ const MAX_CATCHUP = 3600; // cap seconds simulated after the tab was asleep
 let last = performance.now();
 let saveTimer = 0;
 
+// Dev time speed (dev/run): multiplies the simulated time. A dev-only
+// browser setting, never in the save, ignored by the playable version.
+// Catch-up after the tab was asleep (over a second) runs at normal speed.
+const SPEED_KEY = key('isfw.dev.speed');
+let devSpeed = 1;
+try { devSpeed = SITE.mode === 'play' ? 1 : Math.max(1, Number(localStorage.getItem(SPEED_KEY)) || 1); } catch {}
+function setDevSpeed(v) {
+  devSpeed = SITE.mode === 'play' ? 1 : Math.max(1, Number(v) || 1);
+  try { if (devSpeed === 1) localStorage.removeItem(SPEED_KEY); else localStorage.setItem(SPEED_KEY, String(devSpeed)); } catch {}
+  renderSpeedTag();
+}
+function renderSpeedTag() {
+  const t = $('#speed-tag');
+  t.hidden = devSpeed === 1;
+  t.textContent = `×${devSpeed} speed\u00a0\u00a0`;
+}
+
 function tick() {
   const now = performance.now();
-  let dt = Math.min((now - last) / 1000, MAX_CATCHUP);
+  const real = (now - last) / 1000;
+  let dt = real > 1 ? Math.min(real, MAX_CATCHUP) : real * devSpeed;
   last = now;
   while (dt > 0) {
     const d = Math.min(dt, SUBSTEP);
@@ -823,7 +841,8 @@ function showView() {
   if (!PLAY) showDev(v.startsWith('dev/') ? v : null);
 }
 $('#draft-tag').hidden = !USING_DRAFT;
-if (!PLAY) initDev({ getState: () => s, save: () => G.save(s) });
+if (!PLAY) initDev({ getState: () => s, save: () => G.save(s), getSpeed: () => devSpeed, setSpeed: setDevSpeed });
+renderSpeedTag();
 window.addEventListener('hashchange', showView);
 showView();
 

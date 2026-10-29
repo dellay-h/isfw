@@ -17,8 +17,9 @@
       <a href="#dev/run" data-view="dev/run">dev/run</a>
     </nav>
     <span class="spacer"></span>
+    <span id="speed-tag" class="warn" title="dev time speed (dev/run)" hidden></span>
     <span id="draft-tag" class="warn" title="enemies/skills come from dev edits that are not saved to their files yet" hidden>dev draft&nbsp;&nbsp;</span>
-    <span class="muted" id="version">v0.74</span>
+    <span class="muted" id="version">v0.75</span>
   </header>
 
   <main id="view-monitor">
@@ -141,6 +142,7 @@
       <h2>run <span id="dr-info" class="muted"></span></h2>
       <div class="calc">edits this browser's game save directly (not the data files); changes apply at once</div>
       <table class="dev-table">
+        <tr><td class="lbl">time speed</td><td><select id="dr-speed"></select> <span class="muted">dev only, this browser; not saved in the game</span></td></tr>
         <tr><td class="lbl">prestige points</td><td><input type="number" step="1" min="0" id="dr-points"></td></tr>
         <tr><td class="lbl">player level</td><td><input type="number" step="1" min="0" id="dr-level"></td></tr>
         <tr><td class="lbl">xp</td><td><input type="number" step="1" min="0" id="dr-xp"> <span id="dr-xpnext" class="muted"></span></td></tr>

@@ -103,9 +103,9 @@ export function showDev(view) {
   renderBar();
 }
 
-export function initDev({ getState, save } = {}) {
+export function initDev({ getState, save, getSpeed, setSpeed } = {}) {
   initEnemies({ getState });
-  initRun({ getState, save }); // edits the game save, not the data files: never read-only
+  initRun({ getState, save, getSpeed, setSpeed }); // edits the game save, not the data files: never read-only
   initSkills();
   if (READONLY) lockEditing();
   buildBar();
