@@ -8,6 +8,7 @@ import {
 } from './dev/store.js';
 import { initEnemies, renderEnemies } from './dev/enemies.js';
 import { initSkills, renderSkills } from './dev/skills.js';
+import { initRun, showRun } from './dev/run.js';
 import { confirmed } from './dev/ui.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -97,12 +98,14 @@ export function showDev(view) {
   current = view;
   if (view === 'dev/enemies') renderEnemies();
   else if (view === 'dev/skills') renderSkills();
+  showRun(view === 'dev/run');
   renderBanner();
   renderBar();
 }
 
-export function initDev({ getState } = {}) {
+export function initDev({ getState, save } = {}) {
   initEnemies({ getState });
+  initRun({ getState, save }); // edits the game save, not the data files: never read-only
   initSkills();
   if (READONLY) lockEditing();
   buildBar();

@@ -14,10 +14,11 @@
       <a href="#monitor" data-view="monitor">monitor</a>
       <a href="#dev/enemies" data-view="dev/enemies">dev/enemies</a>
       <a href="#dev/skills" data-view="dev/skills">dev/skills</a>
+      <a href="#dev/run" data-view="dev/run">dev/run</a>
     </nav>
     <span class="spacer"></span>
     <span id="draft-tag" class="warn" title="enemies/skills come from dev edits that are not saved to their files yet" hidden>dev draft&nbsp;&nbsp;</span>
-    <span class="muted" id="version">v0.72</span>
+    <span class="muted" id="version">v0.73</span>
   </header>
 
   <main id="view-monitor">
@@ -132,6 +133,21 @@
       <div id="ds-status" class="dev-status"></div>
       <div id="ds-msg" class="dev-warn"></div>
       <div id="ds-list"></div>
+    </div>
+  </main>
+
+  <main id="view-dev-run" class="dev-view" hidden>
+    <div class="dev-run">
+      <h2>run <span id="dr-info" class="muted"></span></h2>
+      <div class="calc">edits this browser's game save directly (not the data files); changes apply at once</div>
+      <table class="dev-table">
+        <tr><td class="lbl">prestige points</td><td><input type="number" step="1" min="0" id="dr-points"></td></tr>
+      </table>
+      <h2>enemies</h2>
+      <table id="dr-list" class="dev-table grid">
+        <thead><tr><th>id</th><th class="num">tier</th><th>label</th><th>kills this run</th><th>max kills</th><th>base</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
   </main>
 

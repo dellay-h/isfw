@@ -804,7 +804,7 @@ function tick() {
 // ---------- views (top band nav) ----------
 // The playable version (SITE.mode 'play') has no dev pages at all.
 const PLAY = SITE.mode === 'play';
-const VIEWS = PLAY ? { monitor: '#view-monitor' } : { monitor: '#view-monitor', 'dev/enemies': '#view-dev-enemies', 'dev/skills': '#view-dev-skills' };
+const VIEWS = PLAY ? { monitor: '#view-monitor' } : { monitor: '#view-monitor', 'dev/enemies': '#view-dev-enemies', 'dev/skills': '#view-dev-skills', 'dev/run': '#view-dev-run' };
 if (PLAY) {
   for (const a of document.querySelectorAll('header nav a')) if (a.dataset.view !== 'monitor') a.remove();
 }
@@ -823,7 +823,7 @@ function showView() {
   if (!PLAY) showDev(v.startsWith('dev/') ? v : null);
 }
 $('#draft-tag').hidden = !USING_DRAFT;
-if (!PLAY) initDev({ getState: () => s });
+if (!PLAY) initDev({ getState: () => s, save: () => G.save(s) });
 window.addEventListener('hashchange', showView);
 showView();
 

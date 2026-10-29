@@ -26,6 +26,7 @@ export function withContent(content, fn) {
 }
 
 export const enemyDef = (id) => C.enemies.find((e) => e.id === id);
+export const gameEnemies = () => C.enemies;
 export const skillDef = (id) => C.skills.find((k) => k.id === id);
 export const specialDef = (id) => C.skills.find((k) => k.id === id && k.special);
 export const specials = () => C.skills.filter((k) => k.special);
@@ -581,6 +582,42 @@ export function unequip(s, i) {
   s.slots[i] = null;
   syncHp(s);
   clampPools(s);
+  return true;
+}
+
+// ---------- dev/run: direct edits of the current run ----------
+// After kills or max kills change: drop skills no longer unlocked from the
+// slots, refresh hp, new-skill notices and reveals.
+function afterRunEdit(s) {
+  syncSlots(s);
+  s.slots = s.slots.map((id) => (id && canLoad(s, id) ? id : null));
+  noteSkills(s);
+  updateReveals(s);
+  syncHp(s);
+  clampPools(s);
+}
+// Kills this run, between 0 and the enemy's current max kills.
+export function devSetKills(s, id, n) {
+  const e = enemyDef(id);
+  if (!e) return false;
+  s.kills[id] = Math.max(0, Math.min(limitOf(s, e), Math.floor(Number(n) || 0)));
+  afterRunEdit(s);
+  return true;
+}
+// Current max kills, between 1 and the rank's cap (fixed ranks can't change).
+// shrinking: whether it has reached the cap once (then shrinks per kill).
+export function devSetMaxKills(s, id, n, shrinking) {
+  const e = enemyDef(id);
+  if (!e || isFixed(e)) return false;
+  const lim = Math.max(1, Math.min(capOf(e), Math.floor(Number(n) || 0)));
+  if (lim === e.limit) delete s.prestige.maxKills[id]; else s.prestige.maxKills[id] = lim;
+  if (shrinking !== undefined) { if (shrinking) s.prestige.capped[id] = true; else delete s.prestige.capped[id]; }
+  s.kills[id] = Math.min(s.kills[id] || 0, limitOf(s, e));
+  afterRunEdit(s);
+  return true;
+}
+export function devSetPoints(s, n) {
+  s.prestige.points = Math.max(0, Math.floor(Number(n) || 0));
   return true;
 }
 
