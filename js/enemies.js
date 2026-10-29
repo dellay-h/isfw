@@ -89,7 +89,7 @@ export const ENEMIES = [
   },
   {
     id: 'E010', name: 'vampire', tier: 1, rank: 'boss', limit: 1,
-    base: { maxHp: 150, damage: 2, attackSpeed: -0.8, lifesteal: 3, armor: 100 },
+    base: { maxHp: 100, damage: 3, attackSpeed: -0.83, lifesteal: 0.8, armor: 0, block: 3 },
     skills: [{ skill: 'S01', level: 1 }, { skill: 'S10', level: 1 }],
     rewards: [
       { stat: 'damage', total: 0.5 },
@@ -115,7 +115,7 @@ export const ENEMIES = [
   },
   {
     id: 'E004', name: 'fire wizard apprentice', tier: 2, rank: 'common', limit: 50,
-    base: { maxHp: 300, magicPower: 1, magicSpeed: 0, maxMana: 0, manaRegen: 0.5 },
+    base: { maxHp: 200, magicPower: 1, magicSpeed: 0, maxMana: 0, manaRegen: 0.5, armor: 50 },
     skills: [{ skill: 'S04', level: 1 }, { skill: 'S14', level: 1 }],
     rewards: [
       { stat: 'manaRegen', total: 1.75 },
