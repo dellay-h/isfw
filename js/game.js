@@ -620,6 +620,26 @@ export function devSetPoints(s, n) {
   s.prestige.points = Math.max(0, Math.floor(Number(n) || 0));
   return true;
 }
+// Player level (from 0) and xp towards the next level (kept below it).
+export function devSetLevel(s, level, xp = s.xp) {
+  s.level = Math.max(0, Math.floor(Number(level) || 0));
+  s.xp = Math.max(0, Math.min(xpToNext(s) - 1, Math.floor(Number(xp) || 0)));
+  syncHp(s);
+  clampPools(s);
+  return true;
+}
+// A prestige shop item's level, 0..max, without spending or refunding
+// points (so a bought upgrade can be taken away). Effects apply at once;
+// free skills beyond the new count are dropped.
+export function devSetShop(s, id, lv) {
+  const x = shopDef(id);
+  if (!x) return false;
+  const n = Math.max(0, Math.min(x.max, Math.floor(Number(lv) || 0)));
+  if (n) s.prestige.shop[id] = n; else delete s.prestige.shop[id];
+  s.prestige.free = s.prestige.free.slice(0, freeCount(s));
+  afterRunEdit(s);
+  return true;
+}
 
 // ---------- units ----------
 // Which stats an action kind uses.

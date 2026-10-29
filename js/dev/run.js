@@ -1,5 +1,6 @@
 // dev/run: edit the current run of this browser's game save directly – kills
-// per enemy this run, their current max kills and the prestige points. Not
+// per enemy this run, their current max kills, the prestige points, the
+// player's level and the prestige shop upgrades (bought or not). Not
 // tied to the data files, so it stays editable in the read-only dev version.
 import * as G from '../game.js';
 import { esc } from './ui.js';
@@ -37,8 +38,16 @@ export function renderRun() {
     </tr>`;
   }).join('');
   $('#dr-points').value = s.prestige.points;
-  $('#dr-info').textContent = `prestige ${s.prestige.count} · level ${s.level}`;
+  $('#dr-level').value = s.level;
+  $('#dr-xp').value = Math.floor(s.xp);
+  $('#dr-xpnext').textContent = `/ ${G.xpToNext(s)}`;
+  $('#dr-info').textContent = `prestige ${s.prestige.count}`;
   $('#dr-list tbody').innerHTML = rows;
+  // prestige shop: set any level, nothing spent or refunded
+  $('#dr-shop tbody').innerHTML = G.shopItems().map((x) => `<tr data-shop="${esc(x.id)}">
+      <td>${esc(x.id)}</td><td>${esc(x.name)}</td>
+      <td>${numIn(`data-run="shop" min="0" max="${x.max}"`, G.shopLevel(s, x.id))} <span class="muted">/ ${x.max}</span></td>
+    </tr>`).join('');
 }
 
 // Keep the numbers current while the game runs (fights add kills), without
@@ -48,6 +57,12 @@ function refresh() {
   if (!visible || !s) return;
   const pts = $('#dr-points');
   if (document.activeElement !== pts && Number(pts.value) !== s.prestige.points) pts.value = s.prestige.points;
+  for (const [sel, v] of [['#dr-level', s.level], ['#dr-xp', Math.floor(s.xp)]]) {
+    const el = $(sel);
+    if (document.activeElement !== el && Number(el.value) !== v) el.value = v;
+  }
+  const nx = `/ ${G.xpToNext(s)}`;
+  if ($('#dr-xpnext').textContent !== nx) $('#dr-xpnext').textContent = nx;
   for (const tr of document.querySelectorAll('#dr-list tbody tr')) {
     const e = G.enemyDef(tr.dataset.id);
     if (!e) continue;
@@ -66,6 +81,12 @@ function onChange(ev) {
   if (!s) return;
   if (el.id === 'dr-points') {
     G.devSetPoints(s, el.value);
+  } else if (el.id === 'dr-level') {
+    G.devSetLevel(s, el.value);
+  } else if (el.id === 'dr-xp') {
+    G.devSetLevel(s, s.level, el.value);
+  } else if (el.dataset.run === 'shop') {
+    G.devSetShop(s, el.closest('tr[data-shop]').dataset.shop, el.value);
   } else {
     const tr = el.closest('tr[data-id]');
     if (!tr) return;

@@ -258,7 +258,7 @@ details.en.wip > summary { color: var(--wip); }
 .wip { color: var(--wip); }
 /* dev/run */
 .dev-run #dr-list td { vertical-align: middle; }
-.dev-run #dr-list input[type=number] { width: 70px; }
+.dev-run #dr-list input[type=number], .dev-run #dr-shop input[type=number] { width: 70px; }
 h3.de-tier { font-size: inherit; font-weight: normal; margin: 12px 0 4px; color: var(--fg); }
 h3.de-tier:first-child { margin-top: 0; }
 details.fld { margin-top: 4px; }
