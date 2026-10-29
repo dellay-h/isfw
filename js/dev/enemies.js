@@ -181,7 +181,13 @@ function skillRewardsField(e, i) {
 function enemyBlock(e, i, warns) {
   const u = withC(() => G.enemyUnit(e));
   const dev = G.inDev(e);
-  const summary = [dev ? `in development for tier ${G.tierAbs(e)}` : `tier ${e.tier || 0}`, `hp ${num(u.maxHp)}`, `${e.limit} kills`, `${(e.skills || []).length} skills`]
+  // dps before the player's defenses (burns on a 20 max hp player, like the
+  // skills field); effective hp from max hp and resistances only
+  const dps = withC(() => G.enemyDps(e, 20)).total;
+  const ehp = G.effectiveHp(u);
+  const tip = 'effective hp: damage of that type needed to defeat it, from max hp and resistances (armor for physical) only; block, regen, lifesteal and shields are not counted';
+  const summary = [dev ? `in development for tier ${G.tierAbs(e)}` : `tier ${e.tier || 0}`, `hp ${num(u.maxHp)}`,
+    `dps ${num(dps)}`, `<span title="${tip}">ehp phys ${num(ehp.physical)} / mag ${num(ehp.magic)}</span>`, `${e.limit} kills`, `${(e.skills || []).length} skills`]
     .concat((e.rewards || []).map((r) => `${G.STAT_LABEL[r.stat] || '?'} +${r.type === 'percent' ? `${num((r.total || 0) * 100)}%` : num(r.total || 0)} total`));
   const n = E().length;
   return `<details class="en${dev ? ' wip' : ''}" data-key="${esc(e.id)}"${open.has(e.id) ? ' open' : ''}>

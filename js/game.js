@@ -777,6 +777,17 @@ export function enemyDps(e, playerMaxHp) {
   return { total, parts, unit: u };
 }
 
+// Effective hp: the damage of each type needed to defeat a unit, from its max
+// hp and its resistances only (armor for physical; magic has no resistance
+// yet). Block, lifesteal, regen, shields and the like are left out: their
+// effect depends on the attacker.
+export function effectiveHp(u) {
+  return {
+    physical: u.maxHp / (1 - armorReduction(u.armor)),
+    magic: u.maxHp,
+  };
+}
+
 // Hit damage after armor (%) then block (flat). Never negative.
 export function mitigate(dmg, armor, block) {
   return Math.max(0, dmg * (1 - armorReduction(armor)) - Math.max(0, block));
