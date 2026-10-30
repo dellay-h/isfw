@@ -148,7 +148,7 @@ export function load() {
   if (!s.hpMax) s.hpMax = derived(s).maxHp;
   syncHp(s);
   clampPools(s);
-  updateReveals(s, false, false);
+  updateReveals(s, true, false); // also counts what the save shows was reached in earlier prestiges
   return s;
 }
 
@@ -521,7 +521,13 @@ function condMet(s, c, legacy = false) {
   if (c.level !== undefined) return s.level >= c.level;
   return false;
 }
-export const enemyRevealed = (s, e) => !!e && (!revealRule(e) || !!s.revealed[e.id]);
+// Tier gate (REVEAL.tierBoss): tier n >= 2 is open while a boss of tier n - 1
+// has been defeated in the current prestige.
+export function tierOpen(s, tier) {
+  if (!REVEAL.tierBoss || !(tier >= 2)) return true;
+  return C.enemies.some((b) => rankOf(b) === 'boss' && (b.tier || 0) === tier - 1 && (s.kills[b.id] || 0) > 0);
+}
+export const enemyRevealed = (s, e) => !!e && (!revealRule(e) || !!s.revealed[e.id]) && tierOpen(s, e.tier || 0);
 export const shopRevealed = (s, x) => !!x && (!REVEAL.shop[x.id] || !!s.revealed[x.id]);
 export const visibleEnemies = (s) => C.enemies.filter((e) => enemyRevealed(s, e));
 export const visibleShop = (s) => PRESTIGE_SHOP.filter((x) => shopRevealed(s, x));
@@ -536,7 +542,7 @@ export function skillVisible(s, id) {
 export function updateReveals(s, legacy = false, logIt = true) {
   const out = [];
   for (const e of C.enemies) {
-    if (enemyRevealed(s, e)) continue;
+    if (!revealRule(e) || s.revealed[e.id]) continue;
     const own = legacy && ((s.kills[e.id] || 0) > 0 || s.prestige.maxKills[e.id] || s.prestige.unlocked[e.id]);
     if (own || condMet(s, revealRule(e), legacy)) { s.revealed[e.id] = true; out.push(`${e.id} ${e.name}`); }
   }
@@ -1153,6 +1159,7 @@ function win(s, e) {
     return `${STAT_LABEL[r.stat]} +${r.type === 'percent' ? `${(g * 100).toFixed(2)}%` : g.toFixed(3)}`;
   }).join(', ');
   log(s, `${e.id} ${e.name} cleared ${n}/${lim} in ${s.fight.elapsed.toFixed(1)}s  ${rText}${tag}`, 'ok');
+  if (REVEAL.tierBoss && rankOf(e) === 'boss' && n === 1 && C.enemies.some((x) => (x.tier || 0) === (e.tier || 0) + 1)) log(s, `tier ${(e.tier || 0) + 1} open for this prestige (${e.id} ${e.name} defeated)`, 'warn');
   s.fight = null;
   noteSkills(s);
   updateReveals(s);

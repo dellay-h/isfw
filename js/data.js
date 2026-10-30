@@ -102,11 +102,15 @@ export const ESSENCE = { perKill: 1 };
 //   { level: n }       player level n reached
 // Skills and specials have no rule of their own: they show when an enemy that
 // is not hidden awards their lv1 (or the player has them).
+//   tierBoss  true: besides the rules above, every tier from 2 up is shown
+//             only while a boss of the tier before it has been defeated in
+//             the current prestige (not kept: hidden again after a prestige)
 export const REVEAL = {
-  tiers: {
-    2: { enemy: 'E010', kills: 1 },      // tier 2 after the tier 1 boss (vampire)
+  tierBoss: true,
+  tiers: {},
+  enemies: {
+    E013: { enemy: 'E010', kills: 1 },   // elder sapling after the first vampire kill
   },
-  enemies: {},
   shop: {},
 };
 
