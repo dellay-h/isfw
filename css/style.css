@@ -403,7 +403,8 @@ button.armed { color: var(--err); border-color: var(--err); }
 #m-new::before { content: '·'; margin-right: 2px; }
 #shop .tip::after { white-space: normal; width: 240px; text-align: left; }
 
-/* essence shop (same layout as the prestige shop) */
+/* essence shop (same layout as the prestige shop); hidden until P13 */
+#essence[hidden], #stabs button[hidden], #st-essence-row[hidden] { display: none !important; }
 #ess-points { float: right; }
 #essence td { vertical-align: top; white-space: normal; padding: 2px 4px; }
 #essence td:first-child { width: 40px; }

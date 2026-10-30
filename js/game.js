@@ -423,7 +423,9 @@ export function essenceCost(s, id) {
   if (!x) return null;
   return (x.cost?.base || 0) + (x.cost?.step || 0) * essenceLevel(s, id);
 }
-export const canBuyEssence = (s, id) => { const c = essenceCost(s, id); return c !== null && s.essence.points >= c; };
+// The essence system is unlocked by a prestige shop item (essence: P13).
+export const essenceOn = (s) => PRESTIGE_SHOP.some((x) => x.essence && shopLevel(s, x.id) > 0);
+export const canBuyEssence = (s, id) => { const c = essenceCost(s, id); return c !== null && essenceOn(s) && s.essence.points >= c; };
 export function buyEssence(s, id) {
   if (!canBuyEssence(s, id)) return false;
   const x = essenceDef(id);
@@ -434,10 +436,12 @@ export function buyEssence(s, id) {
   return true;
 }
 export function gainEssence(s, n = ESSENCE.perKill) {
+  if (!essenceOn(s)) return;
   s.essence.points += n;
 }
 function essenceEffects(s) {
   const out = [];
+  if (!essenceOn(s)) return out;
   for (const x of ESSENCE_SHOP) {
     const lv = essenceLevel(s, x.id);
     if (!lv) continue;

@@ -114,14 +114,20 @@ export const PRESTIGE_SHOP = [
   // minKills { rank: n }: when bought, enemies of that rank still growing get
   // at least n max kills (never above the rank's cap).
   // requires: item id that must be owned before this one can be bought.
-  { id: 'P09', name: 'limit breaker', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['common'], minKills: { common: 100 } },
+  { id: 'P09', name: 'limit breaker', max: 1, cost: { base: 10, step: 0 }, limitGrowth: ['common'], minKills: { common: 100 } },
   { id: 'P10', name: 'limit breaker: elites', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['elite'], requires: 'P09' },
   { id: 'P11', name: 'limit breaker: bosses', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['boss'], requires: 'P09' },
+  // effects [{ stat, kind, v }] per level ('flat' adds, 'pct' multiplies)
+  { id: 'P12', name: 'improved fighting', max: 1, cost: { base: 1, step: 0 }, effects: [{ stat: 'damage', kind: 'flat', v: 0.5 }, { stat: 'attackSpeed', kind: 'flat', v: 0.2 }, { stat: 'maxHp', kind: 'flat', v: 5 }] },
+  // essence: unlocks the essence system (ESSENCE): essence from kills, the
+  // essence shop and its bonuses. Without it none of these apply.
+  { id: 'P13', name: 'essence collector', max: 1, cost: { base: 3, step: 0 }, essence: true },
 ];
 
 // Essence: a granular resource for small, specific upgrades. Gained like xp
 // (perKill for every enemy kill), kept through prestiges; a full reset
-// clears it. Spent in the essence shop.
+// clears it. Spent in the essence shop. Locked until the prestige shop's
+// essence collector (P13) is bought.
 export const ESSENCE = { perKill: 1 };
 // Essence shop. Items have no max level: each level costs
 // cost.base + cost.step x (levels bought) and adds `effects` once more
