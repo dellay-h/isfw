@@ -189,10 +189,35 @@ export function limitState(s, e) {
   return { lim, cap, capped, pool: capped ? cap : lim };
 }
 export const limitOf = (s, e) => (e ? limitState(s, e).lim : 0);
-// Largest change in max kills this prestige can bring (with enough kills):
-// + while growing, - after the cap (down to 1).
-export function limitStep(s, e) {
+// Max kills growth/shrink is a prestige shop upgrade (limitGrowth, P09).
+export const growthOwned = (s) => PRESTIGE_SHOP.some((x) => x.limitGrowth && shopLevel(s, x.id) > 0);
+// Lowest max kills an enemy starts a prestige with (shop minKills by rank,
+// never above the rank's cap); 0 = none.
+export function minKillsOf(s, e) {
   if (!e || isFixed(e)) return 0;
+  let n = 0;
+  for (const x of PRESTIGE_SHOP) if (shopLevel(s, x.id) > 0) n = Math.max(n, Math.floor(x.minKills?.[rankOf(e)] || 0));
+  return Math.min(n, capOf(e));
+}
+// Raises enemies still growing to their minKills (applied when the shop item
+// is bought, and again on each prestige for enemies released since).
+// Returns the enemies raised.
+export function applyMinKills(s) {
+  const raised = [];
+  for (const e of C.enemies) {
+    const min = minKillsOf(s, e);
+    const st = limitState(s, e);
+    if (!min || st.capped || st.lim >= min) continue;
+    s.prestige.maxKills[e.id] = min;
+    if (min >= st.cap) s.prestige.capped[e.id] = true;
+    raised.push(e);
+  }
+  return raised;
+}
+// Largest change in max kills this prestige can bring (with enough kills):
+// + while growing, - after the cap (down to 1). 0 without the shop upgrade.
+export function limitStep(s, e) {
+  if (!e || isFixed(e) || !growthOwned(s)) return 0;
   const { lim, cap, capped } = limitState(s, e);
   const step = Math.ceil(lim * LIMIT_GROWTH.share);
   return capped ? -Math.max(0, Math.min(step, lim - 1)) : Math.max(0, Math.min(step, cap - lim));
@@ -245,6 +270,7 @@ export function prestige(s) {
     if (lim >= st.cap || st.capped) s.prestige.capped[e.id] = true;
     if (g > 0) grown++; else shrunk++;
   }
+  const raised = applyMinKills(s);
   s.fight = null;
   s.retry = null;
   s.kills = Object.fromEntries(C.enemies.map((e) => [e.id, rankOf(e) === 'challenge' ? s.kills[e.id] || 0 : 0]));
@@ -255,6 +281,7 @@ export function prestige(s) {
   const auto = applyAutoEquip(s);
   s.prestige.points += gain;
   s.prestige.count++;
+  if (raised.length) log(s, `max kills raised to ${raised.map((e) => `${limitOf(s, e)} on ${e.id} ${e.name}`).join(', ')} (shop)`, 'warn');
   for (const [e, n] of started) log(s, `${e.id} ${e.name} starts at ${n}/${limitOf(s, e)} kills (head start)`, 'warn');
   if (auto.length) log(s, `auto-equipped: ${auto.map((id) => `${id} ${skillDef(id).name}`).join(', ')}`, 'warn');
   if (free.length) log(s, `free skill${free.length > 1 ? 's' : ''} this prestige (no slot needed): ${free.map((id) => `${id} ${skillDef(id).name}`).join(', ')}`, 'warn');
@@ -357,9 +384,11 @@ export function buy(s, id) {
   const x = shopDef(id);
   s.prestige.points -= shopCost(s, id);
   s.prestige.shop[id] = shopLevel(s, id) + 1;
+  const raised = applyMinKills(s);
   syncSlots(s);
   syncHp(s);
   log(s, `prestige shop: ${x.id} ${x.name} lv${s.prestige.shop[id]} (${s.prestige.points} point${s.prestige.points === 1 ? '' : 's'} left)`, 'warn');
+  if (raised.length) log(s, `max kills raised to ${raised.map((e) => `${limitOf(s, e)} on ${e.id} ${e.name}`).join(', ')} (shop)`, 'warn');
   return true;
 }
 

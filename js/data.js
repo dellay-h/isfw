@@ -47,6 +47,8 @@ export const RANKS = {
 //   shrinking: once the cap is reached, -1 per kill, down to 1. The total
 //              stays at its cap value and is spread over fewer kills.
 // Ranks with `fixed` (challenge, tutorial) never change.
+// Growth and shrink only happen once a prestige shop item with `limitGrowth`
+// is owned (P09); before that, max kills stay where they are.
 export const LIMIT_GROWTH = { share: 0.1, cap: 1000 };
 
 // Kill rewards. Each enemy lists rewards: [{ stat, total, type? }]. total is
@@ -104,6 +106,10 @@ export const PRESTIGE_SHOP = [
   { id: 'P06', name: 'muscle memory', max: 1, cost: { base: 3, step: 0 }, free: 1, freeExclude: ['S01'] },
   { id: 'P07', name: 'head start', max: 10, cost: { base: 1, step: 0 }, startKills: { enemy: 'E001', n: 1 } },
   { id: 'P08', name: 'routine', max: 1, cost: { base: 10, step: 0 }, autoEquip: true },
+  // limitGrowth: turns on max kills growth/shrink (LIMIT_GROWTH).
+  // minKills { rank: n }: when bought, enemies of that rank still growing get
+  // at least n max kills (never above the rank's cap).
+  { id: 'P09', name: 'seasoned', max: 1, cost: { base: 1, step: 0 }, limitGrowth: true, minKills: { common: 100 } },
 ];
 
 // Reveal rules: what stays hidden from the monitor (and locked) until a
