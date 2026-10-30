@@ -194,8 +194,11 @@ export function limitState(s, e) {
   return { lim, cap, capped, pool: capped ? cap : lim };
 }
 export const limitOf = (s, e) => (e ? limitState(s, e).lim : 0);
-// Max kills growth/shrink is a prestige shop upgrade (limitGrowth, P09).
-export const growthOwned = (s) => PRESTIGE_SHOP.some((x) => x.limitGrowth && shopLevel(s, x.id) > 0);
+// Max kills growth/shrink is bought per rank in the prestige shop
+// (limitGrowth: P09 common, P10 elite, P11 boss).
+export const growthRanks = (s) => new Set(PRESTIGE_SHOP.filter((x) => shopLevel(s, x.id) > 0).flatMap((x) => x.limitGrowth || []));
+export const growthOwned = (s) => growthRanks(s).size > 0;
+export const growthOn = (s, e) => !!e && !isFixed(e) && growthRanks(s).has(rankOf(e));
 // Lowest max kills an enemy starts a prestige with (shop minKills by rank,
 // never above the rank's cap); 0 = none.
 export function minKillsOf(s, e) {
@@ -222,7 +225,7 @@ export function applyMinKills(s) {
 // Largest change in max kills this prestige can bring (with enough kills):
 // + while growing, - after the cap (down to 1). 0 without the shop upgrade.
 export function limitStep(s, e) {
-  if (!e || isFixed(e) || !growthOwned(s)) return 0;
+  if (!e || !growthOn(s, e)) return 0;
   const { lim, cap, capped } = limitState(s, e);
   const step = Math.ceil(lim * LIMIT_GROWTH.share);
   return capped ? -Math.max(0, Math.min(step, lim - 1)) : Math.max(0, Math.min(step, cap - lim));
@@ -382,7 +385,9 @@ export function shopCost(s, id) {
   if (!x || lv >= x.max) return null;
   return (x.cost?.base || 0) + (x.cost?.step || 0) * lv;
 }
-export const canBuy = (s, id) => { const c = shopCost(s, id); return c !== null && shopRevealed(s, shopDef(id)) && s.prestige.points >= c; };
+// An item's `requires`: another item that must be owned first.
+export const shopMissing = (s, id) => { const r = shopDef(id)?.requires; return r && !shopLevel(s, r) ? r : null; };
+export const canBuy = (s, id) => { const c = shopCost(s, id); return c !== null && shopRevealed(s, shopDef(id)) && !shopMissing(s, id) && s.prestige.points >= c; };
 
 export function buy(s, id) {
   if (!canBuy(s, id)) return false;

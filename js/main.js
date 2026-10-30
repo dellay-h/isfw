@@ -299,7 +299,7 @@ function rewardsBreakdown(e) {
   } else {
     rows.push(['max kills', `${lim}`, 'head']);
     rows.push(['base', `${e.limit}`]);
-    if (!G.growthOwned(s)) rows.push(['growth', 'off (prestige shop)']);
+    if (!G.growthOn(s, e)) rows.push(['growth', 'off (prestige shop)']);
     else rows.push([st.capped ? 'shrinking' : 'growing', st.capped ? `cap ${st.cap} reached, down to 1` : `up to ${st.cap}`]);
     if (g) rows.push(['next prestige', `${g > 0 ? '+' : ''}${g}`]);
   }
@@ -723,7 +723,10 @@ function shopLines(x) {
     out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Every prestige starts with ${x.startKills.n} ${name} kill${x.startKills.n === 1 ? '' : 's'} per level already done (never above its max kills), with the rewards and unlocks of those kills. Applies from the next prestige.`)}">start kills +${x.startKills.n}</span>`);
   }
   if (x.autoEquip) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Skills already unlocked when a prestige starts (challenge specials and head start kills) get an auto-equip toggle in the library: toggled skills are loaded into the slots at the start of every prestige, no more than the slots a prestige starts with.')}">auto-equip</span>`);
-  if (x.limitGrowth) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Turns on max kills growth: each kill raises an enemy\'s max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the rank\'s cap; after the cap they shrink again without lowering the total. Challenge and tutorial enemies never change. Applies to kills from now on.')}">max kills growth</span>`);
+  if (x.limitGrowth) {
+    const ranks = x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ');
+    out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${ranks}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the rank's cap; after the cap they shrink again without lowering the total. Applies to kills from now on.`)}">${ranks} max kills growth</span>`);
+  }
   for (const [rank, n] of Object.entries(x.minKills || {})) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Every ${rank} enemy gets at least ${n} max kills, right away (more total attribute reward, and its kill ${n} unlocks become reachable). Enemies already past the cap keep shrinking.`)}">${rank} max kills ${n}</span>`);
   if (x.free) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`On every prestige, ${x.free === 1 ? 'one skill' : `${x.free} skills`} chosen at random from the skills unlocked in the prestige that ended is free in the next one: level 1 without unlocking it (higher levels need their usual unlocks), active without using a skill slot, and can be unloaded.${(x.freeExclude || []).length ? ` Never picks ${x.freeExclude.map((id) => G.skillDef(id)?.name || id).join(', ')}.` : ''} Applies from the next prestige.`)}">free skill +${x.free}</span>`);
   return out.join(', ');
@@ -739,7 +742,7 @@ function renderShop() {
     const cost = G.shopCost(s, x.id);
     const btn = cost === null
       ? '<span class="muted">max</span>'
-      : `<button data-act="buy" data-id="${x.id}" ${G.canBuy(s, x.id) ? '' : 'disabled'}>${cost} pt</button>`;
+      : `<button data-act="buy" data-id="${x.id}" ${G.canBuy(s, x.id) ? '' : 'disabled'}>${cost} pt</button>${G.shopMissing(s, x.id) ? `<div class="muted">needs ${G.shopMissing(s, x.id)}</div>` : ''}`;
     return `<tr${lv ? '' : ' class="muted"'}><td>${x.id}</td><td>${x.name}<div class="muted">lv ${lv}/${x.max}</div></td><td>${shopLines(x)}<span class="muted">/lv</span></td><td>${btn}</td></tr>`;
   }).join('');
 }

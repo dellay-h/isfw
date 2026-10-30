@@ -47,8 +47,9 @@ export const RANKS = {
 //   shrinking: once the cap is reached, -1 per kill, down to 1. The total
 //              stays at its cap value and is spread over fewer kills.
 // Ranks with `fixed` (challenge, tutorial) never change.
-// Growth and shrink only happen once a prestige shop item with `limitGrowth`
-// is owned (P09); before that, max kills stay where they are.
+// Growth and shrink only happen for the ranks a prestige shop item with
+// `limitGrowth` covers (P09 common, P10 elite, P11 boss); other enemies keep
+// their max kills where they are.
 export const LIMIT_GROWTH = { share: 0.1, cap: 1000 };
 
 // Kill rewards. Each enemy lists rewards: [{ stat, total, type? }]. total is
@@ -108,10 +109,14 @@ export const RETIRED_SHOP = {
 export const PRESTIGE_SHOP = [
   { id: 'P05', name: 'spare slot', max: 1, cost: { base: 1, step: 0 }, slots: 1 },
   { id: 'P07', name: 'head start', max: 10, cost: { base: 1, step: 0 }, startKills: { enemy: 'E001', n: 1 } },
-  // limitGrowth: turns on max kills growth/shrink (LIMIT_GROWTH).
+  // limitGrowth [rank]: turns on max kills growth/shrink (LIMIT_GROWTH) for
+  // enemies of those ranks.
   // minKills { rank: n }: when bought, enemies of that rank still growing get
   // at least n max kills (never above the rank's cap).
-  { id: 'P09', name: 'seasoned', max: 1, cost: { base: 1, step: 0 }, limitGrowth: true, minKills: { common: 100 } },
+  // requires: item id that must be owned before this one can be bought.
+  { id: 'P09', name: 'limit breaker', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['common'], minKills: { common: 100 } },
+  { id: 'P10', name: 'limit breaker: elites', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['elite'], requires: 'P09' },
+  { id: 'P11', name: 'limit breaker: bosses', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['boss'], requires: 'P09' },
 ];
 
 // Essence: a granular resource for small, specific upgrades. Gained like xp
