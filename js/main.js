@@ -558,6 +558,7 @@ function render() {
   $('#st-ppoints').textContent = s.prestige.points;
   $('#st-essence').textContent = Math.floor(s.essence.points);
   renderEssenceLock();
+  renderShopLock();
   $('#st-pcount').textContent = s.prestige.count;
   renderPrestige();
   renderPopup(d);
@@ -735,7 +736,7 @@ function shopLines(x) {
 }
 function renderShop() {
   const items = G.visibleShop(s);
-  const key = JSON.stringify([s.prestige.points, s.prestige.shop, s.revealed]);
+  const key = JSON.stringify([s.prestige.points, s.prestige.shop, s.revealed, s.seenShop, s.prestige.count]);
   if (key === lastShopKey) return;
   lastShopKey = key;
   $('#shop-points').textContent = `${s.prestige.points} pt${s.prestige.points === 1 ? '' : 's'}`;
@@ -745,9 +746,35 @@ function renderShop() {
     const btn = cost === null
       ? '<span class="muted">max</span>'
       : `<button data-act="buy" data-id="${x.id}" ${G.canBuy(s, x.id) ? '' : 'disabled'}>${cost} pt</button>${G.shopMissing(s, x.id) ? `<div class="muted">needs ${G.shopMissing(s, x.id)}</div>` : ''}`;
-    return `<tr${lv ? '' : ' class="muted"'}><td>${x.id}</td><td>${x.name}<div class="muted">lv ${lv}/${x.max}</div></td><td>${shopLines(x)}<span class="muted">/lv</span></td><td>${btn}</td></tr>`;
+    const nw = G.isShopNew(s, x.id);
+    return `<tr${lv ? '' : ' class="muted"'}${nw ? ` data-pnew="${x.id}"` : ''}><td>${x.id}${nw ? ' <span class="badge" title="new">•</span>' : ''}</td><td>${x.name}<div class="muted">lv ${lv}/${x.max}</div></td><td>${shopLines(x)}<span class="muted">/lv</span></td><td>${btn}</td></tr>`;
   }).join('');
 }
+
+// Prestige shop lock (opens after the first prestige) and new-item notices:
+// a count on the tab (desktop and phone) and a dot on each new row. Leaving
+// the tab, or hovering a row on desktop, marks them seen.
+function renderShopLock() {
+  const off = !G.shopUnlocked(s);
+  const tab = $('#stabs [data-stab=prestige]');
+  if (tab.hidden !== off) {
+    tab.hidden = off;
+    $('#shop').hidden = off;
+    $('#mtabs [data-mtab=shop]').hidden = off;
+    if (off && document.body.dataset.stab === 'prestige') setStab('skills');
+    if (off && document.body.dataset.mtab === 'shop') setMtab('run');
+  }
+  const n = G.shopNew(s).length;
+  for (const sel of ['#p-new', '#m-pnew']) {
+    const el = $(sel);
+    el.hidden = !n;
+    if (n && el.textContent !== String(n)) el.textContent = String(n);
+  }
+}
+$('#shop').addEventListener('mouseover', (ev) => {
+  const tr = ev.target.closest('tr[data-pnew]');
+  if (tr && !narrow() && G.seeShop(s, tr.dataset.pnew)) render();
+});
 
 $('#shop').addEventListener('click', (ev) => {
   const btn = ev.target.closest('button[data-act=buy]');
@@ -822,6 +849,8 @@ $('#btn-reset').addEventListener('click', () => {
 // (Phones use the section tabs below instead.)
 const STAB_KEY = key('isfw.stab');
 function setStab(t) {
+  // leaving the prestige shop: its new items have been seen
+  if (document.body.dataset.stab === 'prestige' && t !== 'prestige' && G.seeShop(s)) G.save(s);
   document.body.dataset.stab = t;
   for (const b of document.querySelectorAll('#stabs [data-stab]')) b.classList.toggle('on', b.dataset.stab === t);
   try { localStorage.setItem(STAB_KEY, t); } catch {}
@@ -841,6 +870,7 @@ const MTAB_KEY = key('isfw.mtab');
 function setMtab(t) {
   // leaving the skills tab: its new skills have been seen
   if (document.body.dataset.mtab === 'skills' && t !== 'skills') G.seeAllSkills(s);
+  if (document.body.dataset.mtab === 'shop' && t !== 'shop' && G.seeShop(s)) G.save(s);
   document.body.dataset.mtab = t;
   for (const b of document.querySelectorAll('#mtabs [data-mtab]')) b.classList.toggle('on', b.dataset.mtab === t);
   try { localStorage.setItem(MTAB_KEY, t); } catch {}

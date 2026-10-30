@@ -62,8 +62,9 @@ main {
 #stabs button:first-child { padding-left: 0; }
 #stabs button:hover { color: var(--fg); }
 #stabs button.on { color: var(--fg); border-bottom-color: var(--accent); }
-#s-new { margin-left: 4px; }
-#s-new::before { content: '·'; margin-right: 2px; }
+#s-new, #p-new, #m-pnew { margin-left: 4px; }
+#s-new::before, #p-new::before, #m-pnew::before { content: '·'; margin-right: 2px; }
+#stabs button[data-stab=prestige][hidden], #mtabs button[hidden], #shop[hidden] { display: none !important; }
 @media (min-width: 641px) {
   #side > section { display: none; }
   body[data-stab=skills] #skills, body[data-stab=prestige] #shop, body[data-stab=essence] #essence { display: block; }

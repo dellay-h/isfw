@@ -57,6 +57,7 @@ export function newState() {
     known: {},                           // skills (and specials) ever unlocked: { id: true }
     fresh: {},                           // unlocked for the first time, not looked at yet: { id: true }
     revealed: {},                        // hidden enemies / shop items revealed for good: { id: true } (REVEAL)
+    seenShop: {},                        // prestige shop items the player has looked at: { id: true } (new-item notices)
     prestige: { points: 0, count: 0, shop: {}, maxKills: {}, capped: {}, unlocked: {}, free: [], freeOff: {}, auto: [] }, // kept through prestiges; only a full reset clears it
                                          // shop: { item id: level bought }
                                          // maxKills: { enemy id: max kills after LIMIT_GROWTH }
@@ -142,6 +143,8 @@ export function load() {
       s.revealed = { ...(saved.revealed || {}) };
       // saves before v0.63 had no list: reveal what the save shows was reached
       if (!saved.revealed) updateReveals(s, true, false);
+      // saves before v0.84 had no list: what the shop shows now counts as seen
+      s.seenShop = saved.seenShop ? { ...saved.seenShop } : Object.fromEntries((shopUnlocked(s) ? visibleShop(s) : []).map((x) => [x.id, true]));
     }
   } catch { /* corrupt or unavailable storage: fresh state */ }
   s.slots = s.slots.map((id) => (id && canLoad(s, id) ? id : null));
@@ -154,8 +157,8 @@ export function load() {
 
 export function save(s) {
   try {
-    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, xp, essence } = s;
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, level0: true, xp, essence }));
+    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, xp, essence, seenShop } = s;
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, level0: true, xp, essence, seenShop }));
   } catch { /* storage unavailable: run without saving */ }
 }
 
@@ -397,7 +400,18 @@ export function shopCost(s, id) {
 }
 // An item's `requires`: another item that must be owned first.
 export const shopMissing = (s, id) => { const r = shopDef(id)?.requires; return r && !shopLevel(s, r) ? r : null; };
-export const canBuy = (s, id) => { const c = shopCost(s, id); return c !== null && shopRevealed(s, shopDef(id)) && !shopMissing(s, id) && s.prestige.points >= c; };
+// The prestige shop opens after the first prestige.
+export const shopUnlocked = (s) => s.prestige.count >= 1;
+// New-item notices: items in the shop the player hasn't looked at yet.
+export const shopNew = (s) => (shopUnlocked(s) ? visibleShop(s).filter((x) => !s.seenShop[x.id]) : []);
+export const isShopNew = (s, id) => shopNew(s).some((x) => x.id === id);
+export function seeShop(s, id = null) {
+  const ids = id ? [id] : shopNew(s).map((x) => x.id);
+  let any = false;
+  for (const x of ids) if (!s.seenShop[x]) { s.seenShop[x] = true; any = true; }
+  return any;
+}
+export const canBuy = (s, id) => { const c = shopCost(s, id); return c !== null && shopUnlocked(s) && shopRevealed(s, shopDef(id)) && !shopMissing(s, id) && s.prestige.points >= c; };
 
 export function buy(s, id) {
   if (!canBuy(s, id)) return false;
