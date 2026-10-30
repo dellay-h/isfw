@@ -421,3 +421,7 @@ button.armed { color: var(--err); border-color: var(--err); }
 /* targets: max kills change in its own column, so the count never moves */
 #targets td.gain { padding-left: 0; width: 7ch; min-width: 7ch; }
 #p-xpbar .bar { display: block; max-width: none; }
+
+/* tooltips in the src panel (left edge of the page): open to the right and
+   wrap, so they stay on screen */
+#unit .tip::after { left: 0; right: auto; white-space: normal; width: 260px; max-width: calc(100vw - 32px); text-align: left; }
