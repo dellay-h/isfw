@@ -1,5 +1,5 @@
 // GitHub access for the online dev version (SITE.mode 'dev'): reads the
-// enemy/skill files from the dev branch, commits edits to it and releases it
+// enemy/skill/shop files from the dev branch, commits edits to it and releases it
 // to the playable version (main). Uses a fine-grained token kept only in
 // this browser (see README, "Online dev version").
 import { SITE, key } from './site.js';
@@ -56,9 +56,9 @@ export async function blobSha(text) {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export const FILE_PATHS = { enemies: 'js/enemies.js', skills: 'js/skills.js' };
+export const FILE_PATHS = { enemies: 'js/enemies.js', skills: 'js/skills.js', shop: 'js/shop.js' };
 
-// Latest enemies.js / skills.js on the dev branch, so the dev version never
+// Latest enemies.js / skills.js / shop.js on the dev branch, so the dev version never
 // waits for the site to redeploy after a commit.
 export async function loadRemote() {
   const ref = await api(`/git/ref/heads/${SITE.branch}`);
@@ -69,7 +69,7 @@ export async function loadRemote() {
     const url = URL.createObjectURL(new Blob([text], { type: 'text/javascript' }));
     try {
       const m = await import(url);
-      out[name] = { text, data: m.ENEMIES || m.SKILLS, sha: await blobSha(text) };
+      out[name] = { text, data: m.ENEMIES || m.SKILLS || m.SHOP, sha: await blobSha(text) };
     } finally {
       URL.revokeObjectURL(url);
     }

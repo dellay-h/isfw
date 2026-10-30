@@ -1,6 +1,6 @@
-// Dev screens (dev/enemies, dev/skills). Both edit the same in-memory copies
-// of the enemy and skill lists (dev/store.js): saved to their files on every
-// change locally, committed to GitHub from the online dev version.
+// Dev screens (dev/enemies, dev/skills, dev/shop). They edit in-memory copies
+// of the enemy, skill and shop lists (dev/store.js): saved to their files on
+// every change locally, committed to GitHub from the online dev version.
 import { STALE_DRAFTS } from './data.js';
 import { SITE } from './site.js';
 import {
@@ -8,6 +8,7 @@ import {
 } from './dev/store.js';
 import { initEnemies, renderEnemies } from './dev/enemies.js';
 import { initSkills, renderSkills } from './dev/skills.js';
+import { initShop, renderShop } from './dev/shop.js';
 import { initRun, showRun } from './dev/run.js';
 import { confirmed } from './dev/ui.js';
 
@@ -19,7 +20,7 @@ function renderBanner() {
   const msgs = [];
   if (server.ok === false) msgs.push(server.msg);
   if (gh.error) msgs.push(gh.error);
-  if (STALE_DRAFTS.length) msgs.push(`Unsaved dev edits to ${[...new Set(STALE_DRAFTS)].join(' and ')} were made on an older version of the file, so the file was used instead. They are kept aside in this browser (localStorage isfw${SITE.mode === 'dev' ? '.devsite' : ''}.dev.stale.*).`);
+  if (STALE_DRAFTS.length) msgs.push(`Unsaved dev edits to ${[...new Set(STALE_DRAFTS)].join(', ')} were made on an older version of the file, so the file was used instead. They are kept aside in this browser (localStorage isfw${SITE.mode === 'dev' ? '.devsite' : ''}.dev.stale.*).`);
   b.hidden = !current || !msgs.length;
   b.innerHTML = msgs.map((m) => `<div>${m}</div>`).join('');
 }
@@ -88,7 +89,7 @@ function renderBar() {
 // re-render. Expand/collapse and the preview panel keep working.
 function lockEditing() {
   const lock = () => {
-    for (const el of document.querySelectorAll('.dev-main input, .dev-main select, .dev-main textarea, .dev-main button[data-act], #de-new, #ds-new, #de-apply, #ds-apply')) el.disabled = true;
+    for (const el of document.querySelectorAll('.dev-main input, .dev-main select, .dev-main textarea, .dev-main button[data-act], #de-new, #ds-new, #de-apply, #ds-apply, #dp-new, #dp-new-ess, #dp-apply')) el.disabled = true;
   };
   for (const root of document.querySelectorAll('.dev-main')) new MutationObserver(lock).observe(root, { childList: true, subtree: true });
   lock();
@@ -98,6 +99,7 @@ export function showDev(view) {
   current = view;
   if (view === 'dev/enemies') renderEnemies();
   else if (view === 'dev/skills') renderSkills();
+  else if (view === 'dev/shop') renderShop();
   showRun(view === 'dev/run');
   renderBanner();
   renderBar();
@@ -107,9 +109,10 @@ export function initDev({ getState, save, getSpeed, setSpeed } = {}) {
   initEnemies({ getState });
   initRun({ getState, save, getSpeed, setSpeed }); // edits the game save, not the data files: never read-only
   initSkills();
+  initShop();
   if (READONLY) lockEditing();
   buildBar();
-  for (const id of ['#de-apply', '#ds-apply']) {
+  for (const id of ['#de-apply', '#ds-apply', '#dp-apply']) {
     $(id).addEventListener('click', async () => { await flush(); location.reload(); });
   }
   // A save, commit or check finished: refresh the visible page.

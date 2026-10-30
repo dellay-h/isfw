@@ -66,13 +66,14 @@ work on, usually `dev`) before editing locally.
 - `js/data.js` – player base stats, reward rules, attribute and bonus lists; loads the data files
 - `js/enemies.js` – enemies (written by dev/enemies, can be edited by hand)
 - `js/skills.js` – skills (written by dev/skills), shared by the player and enemies: S.. skills, X.. specials
+- `js/shop.js` – prestige (P..) and essence (N..) shop items, retired ones included (written by dev/shop)
 - `js/game.js` – state, save/load, units, combat simulation (no DOM)
 - `js/main.js` – game loop, monitor rendering, input, view switching
-- `js/dev.js`, `js/dev/*.js` – dev screens (shared store, enemy page, skill page)
-- `js/serialize.js` – writes `enemies.js` / `skills.js` source
+- `js/dev.js`, `js/dev/*.js` – dev screens (shared store, enemy page, skill page, shop page, run page)
+- `js/serialize.js` – writes `enemies.js` / `skills.js` / `shop.js` source
 - `js/migrate.js` – converts dev edits saved in the old enemy format
 - `design/` – design notes: archetype ideas, skill ideas
-- `server.py` – local server (no caching, `/api/ping`, saves `/api/enemies` and `/api/skills`)
+- `server.py` – local server (no caching, `/api/ping`, saves `/api/enemies`, `/api/skills` and `/api/shop`)
 - `js/site.js` – which version this copy is (local / play / dev) and browser storage names; replaced in the online copies
 - `js/github.js` – GitHub access for the online dev version (load, commit, release)
 - `.github/workflows/pages.yml` – publishes the playable and dev versions to GitHub Pages
@@ -113,6 +114,16 @@ and holds effects: attack, spell, on-hit damage, empower, attribute bonuses,
 skill slots. Later levels add to the levels before them. Each skill shows which
 enemies award it to the player and which enemies use it. Changing a skill id
 updates the enemies that refer to it.
+
+### dev/shop
+Prestige and essence shop items, grouped by shop, with retired items last.
+Each item: id, name, shop, "retired" (out of the game; saves that bought it
+get the cost back in points or essence), max level (prestige items), cost
+(first level + increase per level bought, with the cost of the first levels
+shown), attribute bonuses per level, and other effects (skill slots, start
+kills, max kills growth per rank, minimum max kills per rank, required item,
+unlocks essence, free skills, auto-equip). Changing an id updates the items
+that require it. Prefer retiring to deleting an item players may own.
 
 ## Rules (v0.33)
 

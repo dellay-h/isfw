@@ -4,6 +4,7 @@
 #   GET  /api/ping           -> identifies this server (the dev screens check it)
 #   POST /api/enemies?base=  -> overwrites js/enemies.js
 #   POST /api/skills?base=   -> overwrites js/skills.js
+#   POST /api/shop?base=     -> overwrites js/shop.js
 # base is the sha-256 of the file the page last loaded or saved; if the file
 # changed since (edited elsewhere), the save is refused with 409 so an old page
 # can never overwrite newer data.
@@ -18,7 +19,7 @@ import webbrowser
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 ROOT = os.path.dirname(os.path.abspath(__file__))
-FILES = {'enemies': 'ENEMIES', 'skills': 'SKILLS'}  # name -> export it must contain
+FILES = {'enemies': 'ENEMIES', 'skills': 'SKILLS', 'shop': 'SHOP'}  # name -> export it must contain
 os.chdir(ROOT)
 
 

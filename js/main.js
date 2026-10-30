@@ -899,13 +899,13 @@ function tick() {
 // ---------- views (top band nav) ----------
 // The playable version (SITE.mode 'play') has no dev pages at all.
 const PLAY = SITE.mode === 'play';
-const VIEWS = PLAY ? { monitor: '#view-monitor' } : { monitor: '#view-monitor', 'dev/enemies': '#view-dev-enemies', 'dev/skills': '#view-dev-skills', 'dev/run': '#view-dev-run' };
+const VIEWS = PLAY ? { monitor: '#view-monitor' } : { monitor: '#view-monitor', 'dev/enemies': '#view-dev-enemies', 'dev/skills': '#view-dev-skills', 'dev/shop': '#view-dev-shop', 'dev/run': '#view-dev-run' };
 if (PLAY) {
   for (const a of document.querySelectorAll('header nav a')) if (a.dataset.view !== 'monitor') a.remove();
 }
 if (SITE.mode === 'dev') {
   $('#version').textContent += ' · dev';
-  $('#draft-tag').title = 'enemies/skills come from dev edits not committed to the dev branch yet';
+  $('#draft-tag').title = 'enemies/skills/shop come from dev edits not committed to the dev branch yet';
 }
 function showView() {
   let v = location.hash.slice(1);

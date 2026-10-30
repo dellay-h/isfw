@@ -1,5 +1,5 @@
-// Turns the enemy and skill lists into the source text of js/enemies.js and
-// js/skills.js. Used by the dev screens, which save on every edit.
+// Turns the enemy, skill and shop lists into the source text of js/enemies.js,
+// js/skills.js and js/shop.js. Used by the dev screens, which save on every edit.
 
 const ENEMIES_HEADER = `// Enemy data. Written by the dev/enemies screen on every edit, but can also
 // be edited by hand.
@@ -108,6 +108,39 @@ function skillText(k) {
   lines.push(`levels: ${list(k.levels, LEVEL_ORDER, pad)},`);
   for (const x of Object.keys(k)) if (!['id', 'name', 'special', 'levels'].includes(x)) lines.push(`${key(x)}: ${lit(k[x])},`);
   return `  {\n${lines.map((l) => pad + l).join('\n')}\n  },`;
+}
+
+const SHOP_HEADER = `// Prestige and essence shop items. Written by the dev/shop screen on every
+// edit, but can also be edited by hand.
+//
+//   id         P.. prestige items, N.. essence items. Never reuse an id: saves
+//              keep the levels bought by id
+//   shop       'prestige' (bought with prestige points) | 'essence'
+//   name
+//   retired    true: out of the game; saves that bought it get the cost back
+//              on load (in points or essence) and lose the levels. Clear it
+//              to bring the item back
+//   max        highest level (prestige items; essence items have no cap)
+//   cost       { base, step }: the next level costs base + step x levels bought
+//
+// What each level gives (any combination):
+//   effects      [{ stat, kind: 'flat' | 'pct', v }] attribute bonus per level
+//                (stats: data.js ATTRS; 'pct' multiplies, 0.01 = 1%)
+//   slots        extra skill slots per level
+//   startKills   { enemy, n }: every prestige starts with n kills of that
+//                enemy per level (never above its max kills)
+//   limitGrowth  [rank]: max kills growth/shrink on for those ranks (LIMIT_GROWTH)
+//   minKills     { rank: n }: when bought, enemies of that rank still growing
+//                get at least n max kills
+//   requires     item id that must be owned before this one can be bought
+//   essence      true: unlocks essence (gain, essence shop and its bonuses)
+//   free         random free skills per prestige; freeExclude [skill id] never picked
+//   autoEquip    true: auto-equip toggles for skills unlocked at prestige start
+`;
+const SHOP_ORDER = ['id', 'shop', 'name', 'retired', 'max', 'cost', 'effects', 'slots', 'startKills', 'limitGrowth', 'minKills', 'requires', 'essence', 'free', 'freeExclude', 'autoEquip'];
+
+export function shopSource(items) {
+  return `${SHOP_HEADER}export const SHOP = [\n${items.map((x) => `  ${lit(x, SHOP_ORDER)},`).join('\n')}\n];\n`;
 }
 
 export function enemiesSource(enemies) {

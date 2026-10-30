@@ -1,7 +1,7 @@
-// Edited copies of the enemy and skill lists, shared by both dev pages.
+// Edited copies of the enemy, skill and shop lists, shared by the dev pages.
 //
 // Locally (SITE.mode 'local', start.bat): saved to their files on every
-// change through the ISFW server (server.py: POST /api/enemies, /api/skills).
+// change through the ISFW server (server.py: POST /api/enemies, /api/skills, /api/shop).
 // Until a save succeeds the edits are also kept in localStorage (data.js
 // loads them), so nothing is lost if the server is unreachable.
 //
@@ -9,17 +9,17 @@
 // GitHub token. Signed in, edits are kept in this browser as drafts and go
 // to the dev branch only when "commit" is pressed; "release to playable"
 // moves the playable version (main) to the dev branch.
-import { ENEMIES, SKILLS, FILES, DRAFT_KEYS, FILE_HASH, REMOTE, dataHash } from '../data.js';
-import { enemiesSource, skillsSource } from '../serialize.js';
+import { ENEMIES, SKILLS, SHOP, FILES, DRAFT_KEYS, FILE_HASH, REMOTE, dataHash } from '../data.js';
+import { enemiesSource, skillsSource, shopSource } from '../serialize.js';
 import { SITE } from '../site.js';
 import * as GH from '../github.js';
 
 const clone = (x) => structuredClone(x);
 export const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-export const store = { enemies: clone(ENEMIES), skills: clone(SKILLS) };
-export const RUNNING = { enemies: ENEMIES, skills: SKILLS }; // what the game uses
-const SOURCE = { enemies: enemiesSource, skills: skillsSource };
+export const store = { enemies: clone(ENEMIES), skills: clone(SKILLS), shop: clone(SHOP) };
+export const RUNNING = { enemies: ENEMIES, skills: SKILLS, shop: SHOP }; // what the game uses
+const SOURCE = { enemies: enemiesSource, skills: skillsSource, shop: shopSource };
 const SAVE_DELAY = 400; // ms after the last edit
 
 export const LOCAL = SITE.mode === 'local';
@@ -31,6 +31,7 @@ export const READONLY = !LOCAL && !SIGNED_IN;
 export const status = {
   enemies: { state: 'saved', msg: '', at: null, timer: null },
   skills: { state: 'saved', msg: '', at: null, timer: null },
+  shop: { state: 'saved', msg: '', at: null, timer: null },
 };
 export const server = { ok: null, msg: '' }; // null = not checked yet
 
@@ -54,6 +55,7 @@ export const gh = {
 const disk = {
   enemies: { data: FILE_HASH.enemies, text: null, blob: REMOTE?.enemies?.sha ?? null, committed: FILES.enemies },
   skills: { data: FILE_HASH.skills, text: null, blob: REMOTE?.skills?.sha ?? null, committed: FILES.skills },
+  shop: { data: FILE_HASH.shop, text: null, blob: REMOTE?.shop?.sha ?? null, committed: FILES.shop },
 };
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -65,7 +67,7 @@ const ready = !LOCAL ? Promise.resolve() : Promise.all(Object.keys(disk).map(asy
     const text = await r.text();
     // only trust it if it is the version this page loaded
     const m = await import(`../${name}.js?check=${Date.now()}`).catch(() => null);
-    const data = m && (m.ENEMIES || m.SKILLS);
+    const data = m && (m.ENEMIES || m.SKILLS || m.SHOP);
     if (data && dataHash(data) === FILE_HASH[name]) disk[name].text = await sha256(text);
     else disk[name].stale = true;
   } catch { /* unreachable: saves will report it */ }
@@ -206,7 +208,7 @@ export async function commit(message) {
     files[GH.FILE_PATHS[n]] = SOURCE[n](snap[n]);
     expected[GH.FILE_PATHS[n]] = disk[n].blob;
   }
-  const msg = message.trim() || `dev: update ${names.map((n) => `${n}.js`).join(' and ')}`;
+  const msg = message.trim() || `dev: update ${names.map((n) => `${n}.js`).join(', ')}`;
   try {
     const sha = await GH.commitFiles(files, expected, msg);
     for (const n of names) {
@@ -275,9 +277,8 @@ export function statusText(name) {
   else if (st.state === 'saved') parts.push(st.at ? `saved to ${file} ${st.at.toTimeString().slice(0, 8)}` : `${file} up to date`);
   else if (st.state === 'pending') parts.push('saving…');
   else parts.push(`<span class="err">not saved to ${file}: ${st.msg}. Edits are kept in this browser and saved with the next change.</span>`);
-  const inGame = same(store.enemies, RUNNING.enemies) && same(store.skills, RUNNING.skills);
-  parts.push(inGame ? 'game is running this version' : '<span class="warn">not applied to the game yet</span>');
+  parts.push(appliedToGame() ? 'game is running this version' : '<span class="warn">not applied to the game yet</span>');
   return parts.join(' · ');
 }
 
-export const appliedToGame = () => same(store.enemies, RUNNING.enemies) && same(store.skills, RUNNING.skills);
+export const appliedToGame = () => Object.keys(store).every((n) => same(store[n], RUNNING[n]));

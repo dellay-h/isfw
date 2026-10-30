@@ -14,12 +14,13 @@
       <a href="#monitor" data-view="monitor">monitor</a>
       <a href="#dev/enemies" data-view="dev/enemies">dev/enemies</a>
       <a href="#dev/skills" data-view="dev/skills">dev/skills</a>
+      <a href="#dev/shop" data-view="dev/shop">dev/shop</a>
       <a href="#dev/run" data-view="dev/run">dev/run</a>
     </nav>
     <span class="spacer"></span>
     <span id="speed-tag" class="warn" title="dev time speed (dev/run)" hidden></span>
-    <span id="draft-tag" class="warn" title="enemies/skills come from dev edits that are not saved to their files yet" hidden>dev draft&nbsp;&nbsp;</span>
-    <span class="muted" id="version">v0.81</span>
+    <span id="draft-tag" class="warn" title="enemies/skills/shop come from dev edits that are not saved to their files yet" hidden>dev draft&nbsp;&nbsp;</span>
+    <span class="muted" id="version">v0.82</span>
   </header>
 
   <main id="view-monitor">
@@ -145,6 +146,23 @@
       <div id="ds-status" class="dev-status"></div>
       <div id="ds-msg" class="dev-warn"></div>
       <div id="ds-list"></div>
+    </div>
+  </main>
+
+  <main id="view-dev-shop" class="dev-view" hidden>
+    <div class="dev-main">
+      <h2>shop items <span id="dp-count" class="muted"></span></h2>
+      <div class="controls">
+        <button id="dp-new">+ prestige item</button>
+        <button id="dp-new-ess">+ essence item</button>
+        <button id="dp-expand" class="quiet">expand all</button>
+        <button id="dp-collapse" class="quiet">collapse all</button>
+        <span class="spacer"></span>
+        <button id="dp-apply">apply to game</button>
+      </div>
+      <div id="dp-status" class="dev-status"></div>
+      <div id="dp-msg" class="dev-warn"></div>
+      <div id="dp-list"></div>
     </div>
   </main>
 

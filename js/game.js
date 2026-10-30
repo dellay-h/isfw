@@ -82,6 +82,7 @@ export function load() {
       // removed shop items: refund what was spent on them
       const refunds = [];
       for (const [id, x] of Object.entries(RETIRED_SHOP)) {
+        if (x.shop === 'essence') continue; // refunded with the essence below
         const lv = Math.max(0, Math.floor(s.prestige.shop[id] || 0));
         delete s.prestige.shop[id];
         if (!lv) continue;
@@ -114,7 +115,6 @@ export function load() {
         saved.slots.slice(0, s.slots.length).forEach((id, i) => { s.slots[i] = skillDef(id) ? id : null; });
       }
       s.log = Array.isArray(saved.log) ? saved.log.slice(-LOG_MAX) : [];
-      for (const msg of refunds) log(s, msg, 'warn');
       s.hp = typeof saved.hp === 'number' ? saved.hp : PLAYER_BASE.maxHp;
       s.mana = typeof saved.mana === 'number' ? saved.mana : 0;
       s.repeat = !!saved.repeat;
@@ -124,7 +124,17 @@ export function load() {
       s.level = Math.max(0, Math.floor(saved.level || 0) - (saved.level0 ? 0 : 1));
       s.xp = Math.max(0, Number(saved.xp) || 0);
       s.essence.points = Math.max(0, Number(saved.essence?.points) || 0);
-      for (const [id, lv] of Object.entries(saved.essence?.shop || {})) if (essenceDef(id) && lv > 0) s.essence.shop[id] = Math.floor(lv);
+      for (const [id, lv] of Object.entries(saved.essence?.shop || {})) {
+        if (essenceDef(id) && lv > 0) s.essence.shop[id] = Math.floor(lv);
+        const x = RETIRED_SHOP[id];
+        if (!x || x.shop !== 'essence' || !(lv > 0)) continue;
+        // retired essence item: give the essence back
+        let pts = 0;
+        for (let i = 0; i < Math.floor(lv); i++) pts += (x.cost?.base || 0) + (x.cost?.step || 0) * i;
+        s.essence.points += pts;
+        refunds.push(`essence shop: ${id} ${x.name} removed, ${pts} essence refunded`);
+      }
+      for (const msg of refunds) log(s, msg, 'warn');
       s.known = { ...(saved.known || {}) };
       s.fresh = { ...(saved.fresh || {}) };
       // saves before v0.56 had no list: what is unlocked now counts as seen

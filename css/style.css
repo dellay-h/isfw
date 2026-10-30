@@ -228,7 +228,12 @@ main[hidden], .dev-view[hidden] { display: none; }
 
 /* ---------- dev screen ---------- */
 .dev-view { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; max-width: 1400px; }
-#view-dev-skills { grid-template-columns: minmax(0, 1000px); }
+#view-dev-skills, #view-dev-shop { grid-template-columns: minmax(0, 1000px); }
+h3.dp-shop { font-size: inherit; font-weight: normal; margin: 12px 0 4px; color: var(--fg); }
+h3.dp-shop:first-child { margin-top: 0; }
+details.en.retired > summary { color: var(--muted); }
+.dev-view input.w-v { width: 70px; }
+#dp-list select { max-width: 220px; }
 @media (max-width: 1000px) { .dev-view { grid-template-columns: minmax(0, 1fr); } }
 .dev-side { position: sticky; top: 8px; align-self: start; background: var(--panel); border: 1px solid var(--line); padding: 4px 8px 8px; }
 .dev-side .kv td.num { text-align: right; }

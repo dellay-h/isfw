@@ -76,73 +76,19 @@ export const HEURISTIC = {
 // prestiges.
 export const LEVELS = { xpPer: 100, attrPer: 0.01 };
 
-// Prestige shop: permanent upgrades bought with prestige points. They are
-// kept through prestiges (only a full reset clears them).
-//   id, name
-//   max       highest level
-//   cost      points for the next level = cost.base + cost.step x current level
-//   effects   per level: [{ stat, kind: 'flat' | 'pct', v }] (stats as in ATTRS)
-//   slots     per level: extra skill slots
-//   free      per level: on every prestige, this many skills chosen at random
-//             from the ones unlocked in the prestige that just ended are free
-//             in the next one: lv1 without unlocking it (higher levels need
-//             their usual requirements), active without a slot, can be
-//             unloaded and loaded again
-//   freeExclude  skills the free picks never choose
-//   startKills per level: { enemy, n } every prestige starts with n more kills
-//             of that enemy (never above its max kills)
-//   autoEquip true: skills already unlocked when a prestige starts get an
-//             auto-equip toggle; toggled skills are loaded into the slots at
-//             the start of every prestige (no more than the slots it starts with)
-// Removed items: a save that bought them gets the points back on load
-// (cost as the item had it). Don't reuse these ids for new items. To bring
-// one back, move it to PRESTIGE_SHOP (add id and its fields again).
-export const RETIRED_SHOP = {
-  P01: { name: 'whetstone', cost: { base: 1, step: 1 } },
-  P02: { name: 'thick skin', cost: { base: 1, step: 1 } },
-  P03: { name: 'quick hands', cost: { base: 1, step: 1 } },
-  P04: { name: 'focus', cost: { base: 1, step: 1 } },
-  // kept for later (v0.78): full definitions, ready to move back
-  P06: { name: 'muscle memory', max: 1, cost: { base: 3, step: 0 }, free: 1, freeExclude: ['S01'] },
-  P08: { name: 'routine', max: 1, cost: { base: 10, step: 0 }, autoEquip: true },
-};
-export const PRESTIGE_SHOP = [
-  { id: 'P05', name: 'spare slot', max: 1, cost: { base: 1, step: 0 }, slots: 1 },
-  { id: 'P07', name: 'head start', max: 10, cost: { base: 1, step: 0 }, startKills: { enemy: 'E001', n: 1 } },
-  // limitGrowth [rank]: turns on max kills growth/shrink (LIMIT_GROWTH) for
-  // enemies of those ranks.
-  // minKills { rank: n }: when bought, enemies of that rank still growing get
-  // at least n max kills (never above the rank's cap).
-  // requires: item id that must be owned before this one can be bought.
-  { id: 'P09', name: 'limit breaker', max: 1, cost: { base: 10, step: 0 }, limitGrowth: ['common'], minKills: { common: 100 } },
-  { id: 'P10', name: 'limit breaker: elites', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['elite'], requires: 'P09' },
-  { id: 'P11', name: 'limit breaker: bosses', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['boss'], requires: 'P09' },
-  // effects [{ stat, kind, v }] per level ('flat' adds, 'pct' multiplies)
-  { id: 'P12', name: 'improved fighting', max: 1, cost: { base: 1, step: 0 }, effects: [{ stat: 'damage', kind: 'flat', v: 0.5 }, { stat: 'attackSpeed', kind: 'flat', v: 0.2 }, { stat: 'maxHp', kind: 'flat', v: 5 }] },
-  // essence: unlocks the essence system (ESSENCE): essence from kills, the
-  // essence shop and its bonuses. Without it none of these apply.
-  { id: 'P13', name: 'essence collector', max: 1, cost: { base: 3, step: 0 }, essence: true },
-];
+// Prestige and essence shops: their items live in shop.js (the dev/shop
+// screen saves every edit there); PRESTIGE_SHOP, ESSENCE_SHOP and
+// RETIRED_SHOP are built from it at the end of this file.
+// Prestige upgrades are kept through prestiges (only a full reset clears them).
 
 // Essence: a granular resource for small, specific upgrades. Gained like xp
 // (perKill for every enemy kill), kept through prestiges; a full reset
 // clears it. Spent in the essence shop. Locked until the prestige shop's
 // essence collector (P13) is bought.
 export const ESSENCE = { perKill: 1 };
-// Essence shop. Items have no max level: each level costs
-// cost.base + cost.step x (levels bought) and adds `effects` once more
-// (kind 'pct' multiplies the attribute, like skill mods).
-// TODO: unlock items (qol, features, skills): one level, cost only.
+// TODO: essence shop unlock items (qol, features, skills): one level, cost only.
 // TODO: an item that costs one resource and increases the gain of another
 //       (e.g. pay prestige points for more essence per kill).
-export const ESSENCE_SHOP = [
-  { id: 'N01', name: 'attack', cost: { base: 100, step: 100 }, effects: [{ stat: 'damage', kind: 'pct', v: 0.01 }] },
-  { id: 'N02', name: 'attack speed', cost: { base: 100, step: 100 }, effects: [{ stat: 'attackSpeed', kind: 'pct', v: 0.01 }] },
-  { id: 'N03', name: 'magic power', cost: { base: 100, step: 100 }, effects: [{ stat: 'magicPower', kind: 'pct', v: 0.01 }] },
-  { id: 'N04', name: 'cast speed', cost: { base: 100, step: 100 }, effects: [{ stat: 'magicSpeed', kind: 'pct', v: 0.01 }] },
-  { id: 'N05', name: 'armor', cost: { base: 100, step: 100 }, effects: [{ stat: 'armor', kind: 'pct', v: 0.01 }] },
-  { id: 'N06', name: 'hp', cost: { base: 100, step: 100 }, effects: [{ stat: 'maxHp', kind: 'pct', v: 0.01 }] },
-];
 
 // Reveal rules: what stays hidden from the monitor (and locked) until a
 // condition is met. Once met it stays revealed for good (kept through
@@ -204,14 +150,15 @@ export const MODS = {
   lifesteal: { label: 'lifesteal on physical dmg (0.1 = 10%)', to: [['lifesteal', 'flat']] },
 };
 
-// ---------- enemies and skills ----------
-// They live in enemies.js and skills.js (the dev screens save every edit
-// there). If a save failed, the edits kept in the browser are used instead
-// until they are saved.
+// ---------- enemies, skills and shop items ----------
+// They live in enemies.js, skills.js and shop.js (the dev screens save every
+// edit there). If a save failed, the edits kept in the browser are used
+// instead until they are saved.
 import { SITE, key } from './site.js';
 import { loadRemote, token } from './github.js';
 import { ENEMIES as LOCAL_ENEMIES } from './enemies.js';
 import { SKILLS as LOCAL_SKILLS } from './skills.js';
+import { SHOP as LOCAL_SHOP } from './shop.js';
 
 // Online dev version, signed in: use the latest files on the dev branch
 // (REMOTE.error is set if that failed; the files served with the page are
@@ -220,9 +167,10 @@ export const REMOTE = SITE.mode === 'dev' && token.get() ? await loadRemote().ca
 const fromRemote = !!(REMOTE && !REMOTE.error);
 const FILE_ENEMIES = fromRemote ? REMOTE.enemies.data : LOCAL_ENEMIES;
 const FILE_SKILLS = fromRemote ? REMOTE.skills.data : LOCAL_SKILLS;
+const FILE_SHOP = fromRemote ? REMOTE.shop.data : LOCAL_SHOP;
 
-export const FILES = { enemies: FILE_ENEMIES, skills: FILE_SKILLS };
-export const DRAFT_KEYS = { enemies: key('isfw.dev.enemies.v3'), skills: key('isfw.dev.skills.v3') };
+export const FILES = { enemies: FILE_ENEMIES, skills: FILE_SKILLS, shop: FILE_SHOP };
+export const DRAFT_KEYS = { enemies: key('isfw.dev.enemies.v3'), skills: key('isfw.dev.skills.v3'), shop: key('isfw.dev.shop.v1') };
 
 // Short hash of a data list, to tell which version of a file a draft was
 // made from.
@@ -232,7 +180,7 @@ export function dataHash(x) {
   for (let i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
   return h.toString(36);
 }
-export const FILE_HASH = { enemies: dataHash(FILE_ENEMIES), skills: dataHash(FILE_SKILLS) };
+export const FILE_HASH = { enemies: dataHash(FILE_ENEMIES), skills: dataHash(FILE_SKILLS), shop: dataHash(FILE_SHOP) };
 
 // Drafts set aside because the file changed after they were made (kept in
 // localStorage under isfw.dev.stale.<name>, never used automatically).
@@ -268,7 +216,15 @@ if (SITE.mode === 'local') try {
   }
 } catch { /* storage unavailable */ }
 
-const drafts = { enemies: readDraft('enemies'), skills: readDraft('skills') };
-export const USING_DRAFT = !!(drafts.enemies || drafts.skills);
+const drafts = { enemies: readDraft('enemies'), skills: readDraft('skills'), shop: readDraft('shop') };
+export const USING_DRAFT = !!(drafts.enemies || drafts.skills || drafts.shop);
 export const ENEMIES = drafts.enemies || structuredClone(FILE_ENEMIES);
 export const SKILLS = drafts.skills || structuredClone(FILE_SKILLS);
+export const SHOP = drafts.shop || structuredClone(FILE_SHOP);
+
+// The shops the game uses (shop.js; retired items left out).
+const inShop = (shop) => SHOP.filter((x) => x.shop === shop && !x.retired);
+export const PRESTIGE_SHOP = inShop('prestige');
+export const ESSENCE_SHOP = inShop('essence');
+// Retired items { id: item }: saves that bought them are refunded on load.
+export const RETIRED_SHOP = Object.fromEntries(SHOP.filter((x) => x.retired).map((x) => [x.id, x]));
