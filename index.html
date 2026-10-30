@@ -19,7 +19,7 @@
     <span class="spacer"></span>
     <span id="speed-tag" class="warn" title="dev time speed (dev/run)" hidden></span>
     <span id="draft-tag" class="warn" title="enemies/skills come from dev edits that are not saved to their files yet" hidden>dev draft&nbsp;&nbsp;</span>
-    <span class="muted" id="version">v0.78</span>
+    <span class="muted" id="version">v0.79</span>
   </header>
 
   <main id="view-monitor">
@@ -53,6 +53,7 @@
         <tr><td>ok</td><td class="num" id="st-wins"></td></tr>
         <tr><td>fail</td><td class="num" id="st-losses"></td></tr>
         <tr><td>prestige pts</td><td class="num" id="st-ppoints"></td></tr>
+        <tr><td>essence</td><td class="num" id="st-essence"></td></tr>
         <tr><td>prestiges</td><td class="num" id="st-pcount"></td></tr>
       </table>
     </section>
@@ -73,7 +74,7 @@
       <table id="targets" class="grid">
         <thead>
           <tr>
-            <th>id</th><th class="num">tier</th><th>label</th><th>stats</th><th>unlocks</th><th class="num">rewards</th><th class="num">count</th><th>status</th><th></th>
+            <th>id</th><th class="num">tier</th><th>label</th><th>stats</th><th>unlocks</th><th class="num">rewards</th><th class="num">count</th><th></th><th>status</th><th></th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -84,6 +85,10 @@
       <div id="log" class="m-log"></div>
     </section>
 
+    <div id="side">
+    <nav id="stabs" aria-label="panels">
+      <button data-stab="skills">skills<span class="badge" id="s-new" hidden></span></button><button data-stab="prestige">prestige shop</button><button data-stab="essence">essence shop</button>
+    </nav>
     <section id="skills">
       <h2>slots <span id="slot-count"></span> <span id="auto-count" class="muted" hidden></span></h2>
       <table id="slots" class="grid"><colgroup><col class="c-n"><col class="c-id"><col class="c-name"><col><col class="c-act"></colgroup><tbody></tbody></table>
@@ -99,6 +104,12 @@
       <h2>prestige shop <span id="shop-points"></span></h2>
       <table id="shop-items" class="grid"><tbody></tbody></table>
     </section>
+
+    <section id="essence">
+      <h2><span class="tip" tabindex="0" data-tip="+1 essence per enemy kill. Kept through prestiges.">essence shop</span> <span id="ess-points"></span></h2>
+      <table id="ess-items" class="grid"><tbody></tbody></table>
+    </section>
+    </div>
   </main>
 
   <div id="dev-banner" class="dev-banner" hidden></div>
@@ -144,11 +155,14 @@
       <table class="dev-table">
         <tr><td class="lbl">time speed</td><td><select id="dr-speed"></select> <span class="muted">dev only, this browser; not saved in the game</span></td></tr>
         <tr><td class="lbl">prestige points</td><td><input type="number" step="1" min="0" id="dr-points"></td></tr>
+        <tr><td class="lbl">essence</td><td><input type="number" step="1" min="0" id="dr-essence"></td></tr>
         <tr><td class="lbl">player level</td><td><input type="number" step="1" min="0" id="dr-level"></td></tr>
         <tr><td class="lbl">xp</td><td><input type="number" step="1" min="0" id="dr-xp"> <span id="dr-xpnext" class="muted"></span></td></tr>
       </table>
       <h2>prestige shop <span class="muted">· set any level; nothing is spent or refunded</span></h2>
       <table id="dr-shop" class="dev-table"><tbody></tbody></table>
+      <h2>essence shop <span class="muted">· set any level; nothing is spent or refunded</span></h2>
+      <table id="dr-eshop" class="dev-table"><tbody></tbody></table>
       <h2>enemies</h2>
       <table id="dr-list" class="dev-table grid">
         <thead><tr><th>id</th><th class="num">tier</th><th>label</th><th>kills this run</th><th>max kills</th><th>base</th><th></th></tr></thead>

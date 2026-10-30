@@ -44,18 +44,29 @@ header {
 
 main {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr) 380px 280px;
+  grid-template-columns: 200px minmax(0, 1fr) 400px;
   gap: 16px;
   padding: 16px;
   max-width: 1700px;
 }
-@media (max-width: 1300px) {
-  main { grid-template-columns: 200px minmax(0, 1fr) 380px; }
-  #shop { grid-column: 1 / -1; }
-}
 @media (max-width: 1000px) {
   main { grid-template-columns: 200px minmax(0, 1fr); }
-  #skills { grid-column: 1 / -1; }
+  #side { grid-column: 1 / -1; }
+}
+/* side panel: skills / prestige shop / essence shop as tabs (desktop) */
+#stabs { display: flex; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+#stabs button {
+  border: 0; border-bottom: 1px solid transparent; margin-bottom: -1px;
+  background: none; color: var(--muted); padding: 2px 10px 3px;
+}
+#stabs button:first-child { padding-left: 0; }
+#stabs button:hover { color: var(--fg); }
+#stabs button.on { color: var(--fg); border-bottom-color: var(--accent); }
+#s-new { margin-left: 4px; }
+#s-new::before { content: '·'; margin-right: 2px; }
+@media (min-width: 641px) {
+  #side > section { display: none; }
+  body[data-stab=skills] #skills, body[data-stab=prestige] #shop, body[data-stab=essence] #essence { display: block; }
 }
 @media (max-width: 640px) {
   main { grid-template-columns: minmax(0, 1fr); }
@@ -327,9 +338,11 @@ button.armed { color: var(--err); border-color: var(--err); }
   #m-hp { margin-left: auto; align-self: center; padding-right: 6px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
   /* one section at a time */
-  #view-monitor > section { display: none; }
+  #view-monitor section { display: none; }
+  #stabs { display: none; }
   body[data-mtab=run] #center, body[data-mtab=log] #center { display: flex; flex-direction: column; }
-  body[data-mtab=src] #unit, body[data-mtab=skills] #skills, body[data-mtab=shop] #shop { display: block; }
+  body[data-mtab=src] #unit, body[data-mtab=skills] #skills, body[data-mtab=shop] #shop, body[data-mtab=shop] #essence { display: block; }
+  #essence { margin-top: 8px; }
   body[data-mtab=run] #center .m-log,
   body[data-mtab=log] #center .m-targets, body[data-mtab=log] #center .m-proc { display: none; }
   #center .m-proc { order: -1; }
@@ -350,9 +363,11 @@ button.armed { color: var(--err); border-color: var(--err); }
   .m-only { display: inline; }
   #targets { font-size: 11px; }
   #targets td, #targets th { padding: 3px 3px; }
+  /* (the max kills change column too: on phones it shows under the count) */
   #targets th:nth-child(2), #targets td:nth-child(2),
   #targets th:nth-child(5), #targets td:nth-child(5),
-  #targets th:nth-child(8), #targets td:nth-child(8) { display: none; }
+  #targets th:nth-child(8), #targets td:nth-child(8),
+  #targets th:nth-child(9), #targets td:nth-child(9) { display: none; }
   /* fixed columns so the table fits the screen; text wraps inside them */
   #targets { table-layout: fixed; }
   #targets th:nth-child(1) { width: 34px; }
@@ -360,7 +375,7 @@ button.armed { color: var(--err); border-color: var(--err); }
   #targets .hov { white-space: nowrap; }
   #targets th:nth-child(6) { width: 78px; }
   #targets th:nth-child(7) { width: 54px; }
-  #targets th:nth-child(9) { width: 56px; }
+  #targets th:nth-child(10) { width: 56px; }
   #targets td { white-space: normal; overflow-wrap: anywhere; }
   #targets td:nth-child(3) { min-width: 0; }
   #targets td:last-child { text-align: right; }
@@ -370,7 +385,7 @@ button.armed { color: var(--err); border-color: var(--err); }
   #skills col.c-n { width: 16px; }
   #skills col.c-name { width: 84px; }
   #skills col.c-act { width: 64px; }
-  #skills button, #shop button { padding: 0 6px; }
+  #skills button, #shop button, #essence button { padding: 0 6px; }
 
   /* tap tooltips and breakdowns stay inside the screen */
   .tip:hover::after, .tip:focus::after { white-space: pre-wrap; width: max-content; max-width: 70vw; }
@@ -387,4 +402,15 @@ button.armed { color: var(--err); border-color: var(--err); }
 #m-new { margin-left: 4px; }
 #m-new::before { content: '·'; margin-right: 2px; }
 #shop .tip::after { white-space: normal; width: 240px; text-align: left; }
+
+/* essence shop (same layout as the prestige shop) */
+#ess-points { float: right; }
+#essence td { vertical-align: top; white-space: normal; padding: 2px 4px; }
+#essence td:first-child { width: 40px; }
+#essence td:nth-child(2) { white-space: nowrap; }
+#essence td:last-child { text-align: right; white-space: nowrap; }
+#essence .tip::after { white-space: normal; width: 220px; text-align: left; }
+
+/* targets: max kills change in its own column, so the count never moves */
+#targets td.gain { padding-left: 0; width: 7ch; min-width: 7ch; }
 #p-xpbar .bar { display: block; max-width: none; }

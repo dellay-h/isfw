@@ -38,6 +38,7 @@ function buildTargets() {
       <td>${(e.skillRewards || []).length ? `<span class="hov" data-bd="unlocks:${e.id}" data-f="unlocks">unlocks</span>` : '<span class="muted">—</span>'}</td>
       <td class="num">${G.rewardsOf(e).length ? `<span class="hov" data-bd="rewards:${e.id}" data-f="rewards"></span>` : '<span class="muted">—</span>'}</td>
       <td class="num" data-f="kills"></td>
+      <td class="gain" data-f="gain"></td>
       <td data-f="status"></td>
       <td><button data-act="run">run</button></td>`;
     body.appendChild(tr);
@@ -183,7 +184,7 @@ function levelLines(k, lv, d) {
 
 // ---------- attribute breakdowns ----------
 // Rows: [label, value, class]
-const GROUPS = ['enemies', 'prestige', 'skills'];
+const GROUPS = ['enemies', 'prestige', 'essence', 'skills'];
 const sumV = (a) => a.reduce((x, y) => x + y.v, 0);
 
 // Rows for a list of effects: ungrouped items (base) first, then one total
@@ -454,6 +455,7 @@ function renderNew() {
   put('#new-lib', lib, `${lib} new`);
   put('#new-sp', sp, `${sp} new`);
   put('#m-new', lib + sp, `${lib + sp}`);
+  put('#s-new', lib + sp, `${lib + sp}`);
 }
 $('#skills').addEventListener('mouseover', (ev) => {
   const tr = ev.target.closest('tr[data-fresh]');
@@ -554,6 +556,7 @@ function render() {
   $('#st-wins').textContent = s.stats.wins;
   $('#st-losses').textContent = s.stats.losses;
   $('#st-ppoints').textContent = s.prestige.points;
+  $('#st-essence').textContent = Math.floor(s.essence.points);
   $('#st-pcount').textContent = s.prestige.count;
   renderPrestige();
   renderPopup(d);
@@ -569,8 +572,12 @@ function render() {
     const help = step > 0
       ? `Each kill increases maximum kills on next prestige, up to +${step}. Increases total attribute reward.`
       : `Each kill decreases maximum kills on next prestige, up to ${step}. Doesn't decrease total attribute reward.`;
-    const kt = `<span class="nw">${k || 0}/${lim}</span>${g ? ` <span class="tip muted" tabindex="0" data-tip="${esc(help)}">(${gs})</span>` : ''}`;
+    // the max kills change has its own column (phones: under the count)
+    const gt = g ? `<span class="tip muted" tabindex="0" data-tip="${esc(help)}">(${gs})</span>` : '';
+    const kt = `<span class="nw">${k || 0}/${lim}</span>${gt ? `<span class="m-only"> ${gt}</span>` : ''}`;
     if (kc.dataset.v !== kt) { kc.dataset.v = kt; kc.innerHTML = kt; }
+    const gc = tr.querySelector('[data-f=gain]');
+    if (gc.dataset.v !== gt) { gc.dataset.v = gt; gc.innerHTML = gt; }
     const rc = tr.querySelector('[data-f=rewards]');
     if (rc) { const html = rewardCounter(e); if (rc.dataset.v !== html) { rc.dataset.v = html; rc.innerHTML = html; } }
     // active: in a fight with it, or regenerating to retry it (repeat after a defeat)
@@ -619,6 +626,7 @@ function render() {
   renderSkills(d);
   renderNew();
   renderShop();
+  renderEssence();
 
   const lt = s.log.length ? s.log[s.log.length - 1].t : 0;
   const logKey = `${s.log.length}:${lt}`;
@@ -746,6 +754,39 @@ $('#shop').addEventListener('click', (ev) => {
   }
 });
 
+// ---------- essence shop ----------
+// Rows are rebuilt when levels change; costs' buttons and the essence count
+// update in place (essence changes every kill, buttons stay clickable).
+let lastEssKey = '';
+function renderEssence() {
+  const pts = Math.floor(s.essence.points);
+  const pt = `${pts} essence`;
+  if ($('#ess-points').textContent !== pt) $('#ess-points').textContent = pt;
+  const key = JSON.stringify(s.essence.shop);
+  if (key !== lastEssKey) {
+    lastEssKey = key;
+    $('#ess-items tbody').innerHTML = G.essenceItems().map((x) => {
+      const lv = G.essenceLevel(s, x.id);
+      const per = (x.effects || []).map(effectText).join(', ');
+      const now = lv ? (x.effects || []).map((e) => effectText({ ...e, v: e.v * lv })).join(', ') : '';
+      return `<tr data-id="${x.id}"${lv ? '' : ' class="muted"'}><td>${x.id}</td><td>${x.name}<div class="muted">lv ${lv}</div></td><td>${per}<span class="muted">/lv</span>${now ? `<div class="muted">now ${now}</div>` : ''}</td><td><button data-act="ess-buy" data-id="${x.id}">${G.essenceCost(s, x.id)}</button></td></tr>`;
+    }).join('');
+  }
+  for (const b of document.querySelectorAll('#ess-items button[data-act=ess-buy]')) {
+    const off = !G.canBuyEssence(s, b.dataset.id);
+    if (b.disabled !== off) b.disabled = off;
+  }
+}
+$('#essence').addEventListener('click', (ev) => {
+  const btn = ev.target.closest('button[data-act=ess-buy]');
+  if (!btn) return;
+  if (G.buyEssence(s, btn.dataset.id)) {
+    G.save(s);
+    lastSkillKey = '';
+    render();
+  }
+});
+
 $('#btn-reset').addEventListener('click', () => {
   const b = $('#btn-reset');
   if (!b.dataset.armed) {
@@ -757,9 +798,27 @@ $('#btn-reset').addEventListener('click', () => {
   s = G.reset();
   delete b.dataset.armed;
   b.textContent = 'reset';
-  lastLogKey = lastSkillKey = lastShopKey = '';
+  lastLogKey = lastSkillKey = lastShopKey = lastEssKey = '';
   render();
 });
+
+// ---------- side panel tabs (desktop) ----------
+// Skills, prestige shop and essence shop share one column, one at a time.
+// (Phones use the section tabs below instead.)
+const STAB_KEY = key('isfw.stab');
+function setStab(t) {
+  document.body.dataset.stab = t;
+  for (const b of document.querySelectorAll('#stabs [data-stab]')) b.classList.toggle('on', b.dataset.stab === t);
+  try { localStorage.setItem(STAB_KEY, t); } catch {}
+  closePopup();
+}
+$('#stabs').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-stab]');
+  if (b) setStab(b.dataset.stab);
+});
+let stab = 'skills';
+try { stab = localStorage.getItem(STAB_KEY) || 'skills'; } catch {}
+setStab(document.querySelector(`#stabs [data-stab="${stab}"]`) ? stab : 'skills');
 
 // ---------- phone section tabs ----------
 // Only visible on narrow screens (css): one section of the monitor at a time.

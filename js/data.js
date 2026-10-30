@@ -114,6 +114,25 @@ export const PRESTIGE_SHOP = [
   { id: 'P09', name: 'seasoned', max: 1, cost: { base: 1, step: 0 }, limitGrowth: true, minKills: { common: 100 } },
 ];
 
+// Essence: a granular resource for small, specific upgrades. Gained like xp
+// (perKill for every enemy kill), kept through prestiges; a full reset
+// clears it. Spent in the essence shop.
+export const ESSENCE = { perKill: 1 };
+// Essence shop. Items have no max level: each level costs
+// cost.base + cost.step x (levels bought) and adds `effects` once more
+// (kind 'pct' multiplies the attribute, like skill mods).
+// TODO: unlock items (qol, features, skills): one level, cost only.
+// TODO: an item that costs one resource and increases the gain of another
+//       (e.g. pay prestige points for more essence per kill).
+export const ESSENCE_SHOP = [
+  { id: 'N01', name: 'attack', cost: { base: 100, step: 100 }, effects: [{ stat: 'damage', kind: 'pct', v: 0.01 }] },
+  { id: 'N02', name: 'attack speed', cost: { base: 100, step: 100 }, effects: [{ stat: 'attackSpeed', kind: 'pct', v: 0.01 }] },
+  { id: 'N03', name: 'magic power', cost: { base: 100, step: 100 }, effects: [{ stat: 'magicPower', kind: 'pct', v: 0.01 }] },
+  { id: 'N04', name: 'cast speed', cost: { base: 100, step: 100 }, effects: [{ stat: 'magicSpeed', kind: 'pct', v: 0.01 }] },
+  { id: 'N05', name: 'armor', cost: { base: 100, step: 100 }, effects: [{ stat: 'armor', kind: 'pct', v: 0.01 }] },
+  { id: 'N06', name: 'hp', cost: { base: 100, step: 100 }, effects: [{ stat: 'maxHp', kind: 'pct', v: 0.01 }] },
+];
+
 // Reveal rules: what stays hidden from the monitor (and locked) until a
 // condition is met. Once met it stays revealed for good (kept through
 // prestiges; a full reset hides it again). The dev pages always show everything.

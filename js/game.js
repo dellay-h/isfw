@@ -3,7 +3,7 @@
 // The player and enemies are both "units": base attributes plus a set of
 // active skills. A unit's attributes, attacks and spells are derived from
 // those (see unit()). Combat runs the same rules for both sides.
-import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, LEVELS, REVEAL, RETIRED_SHOP, armorReduction } from './data.js';
+import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, LEVELS, REVEAL, RETIRED_SHOP, ESSENCE, ESSENCE_SHOP, armorReduction } from './data.js';
 import { key } from './site.js';
 
 const SAVE_KEY = key('isfw.save.v3');
@@ -53,6 +53,7 @@ export function newState() {
     stats: { fights: 0, wins: 0, losses: 0 },
     level: 0,                            // player level, from 0 (kept through prestiges)
     xp: 0,                               // xp towards the next level
+    essence: { points: 0, shop: {} },    // essence (ESSENCE) and essence shop levels { item id: level }; kept through prestiges
     known: {},                           // skills (and specials) ever unlocked: { id: true }
     fresh: {},                           // unlocked for the first time, not looked at yet: { id: true }
     revealed: {},                        // hidden enemies / shop items revealed for good: { id: true } (REVEAL)
@@ -122,6 +123,8 @@ export function load() {
       // saves before v0.66 counted levels from 1 (same xp steps, one level higher)
       s.level = Math.max(0, Math.floor(saved.level || 0) - (saved.level0 ? 0 : 1));
       s.xp = Math.max(0, Number(saved.xp) || 0);
+      s.essence.points = Math.max(0, Number(saved.essence?.points) || 0);
+      for (const [id, lv] of Object.entries(saved.essence?.shop || {})) if (essenceDef(id) && lv > 0) s.essence.shop[id] = Math.floor(lv);
       s.known = { ...(saved.known || {}) };
       s.fresh = { ...(saved.fresh || {}) };
       // saves before v0.56 had no list: what is unlocked now counts as seen
@@ -141,8 +144,8 @@ export function load() {
 
 export function save(s) {
   try {
-    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, xp } = s;
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, level0: true, xp }));
+    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, xp, essence } = s;
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, level0: true, xp, essence }));
   } catch { /* storage unavailable: run without saving */ }
 }
 
@@ -405,6 +408,39 @@ function shopEffects(s) {
   return out;
 }
 
+// ---------- essence (ESSENCE, ESSENCE_SHOP in data.js) ----------
+export const essenceItems = () => ESSENCE_SHOP;
+export const essenceDef = (id) => ESSENCE_SHOP.find((x) => x.id === id);
+export const essenceLevel = (s, id) => (essenceDef(id) ? Math.max(0, Math.floor(s.essence.shop[id] || 0)) : 0);
+// Essence for the next level (no max level).
+export function essenceCost(s, id) {
+  const x = essenceDef(id);
+  if (!x) return null;
+  return (x.cost?.base || 0) + (x.cost?.step || 0) * essenceLevel(s, id);
+}
+export const canBuyEssence = (s, id) => { const c = essenceCost(s, id); return c !== null && s.essence.points >= c; };
+export function buyEssence(s, id) {
+  if (!canBuyEssence(s, id)) return false;
+  const x = essenceDef(id);
+  s.essence.points -= essenceCost(s, id);
+  s.essence.shop[id] = essenceLevel(s, id) + 1;
+  syncHp(s);
+  log(s, `essence shop: ${x.id} ${x.name} lv${s.essence.shop[id]} (${Math.floor(s.essence.points)} essence left)`, 'warn');
+  return true;
+}
+export function gainEssence(s, n = ESSENCE.perKill) {
+  s.essence.points += n;
+}
+function essenceEffects(s) {
+  const out = [];
+  for (const x of ESSENCE_SHOP) {
+    const lv = essenceLevel(s, x.id);
+    if (!lv) continue;
+    for (const e of x.effects || []) out.push({ group: 'essence', label: `${x.id} ${x.name} lv${lv}`, stat: e.stat, kind: e.kind, v: e.v * lv });
+  }
+  return out;
+}
+
 // ---------- player level (LEVELS in data.js) ----------
 export const xpToNext = (s) => LEVELS.xpPer * (s.level + 1);
 // Attribute bonus factor from the player level (1.02 = +2%).
@@ -659,6 +695,18 @@ export function devSetLevel(s, level, xp = s.xp) {
   clampPools(s);
   return true;
 }
+export function devSetEssence(s, n) {
+  s.essence.points = Math.max(0, Math.floor(Number(n) || 0));
+  return true;
+}
+// An essence shop item's level, without spending or refunding essence.
+export function devSetEssenceShop(s, id, lv) {
+  if (!essenceDef(id)) return false;
+  const n = Math.max(0, Math.floor(Number(lv) || 0));
+  if (n) s.essence.shop[id] = n; else delete s.essence.shop[id];
+  afterRunEdit(s);
+  return true;
+}
 // A prestige shop item's level, 0..max, without spending or refunding
 // points (so a bought upgrade can be taken away). Effects apply at once;
 // free skills beyond the new count are dropped.
@@ -833,7 +881,7 @@ export function derived(s) {
     const L = freeActive(s, id) && !s.slots.includes(id) && levelData(s, id);
     if (L) active.push({ id, L });
   }
-  return unit(PLAYER(), active, [...killEffects(s.kills, s), ...shopEffects(s)], REGEN.outOfCombatFlat, levelBonus(s));
+  return unit(PLAYER(), active, [...killEffects(s.kills, s), ...shopEffects(s), ...essenceEffects(s)], REGEN.outOfCombatFlat, levelBonus(s));
 }
 
 // Enemy: its base attributes + its skills (always active, at the listed level).
@@ -1078,6 +1126,7 @@ function win(s, e) {
   s.stats.fights++;
   s.stats.wins++;
   gainXp(s, 1);
+  gainEssence(s);
   const lim = limitOf(s, e);
   const tag = n === 1 ? ' [first]' : n === lim ? ' [final]' : '';
   const rText = rewardsOf(e).map((r) => {
