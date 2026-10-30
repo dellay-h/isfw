@@ -103,6 +103,8 @@ export function load() {
       s.prestige.free = Array.isArray(saved.prestige?.free) ? saved.prestige.free.filter((id) => skillDef(id) && !skillDef(id).special) : [];
       s.prestige.freeOff = { ...(saved.prestige?.freeOff || {}) };
       s.prestige.auto = Array.isArray(saved.prestige?.auto) ? saved.prestige.auto.filter((id) => skillDef(id) && !skillDef(id).special) : [];
+      // no free skills without a shop item that gives them (e.g. P06 retired)
+      s.prestige.free = s.prestige.free.slice(0, freeCount(s));
       Object.assign(s.kills, saved.kills || {});
       // limits can be lowered: never keep more kills than an enemy allows
       for (const e of C.enemies) s.kills[e.id] = Math.max(0, Math.min(limitOf(s, e), Math.floor(s.kills[e.id] || 0)));

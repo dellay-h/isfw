@@ -94,18 +94,20 @@ export const LEVELS = { xpPer: 100, attrPer: 0.01 };
 //             auto-equip toggle; toggled skills are loaded into the slots at
 //             the start of every prestige (no more than the slots it starts with)
 // Removed items: a save that bought them gets the points back on load
-// (cost as the item had it). Don't reuse these ids for new items.
+// (cost as the item had it). Don't reuse these ids for new items. To bring
+// one back, move it to PRESTIGE_SHOP (add id and its fields again).
 export const RETIRED_SHOP = {
   P01: { name: 'whetstone', cost: { base: 1, step: 1 } },
   P02: { name: 'thick skin', cost: { base: 1, step: 1 } },
   P03: { name: 'quick hands', cost: { base: 1, step: 1 } },
   P04: { name: 'focus', cost: { base: 1, step: 1 } },
+  // kept for later (v0.78): full definitions, ready to move back
+  P06: { name: 'muscle memory', max: 1, cost: { base: 3, step: 0 }, free: 1, freeExclude: ['S01'] },
+  P08: { name: 'routine', max: 1, cost: { base: 10, step: 0 }, autoEquip: true },
 };
 export const PRESTIGE_SHOP = [
   { id: 'P05', name: 'spare slot', max: 1, cost: { base: 1, step: 0 }, slots: 1 },
-  { id: 'P06', name: 'muscle memory', max: 1, cost: { base: 3, step: 0 }, free: 1, freeExclude: ['S01'] },
   { id: 'P07', name: 'head start', max: 10, cost: { base: 1, step: 0 }, startKills: { enemy: 'E001', n: 1 } },
-  { id: 'P08', name: 'routine', max: 1, cost: { base: 10, step: 0 }, autoEquip: true },
   // limitGrowth: turns on max kills growth/shrink (LIMIT_GROWTH).
   // minKills { rank: n }: when bought, enemies of that rank still growing get
   // at least n max kills (never above the rank's cap).
