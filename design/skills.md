@@ -13,3 +13,5 @@ Not implemented yet unless noted.
 | battle trance | gain a damage-taken reduction buff |
 | deadly intent | gain an attack damage bonus |
 | efficient system | debuffs expire faster, buffs last longer |
+| opening guard | start every fight with a shield of a flat value + 10% of max hp |
+| reinforcement | all your shields and heals are stronger |
