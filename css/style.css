@@ -25,27 +25,6 @@
   }
 }
 
-/* ---------- TEMPORARY blue theme (remove this whole block to revert) ---------- */
-:root {
-  --bg: #e8eef7;
-  --panel: #f4f8fd;
-  --fg: #1f2a3a;
-  --muted: #6f7f95;
-  --line: #c9d6e8;
-  --accent: #2f6db5;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1a2b;
-    --panel: #15233a;
-    --fg: #c8d6ea;
-    --muted: #6c7f9c;
-    --line: #24365a;
-    --accent: #5f9ae0;
-  }
-}
-/* ---------- end of temporary blue theme ---------- */
-
 * { box-sizing: border-box; }
 
 body {
