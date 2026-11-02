@@ -67,13 +67,14 @@ work on, usually `dev`) before editing locally.
 - `js/enemies.js` – enemies (written by dev/enemies, can be edited by hand)
 - `js/skills.js` – skills (written by dev/skills), shared by the player and enemies: S.. skills, X.. specials
 - `js/shop.js` – prestige (P..) and essence (N..) shop items, retired ones included (written by dev/shop)
+- `js/power.js` – tier power levels and enemy profiles (written by dev/enemies)
 - `js/game.js` – state, save/load, units, combat simulation (no DOM)
 - `js/main.js` – game loop, monitor rendering, input, view switching
 - `js/dev.js`, `js/dev/*.js` – dev screens (shared store, enemy page, skill page, shop page, run page)
-- `js/serialize.js` – writes `enemies.js` / `skills.js` / `shop.js` source
+- `js/serialize.js` – writes `enemies.js` / `skills.js` / `shop.js` / `power.js` source
 - `js/migrate.js` – converts dev edits saved in the old enemy format
 - `design/` – design notes: archetype ideas, skill ideas
-- `server.py` – local server (no caching, `/api/ping`, saves `/api/enemies`, `/api/skills` and `/api/shop`)
+- `server.py` – local server (no caching, `/api/ping`, saves `/api/enemies`, `/api/skills`, `/api/shop` and `/api/power`)
 - `js/site.js` – which version this copy is (local / play / dev) and browser storage names; replaced in the online copies
 - `js/github.js` – GitHub access for the online dev version (load, commit, release)
 - `.github/workflows/pages.yml` – publishes the playable and dev versions to GitHub Pages
@@ -90,10 +91,16 @@ aside (the banner says so). A page that loaded an older version of a file can't
 save over a newer one: the server refuses it and the page asks for a reload.
 
 ### dev/enemies
+At the top, **power**: tier power levels (the base attributes of every enemy
+of a tier that has a profile) and enemy profiles (multipliers and flat
+additions applied to the tier's power level, e.g. defensive: hp ×2, dmg ×0.5).
+
 Each enemy is an expandable entry with four expandable fields:
-- **attributes**: rank (sets the default max kills), hp and max kills always; add tier and any base
-  attribute (dmg, aspd, mag pwr, mag spd, max mp, mp regen, armor, block,
-  block shred, regen; negative regen = decay).
+- **attributes**: rank (sets the default max kills), profile, max kills; add tier and any
+  attribute (hp, dmg, aspd, mag pwr, mag spd, max mp, mp regen, armor, block,
+  block shred, regen; negative regen = decay). With a profile the enemy's
+  attributes are tier power × profile, and the ones set here are extra on
+  top; without a profile only the ones set here count (hp required).
 - **skills**: the enemy's own skills (and level). It uses all of them, like
   loaded skills. Shows each resulting attack/spell and the dps. "+ new skill"
   creates one and opens it in dev/skills.

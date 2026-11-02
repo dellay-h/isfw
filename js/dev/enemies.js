@@ -8,12 +8,13 @@ import {
   numInput, textInput, boolInput, select, btn, xBtn, field, readInput, confirmed, wire,
 } from './ui.js';
 import { focusSkill, newSkill } from './skills.js';
+import { initPower, renderPower } from './power.js';
 import { key } from '../site.js';
 
 const $ = (sel) => document.querySelector(sel);
 const E = () => store.enemies;
 const S = () => store.skills;
-const content = () => ({ enemies: store.enemies, skills: store.skills });
+const content = () => ({ enemies: store.enemies, skills: store.skills, power: store.power });
 const withC = (fn) => G.withContent(content(), fn);
 
 // Attributes: hp and max kills are always present, the rest can be added.
@@ -44,7 +45,12 @@ function problems() {
     const p = per.get(e);
     if (!e.id) p.push('missing id');
     else if (ids.filter((x) => x === e.id).length > 1) p.push(`id ${e.id} is used more than once`);
-    if (!(e.base?.maxHp > 0)) p.push('hp must be above 0');
+    if (e.profile) {
+      const prof = store.power.find((x) => x.kind === 'profile' && x.id === e.profile);
+      if (!prof) p.push(`unknown profile ${e.profile}`);
+      if (!store.power.some((x) => x.kind === 'tier' && x.tier === G.tierAbs(e))) p.push(`tier ${G.tierAbs(e)} has no power level (add it under tier power levels)`);
+    }
+    if (!(withC(() => G.enemyBase(e)).maxHp > 0)) p.push('hp must be above 0');
     if (!(e.limit >= 1)) p.push('max kills must be at least 1');
     for (const u of e.skills || []) {
       const k = G.withContent(content(), () => G.skillDef(u.skill));
@@ -78,17 +84,28 @@ function problems() {
 // ---------- rendering ----------
 function attrsField(e, i) {
   const rankRow = `<tr><td class="lbl">rank</td><td>${select(`data-i="${i}" data-p="rank" data-t="rank"`, Object.entries(RANKS).map(([k, r]) => [k, `${r.label} (${r.limit} kills)`]), G.rankOf(e))}</td><td></td></tr>`;
-  const rows = rankRow + ATTR_DEFS.filter((a) => a.required || getP(e, a.path) !== undefined).map((a) => {
+  const profs = store.power.filter((x) => x.kind === 'profile');
+  const profOpts = [['', 'none (own attributes only)'], ...profs.map((x) => [x.id, x.name && x.name !== x.id ? `${x.id} ${x.name}` : x.id])];
+  if (e.profile && !profs.some((x) => x.id === e.profile)) profOpts.push([e.profile, `${e.profile} (unknown)`]);
+  const profRow = `<tr><td class="lbl">profile</td><td>${select(`data-i="${i}" data-p="profile" data-t="profile"`, profOpts, e.profile || '')}</td><td></td></tr>`;
+  // with a profile, hp comes from the tier power level and own values are extra on top
+  const req = (a) => a.required && !(e.profile && a.key === 'maxHp');
+  const label = (a) => (e.profile && a.path.startsWith('base.') ? `+ ${a.label} (extra)` : a.label);
+  const rows = rankRow + profRow + ATTR_DEFS.filter((a) => req(a) || getP(e, a.path) !== undefined).map((a) => {
     const v = getP(e, a.path);
     const input = a.bool ? boolInput(i, a.path, v) : numInput(i, a.path, v, { int: a.int });
-    return `<tr><td class="lbl">${a.label}</td><td>${input}</td><td>${a.required ? '' : xBtn('attr-del', `data-i="${i}" data-p="${a.path}"`)}</td></tr>`;
+    return `<tr><td class="lbl">${label(a)}</td><td>${input}</td><td>${req(a) ? '' : xBtn('attr-del', `data-i="${i}" data-p="${a.path}"`)}</td></tr>`;
   }).join('');
-  const missing = ATTR_DEFS.filter((a) => !a.required && getP(e, a.path) === undefined);
+  const missing = ATTR_DEFS.filter((a) => !req(a) && getP(e, a.path) === undefined);
   const add = missing.length
     ? `<div class="addrow">${select(`data-act="attr-add" data-i="${i}"`, [['', '+ attribute'], ...missing.map((a) => [a.key, a.label])], '')}</div>`
     : '';
   const n = ATTR_DEFS.filter((a) => getP(e, a.path) !== undefined).length;
-  return field(`${e.id}:attrs`, 'attributes', `(${n})`, `<table class="dev-table">${rows}</table>${add}`);
+  const b = withC(() => G.enemyBase(e));
+  const calc = e.profile
+    ? `<div class="calc">tier ${G.tierAbs(e)} power × ${esc(e.profile)}${e.base ? ' + extra' : ''} → ${ATTRS.filter((a) => b[a.key]).map((a) => `${a.label} ${num(b[a.key])}`).join(' · ') || 'all 0'}</div>`
+    : '<div class="calc">no profile: uses only the attributes set here</div>';
+  return field(`${e.id}:attrs`, 'attributes', `(${e.profile ? `${esc(e.profile)} profile` : n})`, `<table class="dev-table">${rows}</table>${add}${calc}`);
 }
 
 function skillsField(e, i) {
@@ -117,7 +134,8 @@ function skillsField(e, i) {
     return `<div>${esc(a.name)}: ${b.join(' · ')} → ${num(hit + dot)} dps</div>`;
   });
   // attributes changed by its skills
-  const changed = ATTRS.filter((a) => Math.abs((unit[a.key] || 0) - (e.base?.[a.key] || 0)) > 1e-9)
+  const ownBase = withC(() => G.enemyBase(e));
+  const changed = ATTRS.filter((a) => Math.abs((unit[a.key] || 0) - (ownBase[a.key] || 0)) > 1e-9)
     .map((a) => `${a.label} ${num(unit[a.key])}`);
   if (changed.length) lines.push(`<div>with skills: ${changed.join(', ')}</div>`);
   if (unit.empowers.length) lines.push(`<div>empower: ${unit.empowers.map((p) => `+${fmt(p.mult * 100, 0)}% every ${num(p.cooldown)}s`).join(', ')}</div>`);
@@ -212,6 +230,7 @@ function enemyBlock(e, i, warns) {
 }
 
 export function renderEnemies() {
+  renderPower();
   const { out, per } = problems();
   // grouped by tier (absolute value: enemies in development sit with the tier
   // they're made for), keeping the file order inside each group
@@ -237,7 +256,9 @@ function onInput(el) {
   const e = E()[Number(el.dataset.i)];
   const path = el.dataset.p;
   const t = el.dataset.t;
-  if (t === 'rank') {
+  if (t === 'profile') {
+    if (el.value) e.profile = el.value; else delete e.profile;
+  } else if (t === 'rank') {
     e.rank = el.value;
     delete e.boss;
     if (RANKS[el.value]) e.limit = RANKS[el.value].limit;
@@ -417,13 +438,14 @@ function onPreviewAction(el) {
 export function initEnemies(opts = {}) {
   if (opts.getState) getGameState = opts.getState;
   wire($('#de-list'), { input: onInput, action: onAction, rerender: renderEnemies, status: renderStatus });
+  initPower({ rerender: renderEnemies });
   const pv = $('#de-preview');
   pv.addEventListener('input', (ev) => { if (ev.target.dataset.pv === 'kills' && onPreview(ev)) renderPreviewKeepFocus(ev.target); });
   pv.addEventListener('change', (ev) => { if (onPreview(ev)) renderPreview(); });
   pv.addEventListener('click', (ev) => { const b = ev.target.closest('button[data-act]'); if (b) onPreviewAction(b); });
 
   $('#de-new').addEventListener('click', () => {
-    const e = { id: nextId(E(), 'E', 3), name: 'new enemy', tier: 0, rank: 'common', limit: RANKS.common.limit, base: { maxHp: 100 }, skills: [], rewards: [{ stat: 'damage', total: 1 }], skillRewards: [] };
+    const e = { id: nextId(E(), 'E', 3), name: 'new enemy', tier: 1, rank: 'common', profile: 'default', limit: RANKS.common.limit, skills: [], rewards: [{ stat: 'damage', total: 1 }], skillRewards: [] };
     E().push(e);
     open.add(e.id);
     for (const f of FIELDS) open.add(`${e.id}:${f}`);

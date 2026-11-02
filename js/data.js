@@ -163,6 +163,7 @@ import { loadRemote, token } from './github.js';
 import { ENEMIES as LOCAL_ENEMIES } from './enemies.js';
 import { SKILLS as LOCAL_SKILLS } from './skills.js';
 import { SHOP as LOCAL_SHOP } from './shop.js';
+import { POWER as LOCAL_POWER } from './power.js';
 
 // Online dev version, signed in: use the latest files on the dev branch
 // (REMOTE.error is set if that failed; the files served with the page are
@@ -172,9 +173,10 @@ const fromRemote = !!(REMOTE && !REMOTE.error);
 const FILE_ENEMIES = fromRemote ? REMOTE.enemies.data : LOCAL_ENEMIES;
 const FILE_SKILLS = fromRemote ? REMOTE.skills.data : LOCAL_SKILLS;
 const FILE_SHOP = fromRemote ? REMOTE.shop.data : LOCAL_SHOP;
+const FILE_POWER = fromRemote ? REMOTE.power.data : LOCAL_POWER;
 
-export const FILES = { enemies: FILE_ENEMIES, skills: FILE_SKILLS, shop: FILE_SHOP };
-export const DRAFT_KEYS = { enemies: key('isfw.dev.enemies.v3'), skills: key('isfw.dev.skills.v3'), shop: key('isfw.dev.shop.v1') };
+export const FILES = { enemies: FILE_ENEMIES, skills: FILE_SKILLS, shop: FILE_SHOP, power: FILE_POWER };
+export const DRAFT_KEYS = { enemies: key('isfw.dev.enemies.v3'), skills: key('isfw.dev.skills.v3'), shop: key('isfw.dev.shop.v1'), power: key('isfw.dev.power.v1') };
 
 // Short hash of a data list, to tell which version of a file a draft was
 // made from.
@@ -184,7 +186,7 @@ export function dataHash(x) {
   for (let i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
   return h.toString(36);
 }
-export const FILE_HASH = { enemies: dataHash(FILE_ENEMIES), skills: dataHash(FILE_SKILLS), shop: dataHash(FILE_SHOP) };
+export const FILE_HASH = { enemies: dataHash(FILE_ENEMIES), skills: dataHash(FILE_SKILLS), shop: dataHash(FILE_SHOP), power: dataHash(FILE_POWER) };
 
 // Drafts set aside because the file changed after they were made (kept in
 // localStorage under isfw.dev.stale.<name>, never used automatically).
@@ -220,11 +222,13 @@ if (SITE.mode === 'local') try {
   }
 } catch { /* storage unavailable */ }
 
-const drafts = { enemies: readDraft('enemies'), skills: readDraft('skills'), shop: readDraft('shop') };
-export const USING_DRAFT = !!(drafts.enemies || drafts.skills || drafts.shop);
+const drafts = { enemies: readDraft('enemies'), skills: readDraft('skills'), shop: readDraft('shop'), power: readDraft('power') };
+export const USING_DRAFT = !!(drafts.enemies || drafts.skills || drafts.shop || drafts.power);
 export const ENEMIES = drafts.enemies || structuredClone(FILE_ENEMIES);
 export const SKILLS = drafts.skills || structuredClone(FILE_SKILLS);
 export const SHOP = drafts.shop || structuredClone(FILE_SHOP);
+// Tier power levels and enemy profiles (power.js).
+export const POWER = drafts.power || structuredClone(FILE_POWER);
 
 // The shops the game uses (shop.js; retired items left out).
 const inShop = (shop) => SHOP.filter((x) => x.shop === shop && !x.retired);

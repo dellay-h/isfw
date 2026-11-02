@@ -5,10 +5,14 @@
 //   id, name
 //   tier          enemies are grouped in tiers (default 0)
 //   rank          'challenge' | 'tutorial' | 'common' | 'elite' | 'boss' (RANKS in data.js)
+//   profile       optional: enemy profile id (power.js). With a profile its
+//                 attributes are its tier's power level x the profile, plus
+//                 base as extra on top; without one, base is all it has
 //   limit         maximum number of kills
 //   unlockCost    optional: prestige points to unlock it (locked until paid;
 //                 stays unlocked through prestiges)
-//   base          base attributes, same keys as the player's (data.js ATTRS):
+//   base          attributes (extra on top of tier x profile when it has a
+//                 profile), same keys as the player's (data.js ATTRS):
 //                 maxHp, damage, attackSpeed, magicPower, magicSpeed, maxMana,
 //                 manaRegen, armor, block, blockShred, regenFlat (hp/s, negative = decay)
 //   skills        [{ skill, level }] its own skills (from skills.js), always active
@@ -49,8 +53,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E011', name: 'goblin', tier: 1, rank: 'common', limit: 50,
-    base: { maxHp: 30, attackSpeed: -0.333 },
+    id: 'E011', name: 'goblin', tier: 1, rank: 'common', profile: 'default', limit: 50,
     skills: [{ skill: 'S03', level: 1 }],
     rewards: [
       { stat: 'damage', total: 1 },
@@ -62,8 +65,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E002', name: 'slime', tier: 1, rank: 'common', limit: 50,
-    base: { maxHp: 60, attackSpeed: -0.09 },
+    id: 'E002', name: 'slime', tier: 1, rank: 'common', profile: 'defensive', limit: 50,
     skills: [{ skill: 'S01', level: 1 }],
     rewards: [
       { stat: 'maxHp', total: 5 },
@@ -75,8 +77,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E003', name: 'archer', tier: 1, rank: 'common', limit: 50,
-    base: { maxHp: 80, attackSpeed: 0 },
+    id: 'E003', name: 'archer', tier: 1, rank: 'common', profile: 'offensive', limit: 50,
     skills: [{ skill: 'S03', level: 1 }],
     rewards: [
       { stat: 'attackSpeed', total: 0.2 },
@@ -88,8 +89,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E010', name: 'vampire', tier: 1, rank: 'boss', limit: 1,
-    base: { maxHp: 100, damage: 5, attackSpeed: -0.83, lifesteal: 0.8, armor: 0, block: 3 },
+    id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'tank', limit: 1,
     skills: [{ skill: 'S01', level: 1 }, { skill: 'S10', level: 1 }],
     rewards: [
       { stat: 'damage', total: 0.5 },

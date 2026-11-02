@@ -1,7 +1,7 @@
 // Edited copies of the enemy, skill and shop lists, shared by the dev pages.
 //
 // Locally (SITE.mode 'local', start.bat): saved to their files on every
-// change through the ISFW server (server.py: POST /api/enemies, /api/skills, /api/shop).
+// change through the ISFW server (server.py: POST /api/enemies, /api/skills, /api/shop, /api/power).
 // Until a save succeeds the edits are also kept in localStorage (data.js
 // loads them), so nothing is lost if the server is unreachable.
 //
@@ -9,17 +9,17 @@
 // GitHub token. Signed in, edits are kept in this browser as drafts and go
 // to the dev branch only when "commit" is pressed; "release to playable"
 // moves the playable version (main) to the dev branch.
-import { ENEMIES, SKILLS, SHOP, FILES, DRAFT_KEYS, FILE_HASH, REMOTE, dataHash } from '../data.js';
-import { enemiesSource, skillsSource, shopSource } from '../serialize.js';
+import { ENEMIES, SKILLS, SHOP, POWER, FILES, DRAFT_KEYS, FILE_HASH, REMOTE, dataHash } from '../data.js';
+import { enemiesSource, skillsSource, shopSource, powerSource } from '../serialize.js';
 import { SITE } from '../site.js';
 import * as GH from '../github.js';
 
 const clone = (x) => structuredClone(x);
 export const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-export const store = { enemies: clone(ENEMIES), skills: clone(SKILLS), shop: clone(SHOP) };
-export const RUNNING = { enemies: ENEMIES, skills: SKILLS, shop: SHOP }; // what the game uses
-const SOURCE = { enemies: enemiesSource, skills: skillsSource, shop: shopSource };
+export const store = { enemies: clone(ENEMIES), skills: clone(SKILLS), shop: clone(SHOP), power: clone(POWER) };
+export const RUNNING = { enemies: ENEMIES, skills: SKILLS, shop: SHOP, power: POWER }; // what the game uses
+const SOURCE = { enemies: enemiesSource, skills: skillsSource, shop: shopSource, power: powerSource };
 const SAVE_DELAY = 400; // ms after the last edit
 
 export const LOCAL = SITE.mode === 'local';
@@ -32,6 +32,7 @@ export const status = {
   enemies: { state: 'saved', msg: '', at: null, timer: null },
   skills: { state: 'saved', msg: '', at: null, timer: null },
   shop: { state: 'saved', msg: '', at: null, timer: null },
+  power: { state: 'saved', msg: '', at: null, timer: null },
 };
 export const server = { ok: null, msg: '' }; // null = not checked yet
 
@@ -56,6 +57,7 @@ const disk = {
   enemies: { data: FILE_HASH.enemies, text: null, blob: REMOTE?.enemies?.sha ?? null, committed: FILES.enemies },
   skills: { data: FILE_HASH.skills, text: null, blob: REMOTE?.skills?.sha ?? null, committed: FILES.skills },
   shop: { data: FILE_HASH.shop, text: null, blob: REMOTE?.shop?.sha ?? null, committed: FILES.shop },
+  power: { data: FILE_HASH.power, text: null, blob: REMOTE?.power?.sha ?? null, committed: FILES.power },
 };
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -67,7 +69,7 @@ const ready = !LOCAL ? Promise.resolve() : Promise.all(Object.keys(disk).map(asy
     const text = await r.text();
     // only trust it if it is the version this page loaded
     const m = await import(`../${name}.js?check=${Date.now()}`).catch(() => null);
-    const data = m && (m.ENEMIES || m.SKILLS || m.SHOP);
+    const data = m && (m.ENEMIES || m.SKILLS || m.SHOP || m.POWER);
     if (data && dataHash(data) === FILE_HASH[name]) disk[name].text = await sha256(text);
     else disk[name].stale = true;
   } catch { /* unreachable: saves will report it */ }

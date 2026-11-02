@@ -56,7 +56,7 @@ export async function blobSha(text) {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export const FILE_PATHS = { enemies: 'js/enemies.js', skills: 'js/skills.js', shop: 'js/shop.js' };
+export const FILE_PATHS = { enemies: 'js/enemies.js', skills: 'js/skills.js', shop: 'js/shop.js', power: 'js/power.js' };
 
 // Latest enemies.js / skills.js / shop.js on the dev branch, so the dev version never
 // waits for the site to redeploy after a commit.
@@ -69,7 +69,7 @@ export async function loadRemote() {
     const url = URL.createObjectURL(new Blob([text], { type: 'text/javascript' }));
     try {
       const m = await import(url);
-      out[name] = { text, data: m.ENEMIES || m.SKILLS || m.SHOP, sha: await blobSha(text) };
+      out[name] = { text, data: m.ENEMIES || m.SKILLS || m.SHOP || m.POWER, sha: await blobSha(text) };
     } finally {
       URL.revokeObjectURL(url);
     }

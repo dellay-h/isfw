@@ -3,7 +3,7 @@
 // The player and enemies are both "units": base attributes plus a set of
 // active skills. A unit's attributes, attacks and spells are derived from
 // those (see unit()). Combat runs the same rules for both sides.
-import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, LEVELS, REVEAL, RETIRED_SHOP, ESSENCE, ESSENCE_SHOP, armorReduction } from './data.js';
+import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, LEVELS, REVEAL, RETIRED_SHOP, ESSENCE, ESSENCE_SHOP, POWER, armorReduction } from './data.js';
 import { key } from './site.js';
 
 const SAVE_KEY = key('isfw.save.v3');
@@ -18,7 +18,7 @@ export const tierAbs = (e) => Math.abs(e?.tier || 0);
 // The enemy and skill lists everything below reads (the game: enemies in
 // development left out). The dev screens swap in their edited copies, all of
 // them, for previews (withContent).
-let C = { enemies: ENEMIES.filter((e) => !inDev(e)), skills: SKILLS };
+let C = { enemies: ENEMIES.filter((e) => !inDev(e)), skills: SKILLS, power: POWER };
 export function withContent(content, fn) {
   const prev = C;
   C = { ...C, ...content };
@@ -923,6 +923,27 @@ export function derived(s) {
   return unit(PLAYER(), active, [...killEffects(s.kills, s), ...shopEffects(s), ...essenceEffects(s)], REGEN.outOfCombatFlat, levelBonus(s));
 }
 
+// ---------- enemy power (power.js) ----------
+// Tier power level: base attributes of every enemy of that tier (an enemy
+// in development uses the tier it is made for).
+export const tierPower = (tier) => C.power.find((x) => x.kind === 'tier' && x.tier === tier) || null;
+export const profileDef = (id) => C.power.find((x) => x.kind === 'profile' && x.id === id) || null;
+export const profiles = () => C.power.filter((x) => x.kind === 'profile');
+// An enemy's base attributes. With a profile: tier power x profile mult +
+// profile add, plus its own base on top. Without one: its own base only.
+export function enemyBase(e) {
+  const own = e.base || {};
+  if (!e.profile) return { ...own };
+  const tb = tierPower(tierAbs(e))?.base || {};
+  const p = profileDef(e.profile) || {};
+  const out = {};
+  for (const k of new Set([...Object.keys(tb), ...Object.keys(p.add || {}), ...Object.keys(own)])) {
+    const v = (tb[k] || 0) * (p.mult?.[k] ?? 1) + (p.add?.[k] || 0) + (own[k] || 0);
+    out[k] = Number(v.toPrecision(12));
+  }
+  return out;
+}
+
 // Enemy: its base attributes + its skills (always active, at the listed level).
 export function enemyUnit(e) {
   const active = [];
@@ -930,7 +951,7 @@ export function enemyUnit(e) {
     const k = skillDef(u.skill);
     if (k) active.push({ id: k.id, L: mergeLevels(k.levels, Math.min(u.level || 1, k.levels.length)) });
   }
-  return unit({ ...ZERO, ...(e.base || {}) }, active);
+  return unit({ ...ZERO, ...enemyBase(e) }, active);
 }
 
 // Size of each reward's increase from the n-th kill (for the log).

@@ -1,5 +1,5 @@
-// Turns the enemy, skill and shop lists into the source text of js/enemies.js,
-// js/skills.js and js/shop.js. Used by the dev screens, which save on every edit.
+// Turns the enemy, skill, shop and power lists into the source text of
+// js/enemies.js, js/skills.js, js/shop.js and js/power.js. Used by the dev screens, which save on every edit.
 
 const ENEMIES_HEADER = `// Enemy data. Written by the dev/enemies screen on every edit, but can also
 // be edited by hand.
@@ -8,10 +8,14 @@ const ENEMIES_HEADER = `// Enemy data. Written by the dev/enemies screen on ever
 //   id, name
 //   tier          enemies are grouped in tiers (default 0)
 //   rank          'challenge' | 'tutorial' | 'common' | 'elite' | 'boss' (RANKS in data.js)
+//   profile       optional: enemy profile id (power.js). With a profile its
+//                 attributes are its tier's power level x the profile, plus
+//                 base as extra on top; without one, base is all it has
 //   limit         maximum number of kills
 //   unlockCost    optional: prestige points to unlock it (locked until paid;
 //                 stays unlocked through prestiges)
-//   base          base attributes, same keys as the player's (data.js ATTRS):
+//   base          attributes (extra on top of tier x profile when it has a
+//                 profile), same keys as the player's (data.js ATTRS):
 //                 maxHp, damage, attackSpeed, magicPower, magicSpeed, maxMana,
 //                 manaRegen, armor, block, blockShred, regenFlat (hp/s, negative = decay)
 //   skills        [{ skill, level }] its own skills (from skills.js), always active
@@ -58,7 +62,7 @@ const SKILLS_HEADER = `// Skill data, shared by the player and enemies. Written 
 //   slots:   extra skill slots (player)
 `;
 
-const ENEMY_ORDER = ['id', 'name', 'tier', 'rank', 'boss', 'limit', 'unlockCost', 'base', 'skills', 'rewards', 'skillRewards'];
+const ENEMY_ORDER = ['id', 'name', 'tier', 'rank', 'boss', 'profile', 'limit', 'unlockCost', 'base', 'skills', 'rewards', 'skillRewards'];
 const ACTION_ORDER = ['type', 'base', 'scaling', 'time', 'speedScaling', 'hits', 'cost', 'lifesteal', 'dot', 'shield', 'heal', 'countdown'];
 const LEVEL_ORDER = ['attack', 'spell', 'onHit', 'empower', 'mods', 'slots'];
 
@@ -89,10 +93,10 @@ function list(items, order, indent) {
 
 function enemyText(e) {
   const pad = '    ';
-  const head = ['id', 'name', 'tier', 'rank', 'boss', 'limit', 'unlockCost'].filter((k) => e[k] !== undefined).map((k) => `${k}: ${lit(e[k])}`);
+  const head = ['id', 'name', 'tier', 'rank', 'boss', 'profile', 'limit', 'unlockCost'].filter((k) => e[k] !== undefined).map((k) => `${k}: ${lit(e[k])}`);
   const lines = [head.join(', ') + ','];
   for (const k of ordered(e, ENEMY_ORDER)) {
-    if (['id', 'name', 'tier', 'rank', 'boss', 'limit', 'unlockCost'].includes(k) || e[k] === undefined) continue;
+    if (['id', 'name', 'tier', 'rank', 'boss', 'profile', 'limit', 'unlockCost'].includes(k) || e[k] === undefined) continue;
     if (k === 'rewards') lines.push(`rewards: ${list(e[k], ['stat', 'total', 'type'], pad)},`);
     else if (k === 'skillRewards') lines.push(`skillRewards: ${list(e[k], ['skill', 'level', 'at'], pad)},`);
     else if (k === 'skills') lines.push(`skills: ${lit(e[k], ['skill', 'level'])},`);
@@ -141,6 +145,24 @@ const SHOP_ORDER = ['id', 'shop', 'name', 'retired', 'max', 'cost', 'effects', '
 
 export function shopSource(items) {
   return `${SHOP_HEADER}export const SHOP = [\n${items.map((x) => `  ${lit(x, SHOP_ORDER)},`).join('\n')}\n];\n`;
+}
+
+const POWER_HEADER = `// Enemy power: tier power levels and enemy profiles. Written by the
+// dev/enemies screen on every edit, but can also be edited by hand.
+//
+//   { kind: 'tier', tier, base }      power level of a tier: the base
+//                                     attributes of every enemy of that tier
+//                                     that has a profile (keys: data.js ATTRS)
+//   { kind: 'profile', id, name, mult, add }
+//                                     an enemy profile: each attribute =
+//                                     tier base x mult (default 1) + add
+//                                     (default 0); the enemy's own base is
+//                                     added on top
+`;
+const POWER_ORDER = ['kind', 'id', 'tier', 'name', 'base', 'mult', 'add'];
+
+export function powerSource(items) {
+  return `${POWER_HEADER}export const POWER = [\n${items.map((x) => `  ${lit(x, POWER_ORDER)},`).join('\n')}\n];\n`;
 }
 
 export function enemiesSource(enemies) {
