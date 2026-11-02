@@ -15,3 +15,5 @@ Not implemented yet unless noted.
 | efficient system | debuffs expire faster, buffs last longer |
 | opening guard | start every fight with a shield of a flat value + 10% of max hp |
 | reinforcement | all your shields and heals are stronger |
+| keen eye | critical chance; good for any critical chance build (needs a crit mechanic first) |
+| flurry | critical chance and attack speed; for attack-based dps builds |
