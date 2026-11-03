@@ -202,12 +202,12 @@ function skillRewardsField(e, i) {
 
 function enemyBlock(e, i, warns) {
   const dev = G.inDev(e);
-  // the summary line stays short: power level (vs the player preview) and
-  // skill count; hp, dps, rewards etc. are inside the entry
+  // the summary line stays short: power level (vs the player preview);
+  // hp, dps, skills, rewards etc. are inside the entry
   const pw = withC(() => G.enemyPower(e)).power;
   const ratio = `<span class="pwr" data-pw="${pw}">${ratioText(pw)}</span>`;
   const pwTip = 'power level = max hp × dps (dps before the player\'s defenses; burns on a 20 hp player). Compared with the player preview\'s power level';
-  const summary = [`<span title="${pwTip}">power ${num(pw)}${ratio}</span>`, `${withC(() => G.enemySkills(e)).length} skills`];
+  const summary = [`<span title="${pwTip}">power ${num(pw)}${ratio}</span>`];
   const n = E().length;
   return `<details class="en${dev ? ' wip' : ''}" data-key="${esc(e.id)}"${open.has(e.id) ? ' open' : ''}>
     <summary>${esc(e.id)} ${esc(e.name)}${G.rankOf(e) === 'common' ? '' : ` <span class="${G.rankOf(e) === 'boss' ? 'warn' : 'muted'}">${G.rankOf(e)}</span>`} <span class="muted">· ${summary.join(' · ')}</span>${warns.length ? ` <span class="warn">· ${warns.length} issue${warns.length > 1 ? 's' : ''}</span>` : ''}</summary>
