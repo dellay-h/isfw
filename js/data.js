@@ -33,7 +33,7 @@ export const SKILL_SLOTS = 2;
 export const RANKS = {
   challenge: { label: 'challenge', limit: 1, fixed: true }, // shown above tier 0, award specials; max kills never change
   tutorial: { label: 'tutorial', limit: 10, fixed: true }, // max kills never change
-  common: { label: 'common', limit: 50, cap: 1000 },
+  common: { label: 'common', limit: 25, cap: 500 },
   elite: { label: 'elite', limit: 5, cap: 500 },
   boss: { label: 'boss', limit: 1, cap: 20 },
 };

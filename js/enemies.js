@@ -104,7 +104,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E012', name: 'dropout sorcerer', tier: -3, rank: 'common', limit: 50, unlockCost: 1,
+    id: 'E012', name: 'dropout sorcerer', tier: -3, rank: 'common', limit: 25, unlockCost: 1,
     base: { maxHp: 80, magicPower: 1, manaRegen: 0.5 },
     skills: [],
     rewards: [
@@ -117,7 +117,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E004', name: 'fire wizard apprentice', tier: 2, rank: 'common', limit: 50,
+    id: 'E004', name: 'fire wizard apprentice', tier: 2, rank: 'common', limit: 25,
     base: { maxHp: 200, magicPower: 1, magicSpeed: 0, maxMana: 0, manaRegen: 0.5, armor: 50 },
     skills: [],
     rewards: [
@@ -141,7 +141,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E006', name: 'ogre', tier: -3, rank: 'common', limit: 50,
+    id: 'E006', name: 'ogre', tier: -3, rank: 'common', limit: 25,
     base: { maxHp: 400, damage: 4, attackSpeed: -0.444, regenFlat: 2 },
     skills: [{ skill: 'M03', level: 1 }],
     rewards: [
@@ -165,7 +165,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E008', name: 'satyr archer', tier: -3, rank: 'common', limit: 50,
+    id: 'E008', name: 'satyr archer', tier: -3, rank: 'common', limit: 25,
     base: { maxHp: 300, damage: 5, attackSpeed: 0.25 },
     skills: [],
     rewards: [
@@ -188,7 +188,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E015', name: 'exploder', tier: 1, rank: 'common', profile: 'exploder', limit: 50,
+    id: 'E015', name: 'exploder', tier: 1, rank: 'common', profile: 'exploder', limit: 25,
     skills: [],
     rewards: [
       { stat: 'damage', total: 1 },
@@ -196,7 +196,7 @@ export const ENEMIES = [
     skillRewards: [],
   },
   {
-    id: 'E016', name: 'quickling', tier: 1, rank: 'common', profile: 'quick', limit: 50,
+    id: 'E016', name: 'quickling', tier: 1, rank: 'common', profile: 'quick', limit: 25,
     skills: [],
     rewards: [
       { stat: 'attackSpeed', total: 0.1 },
