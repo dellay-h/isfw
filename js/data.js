@@ -107,7 +107,9 @@ export const ESSENCE = { perKill: 1 };
 //             the current prestige (not kept: hidden again after a prestige)
 export const REVEAL = {
   tierBoss: true,
-  tiers: {},
+  tiers: {
+    1: { enemy: 'E001', kills: 5 },      // tier 1 after 5 rotting plant kills (kept for good)
+  },
   enemies: {
     E013: { enemy: 'E010', kills: 1 },   // elder sapling after the first vampire kill
   },
