@@ -3,6 +3,7 @@
 // then add), plus its own base on top (game.js enemyBase).
 import { ATTRS, RANKS } from '../data.js';
 import { store, persist, statusText } from './store.js';
+import * as G from '../game.js';
 import {
   esc, num, getP, setP, delP, open, saveOpen, renameOpen, numInput, textInput, select, btn, xBtn, field, readInput, confirmed, wire,
 } from './ui.js';
@@ -68,8 +69,11 @@ function profileBlock(x, i) {
     <div class="act"><div class="ident"><b>multipliers</b> <span class="muted">(others ×1)</span></div>${attrRows(i, 'mult', x.mult, 'mult')}</div>
     <div class="act"><div class="ident"><b>added</b> <span class="muted">(flat, after multiplying)</span></div>${attrRows(i, 'add', x.add, 'add')}</div>
     <div class="act"><div class="ident"><b>skills</b> <span class="muted">(every enemy with this profile has them, besides its own)</span></div>${skillRows(x, i)}</div>`;
-  const info = [short(x.mult, (v) => `×${num(v)}`), short(x.add, (v) => `+${num(v)}`), (x.skills || []).map((u) => u.skill).join(', ')].filter(Boolean).join(' · ') || 'no change';
-  return field(`pw:prof:${x.id}`, `${esc(x.id)}${x.name && x.name !== x.id ? ` ${esc(x.name)}` : ''}`, `<span class="muted">${esc(info)} · ${u.length} enem${u.length === 1 ? 'y' : 'ies'}</span>`, body);
+  // power change: a reference enemy's power level with this profile ÷ without one
+  const ch = G.withContent({ enemies: store.enemies, skills: store.skills, power: store.power }, () => G.profilePowerChange(x.id));
+  const tip = 'power change: power level (max hp × dps) of a reference enemy with this profile ÷ without a profile. Reference: the lowest tier\'s power level with basic attack (or the profile\'s own attack/spell instead, if it has one). Rank bonus not included; start-of-fight effects (rush) not counted';
+  const info = `<span title="${esc(tip)}">power ${ch === null ? '?' : `×${num(ch)}`}</span>`;
+  return field(`pw:prof:${x.id}`, `${esc(x.id)}${x.name && x.name !== x.id ? ` ${esc(x.name)}` : ''}`, `<span class="muted">${info}</span>`, body);
 }
 
 function problems() {

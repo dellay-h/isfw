@@ -1009,6 +1009,21 @@ export function enemyPower(e, playerMaxHp = PLAYER_BASE.maxHp) {
   const { total, unit: u } = enemyDps(e, playerMaxHp);
   return { power: u.maxHp * total, hp: u.maxHp, dps: total };
 }
+// Power change of a profile (dev pages): power level of a reference enemy
+// with the profile ÷ the same enemy without one. Reference: the lowest tier
+// with a power level, using basic attack (S01 lv1), unless the profile has
+// its own attack or spell (then only the profile's skills). Rank bonus left
+// out; start-of-fight effects (rush) don't count.
+export function profilePowerChange(id, refSkill = 'S01') {
+  const tiers = C.power.filter((x) => x.kind === 'tier').map((x) => x.tier).sort((a, b) => a - b);
+  if (!tiers.length) return null;
+  const p = profileDef(id);
+  const own = (p?.skills || []).some((u) => { const k = skillDef(u.skill); return k && k.levels.some((L) => L.attack || L.spell); });
+  const ref = { id: '_ref', name: 'reference', tier: tiers[0], rank: 'common', skills: [{ skill: refSkill, level: 1 }] };
+  const base = enemyPower({ ...ref, profile: '_none' }).power;
+  const withP = enemyPower({ ...ref, profile: id, skills: own ? [] : ref.skills }).power;
+  return base > 0 ? withP / base : null;
+}
 export function playerPower(s, d = derived(s)) {
   return { power: d.maxHp * d.dps, hp: d.maxHp, dps: d.dps };
 }
