@@ -383,7 +383,7 @@ const PREVIEW_ATTRS = [
 ];
 
 // The preview player: kills, player level, skill levels set by hand, then
-// the loaded skills (those at level 1 or more, up to the slots it has).
+// the loaded skills (those at level 1 or more; no slot limit here).
 function previewState(withLevels = true) {
   return withC(() => {
     const s = G.newState();
@@ -394,7 +394,12 @@ function previewState(withLevels = true) {
     s.level = Math.max(0, Math.floor(pvOpts.level || 0));
     if (withLevels) s.devLevels = { ...pvOpts.levels };
     G.syncSlots(s);
-    for (const id of pvOpts.loaded) G.equip(s, id);
+    // no slot limit in the preview: add a slot whenever they are all in use
+    for (const id of pvOpts.loaded) {
+      const added = !s.slots.includes(null);
+      if (added) s.slots.push(null);
+      if (!G.equip(s, id) && added) s.slots.pop(); // not loadable: drop the slot added for it
+    }
     G.syncHp(s);
     return s;
   });
@@ -421,14 +426,13 @@ function renderPreview() {
     const dv = d[k] - base[k];
     return `<tr><td class="lbl">${label}</td><td class="num">${fmt(d[k], dp)}</td><td class="num muted">${Math.abs(dv) > 1e-9 ? `${dv > 0 ? '+' : ''}${fmt(dv, dp)}` : ''}</td></tr>`;
   }).join('');
-  // per skill: a toggle to load / unload it (disabled at level 0 or when the
-  // slots are full) and its level (from the kills unless set here)
-  const full = !s.slots.includes(null);
+  // per skill: a toggle to load / unload it (disabled at level 0; no slot
+  // limit) and its level (from the kills unless set here)
   const fromKills = previewState(false);
   const sk = skills.map(([k, lv]) => {
     const on = s.slots.includes(k.id);
     const kl = withC(() => G.skillLevel(fromKills, k.id));
-    const why = lv < 1 ? 'disabled title="level 0: not unlocked"' : !on && full ? 'disabled title="all slots are in use"' : 'title="load / unload"';
+    const why = lv < 1 ? 'disabled title="level 0: not unlocked"' : 'title="load / unload"';
     return `<tr${lv < 1 ? ' class="muted"' : ''}>
       <td><label class="pv-load"><input type="checkbox" data-pv="load" data-id="${esc(k.id)}" ${on ? 'checked' : ''} ${why}> ${k.id}</label></td>
       <td class="pv-name" title="${esc(k.name)}">${esc(k.name)}</td>
@@ -459,7 +463,7 @@ function renderPreview() {
     <h2>attributes</h2>
     <table class="dev-table kv">${attrs}</table>
     ${pwHtml}
-    <h2>skills <span class="muted">· ${loaded.length}/${slots} slots loaded</span></h2>
+    <h2>skills <span class="${loaded.length > slots ? 'warn' : 'muted'}" title="loaded skills / slots the player would have (no limit in this preview)">· ${loaded.length}/${slots} slots loaded</span></h2>
     <table class="dev-table pv-skills">${sk}</table>${sp ? `<h2>specials</h2>${sp}` : ''}`;
 }
 
