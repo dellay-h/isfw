@@ -434,9 +434,9 @@ function shieldText(sh) {
   return sh && sh.amount > 0 ? `<span class="muted">shield ${fmt(sh.amount, 1)} (${fmt(sh.left, 1)}s)</span>` : '';
 }
 
-function bar(cur, max) {
+function bar(cur, max, cls = '') {
   const pct = Math.max(0, Math.min(1, cur / max)) * 100;
-  return `<span class="bar"><span style="width:${pct}%"></span></span>`;
+  return `<span class="bar${cls ? ` ${cls}` : ''}"><span style="width:${pct}%"></span></span>`;
 }
 
 // New-skill notices: a "new" tag on the row, a count next to the library /
@@ -605,6 +605,12 @@ function render() {
     pane.innerHTML = `
       <div class="row"><span class="k">src</span><span class="v">${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 1)}</span>${bar(s.hp, d.maxHp)}${dotText(f.pDots, d.maxHp)}${shieldText(f.pShield)}</div>
       ${d.maxMana ? `<div class="row"><span class="k">mp</span><span class="v">${fmt(s.mana, 1)} / ${fmt(d.maxMana, 0)}</span>${bar(s.mana, d.maxMana)}</div>` : ''}
+      ${d.actions.map((a) => {
+        // the player's attacks and spells: time to the next use (desktop only)
+        const done = Math.min(a.interval, f.timers[a.key] || 0);
+        const wait = a.cost > s.mana + 1e-9 && done >= a.interval;
+        return `<div class="row act-row"><span class="k"></span><span class="v">${wait ? 'mp' : `${fmt(Math.max(0, a.interval - done), 1)}s`}</span>${bar(done, a.interval, 'mini')}<span class="muted">${a.id} ${a.name}</span></div>`;
+      }).join('')}
       <div class="row"><span class="k">${e.id}</span><span class="v">${fmt(Math.max(0, f.eHp), 1)} / ${fmt(u.maxHp, 1)}</span>${bar(f.eHp, u.maxHp)}${dotText(f.eDots, u.maxHp)}${shieldText(f.eShield)}${u.block ? `<span class="muted">block ${fmt(f.eBlock, 1)}</span>` : ''}</div>
       <div class="row"><span class="k">t</span><span class="v">${fmt(f.elapsed, 1)}s</span>${d.actions.length ? '' : '<span class="muted">no attack or spell loaded</span>'}</div>
       ${d.empowers.map((p) => {

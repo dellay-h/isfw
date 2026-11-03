@@ -432,3 +432,9 @@ button.armed { color: var(--err); border-color: var(--err); }
 #de-preview input.w-lv { width: 44px; }
 #de-preview .pv-skills td { padding: 0 4px 0 0; white-space: nowrap; }
 #de-preview .pv-skills td.pv-name { max-width: 104px; overflow: hidden; text-overflow: ellipsis; }
+
+/* process box: small progress bars for the player's attacks and spells (desktop only) */
+#proc .act-row { font-size: 11px; line-height: 1.3; }
+#proc .bar.mini { flex: 0 0 120px; height: 2px; }
+#proc .act-row .muted { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) { #proc .act-row { display: none; } }
