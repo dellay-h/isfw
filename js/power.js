@@ -17,8 +17,8 @@
 export const POWER = [
   { kind: 'tier', tier: 1, base: { maxHp: 20, damage: 2.5, attackSpeed: 0 } },
   { kind: 'profile', id: 'default', name: 'default', mult: {}, add: {}, skills: [{ skill: 'M03', level: 1 }] },
-  { kind: 'profile', id: 'defensive', name: 'defensive', mult: { maxHp: 1.6, damage: 0.7 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
-  { kind: 'profile', id: 'offensive', name: 'offensive', mult: { maxHp: 0.7, damage: 1.8 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
+  { kind: 'profile', id: 'defensive', name: 'defensive', mult: { maxHp: 1.8, damage: 0.6 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
+  { kind: 'profile', id: 'offensive', name: 'offensive', mult: { maxHp: 0.6, damage: 2 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
   { kind: 'profile', id: 'exploder', name: 'exploder', mult: { damage: 10 }, add: {}, skills: [{ skill: 'M01', level: 1 }] },
   { kind: 'profile', id: 'quick', name: 'quick', mult: {}, add: {}, skills: [{ skill: 'M03', level: 1 }, { skill: 'M02', level: 1 }] },
   { kind: 'rank', rank: 'elite', bonus: 0.2 },
