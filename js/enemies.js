@@ -25,7 +25,7 @@
 export const ENEMIES = [
   {
     id: 'E013', name: 'elder sapling', tier: 1, rank: 'challenge', limit: 1,
-    base: { maxHp: 60, regenFlat: 4, block: 4 },
+    base: { maxHp: 60, regenFlat: 4, block: 2 },
     skills: [],
     rewards: [],
     skillRewards: [
@@ -92,18 +92,6 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'defensive', limit: 1,
-    base: { lifesteal: 0.4, damage: 1, attackSpeed: -0.15 },
-    skills: [],
-    rewards: [
-      { stat: 'damage', total: 0.5 },
-      { stat: 'attackSpeed', total: 0.1 },
-    ],
-    skillRewards: [
-      { skill: 'S10', level: 1, at: 1 },
-    ],
-  },
-  {
     id: 'E012', name: 'dropout sorcerer', tier: -3, rank: 'common', limit: 25, unlockCost: 1,
     base: { maxHp: 80, magicPower: 1, manaRegen: 0.5 },
     skills: [],
@@ -126,6 +114,18 @@ export const ENEMIES = [
     skillRewards: [
       { skill: 'S04', level: 1, at: 'first' },
       { skill: 'X01', level: 1, at: 'final' },
+    ],
+  },
+  {
+    id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'defensive', limit: 1,
+    base: { lifesteal: 0.4, damage: 1, attackSpeed: -0.15 },
+    skills: [],
+    rewards: [
+      { stat: 'damage', total: 0.5 },
+      { stat: 'attackSpeed', total: 0.1 },
+    ],
+    skillRewards: [
+      { skill: 'S10', level: 1, at: 1 },
     ],
   },
   {
@@ -177,6 +177,22 @@ export const ENEMIES = [
     ],
   },
   {
+    id: 'E015', name: 'exploder', tier: 1, rank: 'elite', profile: 'exploder', limit: 5,
+    skills: [],
+    rewards: [
+      { stat: 'maxHp', total: 5 },
+    ],
+    skillRewards: [],
+  },
+  {
+    id: 'E016', name: 'quickling', tier: 1, rank: 'elite', profile: 'quick', limit: 5,
+    skills: [],
+    rewards: [
+      { stat: 'attackSpeed', total: 0.6 },
+    ],
+    skillRewards: [],
+  },
+  {
     id: 'E009', name: 'arcane wizard apprentice', tier: -3, rank: 'elite', limit: 5,
     base: { maxHp: 350, magicPower: 5, manaRegen: 1 },
     skills: [],
@@ -186,21 +202,5 @@ export const ENEMIES = [
     skillRewards: [
       { skill: 'S09', level: 1, at: 'final' },
     ],
-  },
-  {
-    id: 'E015', name: 'exploder', tier: 1, rank: 'common', profile: 'exploder', limit: 25,
-    skills: [],
-    rewards: [
-      { stat: 'damage', total: 1 },
-    ],
-    skillRewards: [],
-  },
-  {
-    id: 'E016', name: 'quickling', tier: 1, rank: 'common', profile: 'quick', limit: 25,
-    skills: [],
-    rewards: [
-      { stat: 'attackSpeed', total: 0.1 },
-    ],
-    skillRewards: [],
   },
 ];
