@@ -32,6 +32,8 @@
 //   empower: { mult, cooldown, armorPen } next attack deals +mult x damage
 //   mods:    attribute bonuses (keys in data.js MODS)
 //   slots:   extra skill slots (player)
+//   rush:    { attackSpeed, duration } +attackSpeed at the start of a fight,
+//            falling to 0 over duration seconds (enemies only for now)
 export const SKILLS = [
   {
     id: 'S01', name: 'basic attack',
@@ -159,6 +161,18 @@ export const SKILLS = [
     id: 'S16', name: 'warrior\'s bundle',
     levels: [
       { mods: { damage: 0.05, maxHp: 0.05, hpFlat: 5 } },
+    ],
+  },
+  {
+    id: 'M01', name: 'explosion',
+    levels: [
+      { attack: { type: 'physical', base: 0, scaling: 1, time: 15, speedScaling: 0 } },
+    ],
+  },
+  {
+    id: 'M02', name: 'quick start',
+    levels: [
+      { rush: { attackSpeed: 3, duration: 4 } },
     ],
   },
 ];

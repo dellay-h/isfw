@@ -1,7 +1,7 @@
 // dev/enemies, top: tier power levels and enemy profiles (js/power.js).
 // An enemy with a profile gets its tier's power level x the profile (mult,
 // then add), plus its own base on top (game.js enemyBase).
-import { ATTRS } from '../data.js';
+import { ATTRS, RANKS } from '../data.js';
 import { store, persist, statusText } from './store.js';
 import {
   esc, num, getP, setP, delP, open, saveOpen, renameOpen, numInput, textInput, select, btn, xBtn, field, readInput, confirmed, wire,
@@ -10,6 +10,10 @@ import {
 const $ = (sel) => document.querySelector(sel);
 const P = () => store.power;
 const E = () => store.enemies;
+const S = () => store.skills;
+// ranks that can have a bonus (elite, boss)
+const BONUS_RANKS = ['elite', 'boss'].filter((r) => RANKS[r]);
+const pct = (v) => `${v >= 0 ? '+' : ''}${num((v || 0) * 100)}%`;
 const LABEL = Object.fromEntries(ATTRS.map((a) => [a.key, a.label]));
 const DEF = { maxHp: 100, damage: 1, attackSpeed: 0, magicPower: 1, magicSpeed: 0, maxMana: 20, manaRegen: 1, armor: 10, block: 1, blockShred: 1, regenFlat: 1, regenIn: 0.01, lifesteal: 0.1 };
 let afterEdit = () => {};
@@ -39,14 +43,32 @@ function tierBlock(x, i) {
   return field(`pw:tier:${x.tier}`, `tier ${x.tier}`, `<span class="muted">${esc(short(x.base, num))}</span>`, body);
 }
 
+function skillRows(x, i) {
+  const own = x.skills || [];
+  const label = (k) => `${k.id} ${k.name}${k.special ? ' (special)' : ''}`;
+  const rows = own.map((u, j) => {
+    const k = S().find((y) => y.id === u.skill);
+    const max = k ? k.levels.length : 1;
+    return `<tr>
+      <td>${select(`data-i="${i}" data-p="skills.${j}.skill" data-t="text"`, S().filter((y) => !y.special).map((y) => [y.id, label(y)]).concat(k ? [] : [[u.skill, `${u.skill} (unknown)`]]), u.skill)}</td>
+      <td>lv ${select(`data-i="${i}" data-p="skills.${j}.level" data-t="int"`, Array.from({ length: Math.max(max, u.level || 1) }, (_, n) => [n + 1, n + 1]), u.level)}</td>
+      <td>${xBtn('pskill-del', `data-i="${i}" data-j="${j}"`)}</td></tr>`;
+  }).join('');
+  const used = new Set(own.map((u) => u.skill));
+  const left = S().filter((y) => !y.special && !used.has(y.id));
+  return `${rows ? `<table class="dev-table">${rows}</table>` : '<div class="muted">none</div>'}
+    ${left.length ? `<div class="addrow">${select(`data-act="pskill-add" data-i="${i}"`, [['', '+ skill'], ...left.map((y) => [y.id, label(y)])], '')}</div>` : ''}`;
+}
+
 function profileBlock(x, i) {
   const u = users(x.id);
   const body = `<div class="ident"><label>id</label>${textInput(i, 'id', x.id, 'w-name')}<label>name</label>${textInput(i, 'name', x.name, 'w-name')}
       <span class="spacer"></span>${btn('delete', 'prof-del', `data-i="${i}"`, 'quiet')}</div>
     <div class="calc">used by ${u.length ? u.map((e) => `${e.id} ${esc(e.name)}`).join(', ') : 'no enemy'} · attribute = tier base × multiplier + added</div>
     <div class="act"><div class="ident"><b>multipliers</b> <span class="muted">(others ×1)</span></div>${attrRows(i, 'mult', x.mult, 'mult')}</div>
-    <div class="act"><div class="ident"><b>added</b> <span class="muted">(flat, after multiplying)</span></div>${attrRows(i, 'add', x.add, 'add')}</div>`;
-  const info = [short(x.mult, (v) => `×${num(v)}`), short(x.add, (v) => `+${num(v)}`)].filter(Boolean).join(' · ') || 'no change';
+    <div class="act"><div class="ident"><b>added</b> <span class="muted">(flat, after multiplying)</span></div>${attrRows(i, 'add', x.add, 'add')}</div>
+    <div class="act"><div class="ident"><b>skills</b> <span class="muted">(every enemy with this profile has them, besides its own)</span></div>${skillRows(x, i)}</div>`;
+  const info = [short(x.mult, (v) => `×${num(v)}`), short(x.add, (v) => `+${num(v)}`), (x.skills || []).map((u) => u.skill).join(', ')].filter(Boolean).join(' · ') || 'no change';
   return field(`pw:prof:${x.id}`, `${esc(x.id)}${x.name && x.name !== x.id ? ` ${esc(x.name)}` : ''}`, `<span class="muted">${esc(info)} · ${u.length} enem${u.length === 1 ? 'y' : 'ies'}</span>`, body);
 }
 
@@ -56,14 +78,37 @@ function problems() {
   for (const [x] of tiers()) { if (seenT.has(x.tier)) out.push(`tier ${x.tier} has more than one power level`); seenT.add(x.tier); }
   const ids = profs().map(([x]) => x.id);
   for (const id of ids) if (!id) out.push('a profile has no id'); else if (ids.filter((y) => y === id).length > 1) out.push(`profile id ${id} is used more than once`);
+  for (const [x] of profs()) {
+    for (const u of x.skills || []) {
+      const k = S().find((y) => y.id === u.skill);
+      if (!k) out.push(`profile ${x.id}: unknown skill ${u.skill}`);
+      else if (u.level > k.levels.length) out.push(`profile ${x.id}: ${u.skill} has no level ${u.level}`);
+    }
+  }
   return out;
+}
+
+function rankRows() {
+  return BONUS_RANKS.map((r) => {
+    const i = P().findIndex((x) => x.kind === 'rank' && x.rank === r);
+    const v = i >= 0 ? P()[i].bonus : 0;
+    const n = E().filter((e) => (e.rank || (e.boss ? 'boss' : 'common')) === r).length;
+    return `<tr><td class="lbl">${RANKS[r].label}</td>
+      <td><input type="number" step="any" data-p="bonus" data-t="rank-bonus" data-rank="${r}" value="${esc(v)}"> <span class="muted">${pct(v)} to every attribute · ${n} enem${n === 1 ? 'y' : 'ies'}</span></td></tr>`;
+  }).join('');
 }
 
 export function renderPower() {
   const warns = problems();
   const T = tiers();
   const Pr = profs();
+  const rb = BONUS_RANKS.map((r) => `${r} ${pct(P().find((x) => x.kind === 'rank' && x.rank === r)?.bonus)}`).join(', ');
   $('#de-power').innerHTML = `
+    <details class="en" data-key="pw:ranks"${open.has('pw:ranks') ? ' open' : ''}>
+      <summary>rank bonus <span class="muted">· ${rb}</span></summary>
+      <div class="body"><div class="calc">every attribute of elites / bosses (0.5 = +50%), applied last, like the player's level bonus (negative values shrink towards 0)</div>
+        <table class="dev-table">${rankRows()}</table></div>
+    </details>
     <details class="en" data-key="pw:tiers"${open.has('pw:tiers') ? ' open' : ''}>
       <summary>tier power levels <span class="muted">· ${T.map(([x]) => `tier ${x.tier}`).join(', ') || 'none'}</span></summary>
       <div class="body">${T.map(([x, i]) => tierBlock(x, i)).join('')}<div class="addrow">${btn('+ tier', 'tier-add')}</div></div>
@@ -77,6 +122,14 @@ export function renderPower() {
 }
 
 function onInput(el) {
+  if (el.dataset.t === 'rank-bonus') {
+    const v = parseFloat(el.value);
+    let x = P().find((y) => y.kind === 'rank' && y.rank === el.dataset.rank);
+    if (!x) { x = { kind: 'rank', rank: el.dataset.rank, bonus: 0 }; P().push(x); }
+    x.bonus = Number.isFinite(v) ? v : 0;
+    persist('power');
+    return;
+  }
   const x = P()[Number(el.dataset.i)];
   const path = el.dataset.p;
   if (el.dataset.t === 'pw-key') {
@@ -114,6 +167,11 @@ function onAction(el) {
       break;
     }
     case 'pw-del': delP(x, el.dataset.p, 99); break;
+    case 'pskill-add': if (!el.value) return; (x.skills ??= []).push({ skill: el.value, level: 1 }); break;
+    case 'pskill-del':
+      x.skills.splice(Number(el.dataset.j), 1);
+      if (!x.skills.length) delete x.skills;
+      break;
     case 'tier-add': {
       const top = tiers().reduce((m, [t]) => Math.max(m, t.tier), 0);
       const last = tiers().at(-1)?.[0];

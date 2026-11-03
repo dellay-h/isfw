@@ -60,11 +60,13 @@ const SKILLS_HEADER = `// Skill data, shared by the player and enemies. Written 
 //   empower: { mult, cooldown, armorPen } next attack deals +mult x damage
 //   mods:    attribute bonuses (keys in data.js MODS)
 //   slots:   extra skill slots (player)
+//   rush:    { attackSpeed, duration } +attackSpeed at the start of a fight,
+//            falling to 0 over duration seconds (enemies only for now)
 `;
 
 const ENEMY_ORDER = ['id', 'name', 'tier', 'rank', 'boss', 'profile', 'limit', 'unlockCost', 'base', 'skills', 'rewards', 'skillRewards'];
 const ACTION_ORDER = ['type', 'base', 'scaling', 'time', 'speedScaling', 'hits', 'cost', 'lifesteal', 'dot', 'shield', 'heal', 'countdown'];
-const LEVEL_ORDER = ['attack', 'spell', 'onHit', 'empower', 'mods', 'slots'];
+const LEVEL_ORDER = ['attack', 'spell', 'onHit', 'empower', 'mods', 'slots', 'rush'];
 
 const key = (k) => (/^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k));
 const str = (s) => `'${String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
@@ -153,13 +155,16 @@ const POWER_HEADER = `// Enemy power: tier power levels and enemy profiles. Writ
 //   { kind: 'tier', tier, base }      power level of a tier: the base
 //                                     attributes of every enemy of that tier
 //                                     that has a profile (keys: data.js ATTRS)
-//   { kind: 'profile', id, name, mult, add }
+//   { kind: 'profile', id, name, mult, add, skills }
 //                                     an enemy profile: each attribute =
 //                                     tier base x mult (default 1) + add
 //                                     (default 0); the enemy's own base is
-//                                     added on top
+//                                     added on top. skills [{ skill, level }]:
+//                                     every enemy with the profile has them
+//   { kind: 'rank', rank, bonus }     elites / bosses: +bonus to every
+//                                     attribute (0.5 = +50%), applied last
 `;
-const POWER_ORDER = ['kind', 'id', 'tier', 'name', 'base', 'mult', 'add'];
+const POWER_ORDER = ['kind', 'id', 'tier', 'rank', 'name', 'bonus', 'base', 'mult', 'add', 'skills'];
 
 export function powerSource(items) {
   return `${POWER_HEADER}export const POWER = [\n${items.map((x) => `  ${lit(x, POWER_ORDER)},`).join('\n')}\n];\n`;

@@ -102,9 +102,11 @@ function attrsField(e, i) {
     : '';
   const n = ATTR_DEFS.filter((a) => getP(e, a.path) !== undefined).length;
   const b = withC(() => G.enemyBase(e));
-  const calc = e.profile
+  const rb = withC(() => G.rankBonus(e));
+  const rbText = rb ? `<div class="calc">${G.rankOf(e)} bonus +${num(rb * 100)}% to every attribute (applied last, after skills)</div>` : '';
+  const calc = (e.profile
     ? `<div class="calc">tier ${G.tierAbs(e)} power × ${esc(e.profile)}${e.base ? ' + extra' : ''} → ${ATTRS.filter((a) => b[a.key]).map((a) => `${a.label} ${num(b[a.key])}`).join(' · ') || 'all 0'}</div>`
-    : '<div class="calc">no profile: uses only the attributes set here</div>';
+    : '<div class="calc">no profile: uses only the attributes set here</div>') + rbText;
   return field(`${e.id}:attrs`, 'attributes', `(${e.profile ? `${esc(e.profile)} profile` : n})`, `<table class="dev-table">${rows}</table>${add}${calc}`);
 }
 
@@ -139,9 +141,11 @@ function skillsField(e, i) {
     .map((a) => `${a.label} ${num(unit[a.key])}`);
   if (changed.length) lines.push(`<div>with skills: ${changed.join(', ')}</div>`);
   if (unit.empowers.length) lines.push(`<div>empower: ${unit.empowers.map((p) => `+${fmt(p.mult * 100, 0)}% every ${num(p.cooldown)}s`).join(', ')}</div>`);
+  const fromProfile = withC(() => G.enemySkills(e)).filter((u) => u.fromProfile);
+  if (fromProfile.length) lines.unshift(`<div>from the ${esc(e.profile)} profile: ${fromProfile.map((u) => `${u.skill} lv${u.level || 1}`).join(', ')}</div>`);
   const used = new Set(own.map((u) => u.skill));
   const addable = opts.filter((k) => !used.has(k.id));
-  const body = `${rows ? `<table class="dev-table">${rows}</table>` : '<div class="muted">no skills: this enemy does not act</div>'}
+  const body = `${rows ? `<table class="dev-table">${rows}</table>` : fromProfile.length ? '<div class="muted">no own skills (only its profile\'s)</div>' : '<div class="muted">no skills: this enemy does not act</div>'}
     <div class="addrow">
       ${addable.length ? select(`data-act="own-add" data-i="${i}"`, [['', '+ skill'], ...addable.map((k) => [k.id, skillLabel(k)])], '') : ''}
       ${btn('+ new skill', 'own-new', `data-i="${i}"`)}
@@ -205,7 +209,7 @@ function enemyBlock(e, i, warns) {
   const ehp = G.effectiveHp(u);
   const tip = 'effective hp: damage of that type needed to defeat it, from max hp and resistances (armor for physical) only; block, regen, lifesteal and shields are not counted';
   const summary = [dev ? `in development for tier ${G.tierAbs(e)}` : `tier ${e.tier || 0}`, `hp ${num(u.maxHp)}`,
-    `dps ${num(dps)}`, `<span title="${tip}">ehp phys ${num(ehp.physical)} / mag ${num(ehp.magic)}</span>`, `${e.limit} kills`, `${(e.skills || []).length} skills`]
+    `dps ${num(dps)}`, `<span title="${tip}">ehp phys ${num(ehp.physical)} / mag ${num(ehp.magic)}</span>`, `${e.limit} kills`, `${withC(() => G.enemySkills(e)).length} skills`]
     .concat((e.rewards || []).map((r) => `${G.STAT_LABEL[r.stat] || '?'} +${r.type === 'percent' ? `${num((r.total || 0) * 100)}%` : num(r.total || 0)} total`));
   const n = E().length;
   return `<details class="en${dev ? ' wip' : ''}" data-key="${esc(e.id)}"${open.has(e.id) ? ' open' : ''}>

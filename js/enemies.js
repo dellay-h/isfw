@@ -183,4 +183,20 @@ export const ENEMIES = [
       { skill: 'S09', level: 1, at: 'final' },
     ],
   },
+  {
+    id: 'E015', name: 'exploder', tier: -1, rank: 'common', profile: 'exploder', limit: 50,
+    skills: [],
+    rewards: [
+      { stat: 'damage', total: 1 },
+    ],
+    skillRewards: [],
+  },
+  {
+    id: 'E016', name: 'quickling', tier: -1, rank: 'common', profile: 'quick', limit: 50,
+    skills: [{ skill: 'S03', level: 1 }],
+    rewards: [
+      { stat: 'attackSpeed', total: 0.1 },
+    ],
+    skillRewards: [],
+  },
 ];

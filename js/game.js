@@ -929,6 +929,17 @@ export function derived(s) {
 export const tierPower = (tier) => C.power.find((x) => x.kind === 'tier' && x.tier === tier) || null;
 export const profileDef = (id) => C.power.find((x) => x.kind === 'profile' && x.id === id) || null;
 export const profiles = () => C.power.filter((x) => x.kind === 'profile');
+// Rank bonus (power.js { kind: 'rank', rank, bonus }): elites and bosses get
+// +bonus to every attribute (0.5 = +50%), applied last like the player's
+// level bonus (negative values shrink towards 0).
+export const rankBonus = (e) => (e ? C.power.find((x) => x.kind === 'rank' && x.rank === rankOf(e))?.bonus || 0 : 0);
+// An enemy's skills: its own, then its profile's (its own level wins).
+export function enemySkills(e) {
+  const out = [...(e.skills || [])];
+  const p = e.profile ? profileDef(e.profile) : null;
+  for (const u of p?.skills || []) if (!out.some((x) => x.skill === u.skill)) out.push({ ...u, fromProfile: true });
+  return out;
+}
 // An enemy's base attributes. With a profile: tier power x profile mult +
 // profile add, plus its own base on top. Without one: its own base only.
 export function enemyBase(e) {
@@ -944,14 +955,30 @@ export function enemyBase(e) {
   return out;
 }
 
-// Enemy: its base attributes + its skills (always active, at the listed level).
-export function enemyUnit(e) {
+// Enemy: its base attributes + its skills (always active, at the listed
+// level, profile skills included) + its rank bonus.
+// t: seconds into the fight (rush, a decaying attack speed bonus at the
+// start of a fight, only counts in a fight).
+export function enemyUnit(e, t = null) {
   const active = [];
-  for (const u of e.skills || []) {
+  for (const u of enemySkills(e)) {
     const k = skillDef(u.skill);
     if (k) active.push({ id: k.id, L: mergeLevels(k.levels, Math.min(u.level || 1, k.levels.length)) });
   }
-  return unit({ ...ZERO, ...enemyBase(e) }, active);
+  const extra = t === null ? [] : rushEffects(active, t);
+  return unit({ ...ZERO, ...enemyBase(e) }, active, extra, 0, 1 + rankBonus(e));
+}
+// Rush (skill part { attackSpeed, duration }): +attackSpeed at the start of a
+// fight, falling linearly to 0 over duration seconds. With speed scaling 1
+// that is attackSpeed x duration / 2 extra uses.
+export function rushEffects(active, t) {
+  const out = [];
+  for (const { id, L } of active) {
+    const r = L.rush;
+    if (!r || !(r.duration > 0) || t >= r.duration) continue;
+    out.push({ group: 'skills', label: `${id} rush`, stat: 'attackSpeed', kind: 'flat', v: (r.attackSpeed || 0) * (1 - t / r.duration) });
+  }
+  return out;
 }
 
 // Size of each reward's increase from the n-th kill (for the log).
@@ -1088,7 +1115,7 @@ export function step(s, dt) {
 
   const e = enemyDef(f.enemyId);
   if (!e) { s.fight = null; return; }
-  const eu = enemyUnit(e);
+  const eu = enemyUnit(e, f.elapsed);
   const { P, E } = sides(s, f, d, eu);
   f.elapsed += dt;
   if (d.regenInHp) s.hp = Math.min(d.maxHp, s.hp + d.regenInHp * dt);

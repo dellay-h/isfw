@@ -40,10 +40,12 @@ const PARTS = {
   empower: { label: 'empower (next attack)', make: () => ({ mult: 1, cooldown: 5 }) },
   mods: { label: 'attribute bonuses', make: () => ({ damageFlat: 1 }) },
   slots: { label: 'skill slots', make: () => 1 },
+  rush: { label: 'rush (attack speed at fight start, decaying; enemies)', make: () => ({ attackSpeed: 3, duration: 4 }) },
 };
 const SIMPLE = {
   onHit: [['base', 'base'], ['scaling', 'scaling (x dmg)']],
   empower: [['mult', 'bonus (1 = +100%)'], ['cooldown', 'cooldown (s)'], ['armorPen', 'armor pen']],
+  rush: [['attackSpeed', 'aspd bonus at the start'], ['duration', 'falls to 0 over (s)']],
 };
 
 // Who uses / awards a skill.
@@ -53,6 +55,10 @@ function refs(id) {
   for (const e of E()) {
     for (const u of e.skillRewards || []) if (u.skill === id) awards.push({ e, u });
     for (const u of e.skills || []) if (u.skill === id) users.push({ e, u });
+  }
+  // enemy profiles that give the skill to their enemies (power.js)
+  for (const p of store.power.filter((x) => x.kind === 'profile')) {
+    for (const u of p.skills || []) if (u.skill === id) users.push({ e: { id: `profile ${p.id}` }, u });
   }
   return { awards, users };
 }
@@ -204,6 +210,9 @@ function renameRefs(oldId, newId) {
     for (const u of [...(e.skills || []), ...(e.skillRewards || [])]) if (u.skill === oldId) { u.skill = newId; changed = true; }
   }
   if (changed) persist('enemies');
+  let inPower = false;
+  for (const p of store.power) for (const u of p.skills || []) if (u.skill === oldId) { u.skill = newId; inPower = true; }
+  if (inPower) persist('power');
 }
 
 function onInput(el) {

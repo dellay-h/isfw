@@ -601,7 +601,7 @@ function render() {
   const pane = $('#proc');
   if (f) {
     const e = G.enemyDef(f.enemyId);
-    const u = G.enemyUnit(e);
+    const u = G.enemyUnit(e, f.elapsed);
     pane.innerHTML = `
       <div class="row"><span class="k">src</span><span class="v">${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 1)}</span>${bar(s.hp, d.maxHp)}${dotText(f.pDots, d.maxHp)}${shieldText(f.pShield)}</div>
       ${d.maxMana ? `<div class="row"><span class="k">mp</span><span class="v">${fmt(s.mana, 1)} / ${fmt(d.maxMana, 0)}</span>${bar(s.mana, d.maxMana)}</div>` : ''}
