@@ -54,7 +54,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E011', name: 'goblin', tier: 1, rank: 'common', profile: 'default', limit: 50,
+    id: 'E011', name: 'goblin', tier: 1, rank: 'common', profile: 'default', limit: 25,
     skills: [],
     rewards: [
       { stat: 'damage', total: 1 },
@@ -66,7 +66,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E002', name: 'slime', tier: 1, rank: 'common', profile: 'defensive', limit: 50,
+    id: 'E002', name: 'slime', tier: 1, rank: 'common', profile: 'defensive', limit: 25,
     base: { maxHp: 10 },
     skills: [],
     rewards: [
@@ -79,7 +79,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E003', name: 'archer', tier: 1, rank: 'common', profile: 'offensive', limit: 50,
+    id: 'E003', name: 'archer', tier: 1, rank: 'common', profile: 'offensive', limit: 25,
     base: { maxHp: 10 },
     skills: [],
     rewards: [
@@ -93,7 +93,7 @@ export const ENEMIES = [
   },
   {
     id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'defensive', limit: 1,
-    base: { damage: 2 },
+    base: { lifesteal: 0.4, damage: 1, attackSpeed: -0.15 },
     skills: [],
     rewards: [
       { stat: 'damage', total: 0.5 },
