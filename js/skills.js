@@ -165,6 +165,12 @@ export const SKILLS = [
     ],
   },
   {
+    id: 'X05', name: 'improved fighting', special: true,
+    levels: [
+      { mods: { damageFlat: 0.5, attackSpeedFlat: 0.2, hpFlat: 5 } },
+    ],
+  },
+  {
     id: 'S16', name: 'warrior\'s bundle',
     levels: [
       { mods: { damage: 0.05, maxHp: 0.05, hpFlat: 5 } },

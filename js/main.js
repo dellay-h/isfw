@@ -725,6 +725,8 @@ let lastShopKey = '';
 const effectText = (e) => `${G.STAT_LABEL[e.stat] || e.stat} +${e.kind === 'pct' ? `${exact(e.v * 100)}%` : exact(e.v)}`;
 function shopLines(x) {
   const out = (x.effects || []).map(effectText);
+  const uk = x.unlockSkill && G.skillDef(x.unlockSkill);
+  if (uk) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`${uk.special ? 'Special (always active)' : 'Skill'}: ${describe(uk.levels[0], G.mergeLevels(uk.levels, 1), {}, G.derived(s)).join(', ') || uk.name}`)}">unlocks ${uk.id} ${uk.name}</span>`);
   if (x.slots) out.push(`skill slots +${x.slots}`);
   if (x.startKills) {
     const e = G.enemyDef(x.startKills.enemy);
