@@ -1262,7 +1262,10 @@ function win(s, e) {
   if (REVEAL.tierBoss && rankOf(e) === 'boss' && n === 1 && C.enemies.some((x) => (x.tier || 0) === (e.tier || 0) + 1)) log(s, `tier ${(e.tier || 0) + 1} open for this prestige (${e.id} ${e.name} defeated)`, 'warn');
   s.fight = null;
   noteSkills(s);
-  updateReveals(s);
+  // a whole tier revealed for the first time (REVEAL.tiers, e.g. tier 1 after
+  // 5 rotting plant kills): the process stops so the player sees it
+  const newTier = updateReveals(s).map((x) => enemyDef(x.split(' ')[0]))
+    .find((x) => x && !Object.hasOwn(REVEAL.enemies, x.id) && REVEAL.tiers[x.tier || 0]);
   all.forEach((k, i) => {
     const lv = skillLevel(s, k.id);
     if (lv <= before[i]) return;
@@ -1271,6 +1274,8 @@ function win(s, e) {
   });
   if (n >= lim) {
     log(s, `${e.id} ${e.name} limit reached`, 'warn');
+  } else if (newTier) {
+    log(s, `tier ${newTier.tier || 0} unlocked: process stopped`, 'warn');
   } else if (s.repeat) {
     startFight(s, e.id); // repeat immediately with current hp
   }
