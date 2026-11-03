@@ -179,7 +179,7 @@ export const SKILLS = [
   {
     id: 'M01', name: 'explosion',
     levels: [
-      { attack: { type: 'physical', base: 0, scaling: 1, time: 15, speedScaling: 0 } },
+      { attack: { type: 'physical', base: 0, scaling: 10, time: 7, speedScaling: 0 } },
     ],
   },
   {
