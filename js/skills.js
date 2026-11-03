@@ -38,7 +38,7 @@ export const SKILLS = [
   {
     id: 'S01', name: 'basic attack',
     levels: [
-      { attack: { type: 'physical', base: 2, scaling: 1, time: 1, speedScaling: 1 } },
+      { attack: { type: 'physical', base: 2, scaling: 1, time: 1.5, speedScaling: 1 } },
       { mods: { damageFlat: 1 } },
     ],
   },
@@ -53,7 +53,7 @@ export const SKILLS = [
   {
     id: 'S03', name: 'quick attack',
     levels: [
-      { attack: { type: 'physical', base: 1, scaling: 0.6, time: 0.6, speedScaling: 1 } },
+      { attack: { type: 'physical', base: 1, scaling: 0.6, time: 0.9, speedScaling: 1 } },
       { mods: { attackSpeedFlat: 0.25 } },
       { mods: { magicPowerFlat: 1 } },
     ],
@@ -178,7 +178,7 @@ export const SKILLS = [
   {
     id: 'M03', name: 'basic attack',
     levels: [
-      { attack: { type: 'physical', scaling: 1, time: 1, speedScaling: 1 } },
+      { attack: { type: 'physical', scaling: 1, time: 1.5, speedScaling: 1 } },
     ],
   },
 ];
