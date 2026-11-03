@@ -99,7 +99,7 @@ function rankRows() {
     const v = i >= 0 ? P()[i].bonus : 0;
     const n = E().filter((e) => (e.rank || (e.boss ? 'boss' : 'common')) === r).length;
     return `<tr><td class="lbl">${RANKS[r].label}</td>
-      <td><input type="number" step="any" data-p="bonus" data-t="rank-bonus" data-rank="${r}" value="${esc(v)}"> <span class="muted">${pct(v)} to every attribute · ${n} enem${n === 1 ? 'y' : 'ies'}</span></td></tr>`;
+      <td><input type="number" step="any" data-p="bonus" data-t="rank-bonus" data-rank="${r}" value="${esc(v)}"> <span class="muted">${pct(v)} on base stats · ${n} enem${n === 1 ? 'y' : 'ies'}</span></td></tr>`;
   }).join('');
 }
 
@@ -111,7 +111,7 @@ export function renderPower() {
   $('#de-power').innerHTML = `
     <details class="en" data-key="pw:ranks"${open.has('pw:ranks') ? ' open' : ''}>
       <summary>rank bonus <span class="muted">· ${rb}</span></summary>
-      <div class="body"><div class="calc">every attribute of elites / bosses (0.5 = +50%), applied last, like the player's level bonus (negative values shrink towards 0)</div>
+      <div class="body"><div class="calc">elites / bosses: +bonus (0.5 = +50%) on their base stats (tier power × profile; without a profile, their own attributes), like the player's level bonus (negative values shrink towards 0). An enemy's own extra attributes and its skills come after it</div>
         <table class="dev-table">${rankRows()}</table></div>
     </details>
     <details class="en" data-key="pw:tiers"${open.has('pw:tiers') ? ' open' : ''}>

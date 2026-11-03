@@ -930,8 +930,10 @@ export const tierPower = (tier) => C.power.find((x) => x.kind === 'tier' && x.ti
 export const profileDef = (id) => C.power.find((x) => x.kind === 'profile' && x.id === id) || null;
 export const profiles = () => C.power.filter((x) => x.kind === 'profile');
 // Rank bonus (power.js { kind: 'rank', rank, bonus }): elites and bosses get
-// +bonus to every attribute (0.5 = +50%), applied last like the player's
-// level bonus (negative values shrink towards 0).
+// +bonus (0.5 = +50%) on their base stats (tier power x profile; without a
+// profile, the enemy's own attributes), in their favour like the player's
+// level bonus (negative values shrink towards 0). An enemy's own extra
+// attributes and its skills come after it.
 export const rankBonus = (e) => (e ? C.power.find((x) => x.kind === 'rank' && x.rank === rankOf(e))?.bonus || 0 : 0);
 // An enemy's skills: its own, then its profile's (its own level wins).
 export function enemySkills(e) {
@@ -941,22 +943,27 @@ export function enemySkills(e) {
   return out;
 }
 // An enemy's base attributes. With a profile: tier power x profile mult +
-// profile add, plus its own base on top. Without one: its own base only.
+// profile add, then the rank bonus, then its own base (extra, specific to
+// this enemy) on top. Without one: its own base, with the rank bonus.
 export function enemyBase(e) {
   const own = e.base || {};
-  if (!e.profile) return { ...own };
+  const rb = 1 + rankBonus(e);
+  const out = {};
+  if (!e.profile) {
+    for (const [k, v] of Object.entries(own)) out[k] = Number(favour(v || 0, rb).toPrecision(12));
+    return out;
+  }
   const tb = tierPower(tierAbs(e))?.base || {};
   const p = profileDef(e.profile) || {};
-  const out = {};
   for (const k of new Set([...Object.keys(tb), ...Object.keys(p.add || {}), ...Object.keys(own)])) {
-    const v = (tb[k] || 0) * (p.mult?.[k] ?? 1) + (p.add?.[k] || 0) + (own[k] || 0);
+    const v = favour((tb[k] || 0) * (p.mult?.[k] ?? 1) + (p.add?.[k] || 0), rb) + (own[k] || 0);
     out[k] = Number(v.toPrecision(12));
   }
   return out;
 }
 
-// Enemy: its base attributes + its skills (always active, at the listed
-// level, profile skills included) + its rank bonus.
+// Enemy: its base attributes (rank bonus included, see enemyBase) + its
+// skills (always active, at the listed level, profile skills included).
 // t: seconds into the fight (rush, a decaying attack speed bonus at the
 // start of a fight, only counts in a fight).
 export function enemyUnit(e, t = null) {
@@ -966,7 +973,7 @@ export function enemyUnit(e, t = null) {
     if (k) active.push({ id: k.id, L: mergeLevels(k.levels, Math.min(u.level || 1, k.levels.length)) });
   }
   const extra = t === null ? [] : rushEffects(active, t);
-  return unit({ ...ZERO, ...enemyBase(e) }, active, extra, 0, 1 + rankBonus(e));
+  return unit({ ...ZERO, ...enemyBase(e) }, active, extra);
 }
 // Rush (skill part { attackSpeed, duration }): +attackSpeed at the start of a
 // fight, falling linearly to 0 over duration seconds. With speed scaling 1

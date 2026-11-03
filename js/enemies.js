@@ -6,8 +6,9 @@
 //   tier          enemies are grouped in tiers (default 0)
 //   rank          'challenge' | 'tutorial' | 'common' | 'elite' | 'boss' (RANKS in data.js)
 //   profile       optional: enemy profile id (power.js). With a profile its
-//                 attributes are its tier's power level x the profile, plus
-//                 base as extra on top; without one, base is all it has
+//                 attributes are its tier's power level x the profile x its
+//                 rank bonus, plus base as extra on top; without one, base
+//                 is all it has (with the rank bonus)
 //   limit         maximum number of kills
 //   unlockCost    optional: prestige points to unlock it (locked until paid;
 //                 stays unlocked through prestiges)
@@ -91,7 +92,7 @@ export const ENEMIES = [
   },
   {
     id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'defensive', limit: 1,
-    base: { damage: 1.3333 },
+    base: { damage: 2 },
     skills: [],
     rewards: [
       { stat: 'damage', total: 0.5 },

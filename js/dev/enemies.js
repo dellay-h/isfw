@@ -106,9 +106,9 @@ function attrsField(e, i) {
   const n = ATTR_DEFS.filter((a) => getP(e, a.path) !== undefined).length;
   const b = withC(() => G.enemyBase(e));
   const rb = withC(() => G.rankBonus(e));
-  const rbText = rb ? `<div class="calc">${G.rankOf(e)} bonus +${num(rb * 100)}% to every attribute (applied last, after skills)</div>` : '';
+  const rbText = rb ? `<div class="calc">includes the ${G.rankOf(e)} bonus: +${num(rb * 100)}% on ${e.profile ? 'tier power × profile (extra attributes are added after it)' : 'its attributes'}; skills come after it</div>` : '';
   const calc = (e.profile
-    ? `<div class="calc">tier ${G.tierAbs(e)} power × ${esc(e.profile)}${e.base ? ' + extra' : ''} → ${ATTRS.filter((a) => b[a.key]).map((a) => `${a.label} ${num(b[a.key])}`).join(' · ') || 'all 0'}</div>`
+    ? `<div class="calc">tier ${G.tierAbs(e)} power × ${esc(e.profile)}${rb ? ` × ${G.rankOf(e)} bonus` : ''}${e.base ? ' + extra' : ''} → ${ATTRS.filter((a) => b[a.key]).map((a) => `${a.label} ${num(b[a.key])}`).join(' · ') || 'all 0'}</div>`
     : '<div class="calc">no profile: uses only the attributes set here</div>') + rbText;
   return field(`${e.id}:attrs`, 'attributes', `(${e.profile ? `${esc(e.profile)} profile` : n})`, `<table class="dev-table">${rows}</table>${add}${calc}`);
 }

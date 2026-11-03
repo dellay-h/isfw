@@ -9,8 +9,9 @@ const ENEMIES_HEADER = `// Enemy data. Written by the dev/enemies screen on ever
 //   tier          enemies are grouped in tiers (default 0)
 //   rank          'challenge' | 'tutorial' | 'common' | 'elite' | 'boss' (RANKS in data.js)
 //   profile       optional: enemy profile id (power.js). With a profile its
-//                 attributes are its tier's power level x the profile, plus
-//                 base as extra on top; without one, base is all it has
+//                 attributes are its tier's power level x the profile x its
+//                 rank bonus, plus base as extra on top; without one, base
+//                 is all it has (with the rank bonus)
 //   limit         maximum number of kills
 //   unlockCost    optional: prestige points to unlock it (locked until paid;
 //                 stays unlocked through prestiges)
@@ -161,8 +162,10 @@ const POWER_HEADER = `// Enemy power: tier power levels and enemy profiles. Writ
 //                                     (default 0); the enemy's own base is
 //                                     added on top. skills [{ skill, level }]:
 //                                     every enemy with the profile has them
-//   { kind: 'rank', rank, bonus }     elites / bosses: +bonus to every
-//                                     attribute (0.5 = +50%), applied last
+//   { kind: 'rank', rank, bonus }     elites / bosses: +bonus (0.5 = +50%)
+//                                     on the base stats (tier power x
+//                                     profile), before the enemy's own
+//                                     extra attributes and its skills
 `;
 const POWER_ORDER = ['kind', 'id', 'tier', 'rank', 'name', 'bonus', 'base', 'mult', 'add', 'skills'];
 
