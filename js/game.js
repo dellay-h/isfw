@@ -1000,6 +1000,19 @@ export function enemyDps(e, playerMaxHp) {
   return { total, parts, unit: u };
 }
 
+// Power level (dev pages only): max hp x dps, a rough measure of a unit's
+// total strength, to compare enemies with each other and with the player.
+// Enemy dps: hits and burns (burns on a player with playerMaxHp), before the
+// player's defenses. Player dps: hits of the loaded skills (burns depend on
+// the target, not counted), before the enemy's defenses.
+export function enemyPower(e, playerMaxHp = PLAYER_BASE.maxHp) {
+  const { total, unit: u } = enemyDps(e, playerMaxHp);
+  return { power: u.maxHp * total, hp: u.maxHp, dps: total };
+}
+export function playerPower(s, d = derived(s)) {
+  return { power: d.maxHp * d.dps, hp: d.maxHp, dps: d.dps };
+}
+
 // Effective hp: the damage of each type needed to defeat a unit, from its max
 // hp and its resistances only (armor for physical; magic has no resistance
 // yet). Block, lifesteal, regen, shields and the like are left out: their

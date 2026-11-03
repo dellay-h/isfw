@@ -208,8 +208,11 @@ function enemyBlock(e, i, warns) {
   const dps = withC(() => G.enemyDps(e, 20)).total;
   const ehp = G.effectiveHp(u);
   const tip = 'effective hp: damage of that type needed to defeat it, from max hp and resistances (armor for physical) only; block, regen, lifesteal and shields are not counted';
+  const pw = withC(() => G.enemyPower(e)).power;
+  const ratio = `<span class="pwr" data-pw="${pw}">${ratioText(pw)}</span>`;
+  const pwTip = 'power level = max hp × dps (dps before the player\'s defenses; burns on a 20 hp player). Compared with the player preview\'s power level';
   const summary = [dev ? `in development for tier ${G.tierAbs(e)}` : `tier ${e.tier || 0}`, `hp ${num(u.maxHp)}`,
-    `dps ${num(dps)}`, `<span title="${tip}">ehp phys ${num(ehp.physical)} / mag ${num(ehp.magic)}</span>`, `${e.limit} kills`, `${withC(() => G.enemySkills(e)).length} skills`]
+    `dps ${num(dps)}`, `<span title="${pwTip}">power ${num(pw)}${ratio}</span>`, `<span title="${tip}">ehp phys ${num(ehp.physical)} / mag ${num(ehp.magic)}</span>`, `${e.limit} kills`, `${withC(() => G.enemySkills(e)).length} skills`]
     .concat((e.rewards || []).map((r) => `${G.STAT_LABEL[r.stat] || '?'} +${r.type === 'percent' ? `${num((r.total || 0) * 100)}%` : num(r.total || 0)} total`));
   const n = E().length;
   return `<details class="en${dev ? ' wip' : ''}" data-key="${esc(e.id)}"${open.has(e.id) ? ' open' : ''}>
@@ -233,8 +236,29 @@ function enemyBlock(e, i, warns) {
   </details>`;
 }
 
+// Power level of the player preview (with the game's loaded skills that the
+// preview has unlocked); enemies show theirs relative to it.
+let previewPower = 0;
+const ratioText = (pw) => (previewPower > 0 ? ` (${num(pw / previewPower)}× player)` : '');
+function updateRatios() {
+  for (const el of document.querySelectorAll('#de-list .pwr')) {
+    const txt = ratioText(Number(el.dataset.pw));
+    if (el.textContent !== txt) el.textContent = txt;
+  }
+}
+function previewLoaded() {
+  const s = previewState();
+  const gs = getGameState();
+  const loaded = [];
+  withC(() => {
+    for (const id of gs?.slots || []) if (id && G.equip(s, id)) loaded.push(id);
+  });
+  return { s, loaded };
+}
+
 export function renderEnemies() {
   renderPower();
+  { const { s } = previewLoaded(); previewPower = withC(() => G.playerPower(s)).power; }
   const { out, per } = problems();
   // grouped by tier (absolute value: enemies in development sit with the tier
   // they're made for), keeping the file order inside each group
@@ -393,6 +417,17 @@ function renderPreview() {
     return `<tr><td class="lbl">${label}</td><td class="num">${fmt(d[k], dp)}</td><td class="num muted">${Math.abs(dv) > 1e-9 ? `${dv > 0 ? '+' : ''}${fmt(dv, dp)}` : ''}</td></tr>`;
   }).join('');
   const sk = skills.map(([k, lv]) => `<div>${k.id} ${esc(k.name)} <span class="muted">lv${lv}/${k.levels.length}</span></div>`).join('') || '<div class="muted">none</div>';
+  // power level with the skills loaded in the game (those this preview has unlocked)
+  const { s: sl, loaded } = previewLoaded();
+  const pp = withC(() => G.playerPower(sl));
+  previewPower = pp.power;
+  updateRatios();
+  const pwHtml = `<h2>power level</h2>
+    <table class="dev-table kv">
+      <tr><td class="lbl">hp × dps</td><td class="num">${num(pp.hp)} × ${num(pp.dps)}</td></tr>
+      <tr><td class="lbl">power level</td><td class="num">${num(pp.power)}</td></tr>
+    </table>
+    <div class="calc">${loaded.length ? `with the skills loaded in the game: ${loaded.join(', ')}` : 'no attack loaded: load skills in the game (unlocked in this preview) to get a dps'} · enemies show their power level relative to this</div>`;
   const sp = sps.map(([k]) => `<div>${k.id} ${esc(k.name)}</div>`).join('');
   $('#de-preview').innerHTML = `
     <h2>player preview</h2>
@@ -406,6 +441,7 @@ function renderPreview() {
     </div>
     <h2>attributes</h2>
     <table class="dev-table kv">${attrs}</table>
+    ${pwHtml}
     <h2>skills unlocked <span class="muted">· ${slots} slots</span></h2>
     ${sk}${sp ? `<h2>specials</h2>${sp}` : ''}`;
 }

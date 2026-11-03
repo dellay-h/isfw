@@ -4,7 +4,7 @@
 // time speed (kept in this browser, not in the save). Not
 // tied to the data files, so it stays editable in the read-only dev version.
 import * as G from '../game.js';
-import { esc } from './ui.js';
+import { esc, num } from './ui.js';
 
 const $ = (sel) => document.querySelector(sel);
 let getState = () => null;
@@ -50,6 +50,7 @@ export function renderRun() {
   $('#dr-xp').value = Math.floor(s.xp);
   $('#dr-xpnext').textContent = `/ ${G.xpToNext(s)}`;
   $('#dr-info').textContent = `prestige ${s.prestige.count}`;
+  renderPower(s);
   $('#dr-list tbody').innerHTML = rows;
   // prestige shop: set any level, nothing spent or refunded
   $('#dr-shop tbody').innerHTML = G.shopItems().map((x) => `<tr data-shop="${esc(x.id)}">
@@ -63,6 +64,14 @@ export function renderRun() {
     </tr>`).join('');
 }
 
+// The player's power level (max hp x dps of the loaded skills).
+function renderPower(s) {
+  const p = G.playerPower(s);
+  const html = `${num(p.power)} <span class="muted">= hp ${num(p.hp)} × dps ${num(p.dps)}${p.dps ? '' : ' (no attack loaded)'}</span>`;
+  const el = $('#dr-power');
+  if (el.innerHTML !== html) el.innerHTML = html;
+}
+
 // Keep the numbers current while the game runs (fights add kills), without
 // touching the field being typed in.
 function refresh() {
@@ -74,6 +83,7 @@ function refresh() {
     const el = $(sel);
     if (document.activeElement !== el && Number(el.value) !== v) el.value = v;
   }
+  renderPower(s);
   const nx = `/ ${G.xpToNext(s)}`;
   if ($('#dr-xpnext').textContent !== nx) $('#dr-xpnext').textContent = nx;
   for (const tr of document.querySelectorAll('#dr-list tbody tr')) {
