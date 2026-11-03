@@ -425,3 +425,7 @@ button.armed { color: var(--err); border-color: var(--err); }
 /* tooltips in the src panel (left edge of the page): open to the right and
    wrap, so they stay on screen */
 #unit .tip::after { left: 0; right: auto; white-space: normal; width: 260px; max-width: calc(100vw - 32px); text-align: left; }
+
+/* dev/enemies player preview: load toggles left of the skill id */
+#de-preview .pv-load { cursor: pointer; }
+#de-preview .pv-load input { margin-right: 2px; }

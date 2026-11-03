@@ -668,7 +668,7 @@ export function slotCount(s) {
 }
 
 // Grow (or shrink) the slot list to match the current slot count.
-function syncSlots(s) {
+export function syncSlots(s) {
   const n = slotCount(s);
   while (s.slots.length < n) s.slots.push(null);
   if (s.slots.length > n) s.slots.length = n;
