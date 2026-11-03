@@ -22,6 +22,7 @@ const GROUPS = [['prestige', 'prestige shop'], ['essence', 'essence shop'], ['re
 // reads it on prestige shop items.
 const FEATURES = {
   unlockSkill: { label: 'unlocks skill (lv1)', make: () => K().find((k) => k.special)?.id || K()[0]?.id || '' },
+  unlockEnemies: { label: 'unlocks targets (hidden until owned)', prestige: true, make: () => [] },
   slots: { label: 'skill slots', prestige: true, make: () => 1 },
   startKills: { label: 'start kills', prestige: true, make: () => ({ enemy: E()[0]?.id || '', n: 1 }) },
   limitGrowth: { label: 'max kills growth', prestige: true, make: () => ['common'] },
@@ -61,6 +62,7 @@ function problems() {
     if (x.unlockSkill !== undefined && !skillIds.has(x.unlockSkill)) p.push(`unlocks skill: unknown skill ${x.unlockSkill || '(none)'}`);
     if (x.startKills && !enemyIds.has(x.startKills.enemy)) p.push(`start kills: unknown enemy ${x.startKills.enemy || '(none)'}`);
     for (const id of x.freeExclude || []) if (!skillIds.has(id)) p.push(`free skills never pick: unknown skill ${id}`);
+    for (const id of x.unlockEnemies || []) if (!enemyIds.has(id)) p.push(`unlocks targets: unknown enemy ${id}`);
     if (x.limitGrowth && !x.limitGrowth.length) p.push('max kills growth: no rank ticked');
   }
   return per;
@@ -96,6 +98,7 @@ function summary(x) {
   if (x.essence) out.push('unlocks essence');
   if (x.free) out.push(`free skill +${x.free}`);
   if (x.autoEquip) out.push('auto-equip');
+  if ((x.unlockEnemies || []).length) out.push(`unlocks ${x.unlockEnemies.join(', ')}`);
   return out.join(', ');
 }
 
@@ -121,6 +124,8 @@ function featureRow(x, i, k) {
     input = select(`data-i="${i}" data-p="requires" data-t="text"`, opts, x.requires);
   } else if (k === 'freeExclude') {
     input = `<input type="text" class="w-name" data-i="${i}" data-p="freeExclude" data-t="id-list" value="${esc((x.freeExclude || []).join(', '))}" placeholder="skill ids, e.g. S01, S02">`;
+  } else if (k === 'unlockEnemies') {
+    input = `<input type="text" class="w-name" data-i="${i}" data-p="unlockEnemies" data-t="id-list" value="${esc((x.unlockEnemies || []).join(', '))}" placeholder="enemy ids, e.g. E015, E016">`;
   } else input = '<span class="muted">on</span>';
   return `<tr><td class="lbl">${FEATURES[k].label}</td><td>${input}</td><td>${del}</td></tr>`;
 }
@@ -233,7 +238,7 @@ function onInput(el) {
     const v = parseInt(el.value, 10);
     if (v > 0) x.minKills[el.dataset.rank] = v; else delete x.minKills[el.dataset.rank];
   } else if (t === 'id-list') {
-    x.freeExclude = el.value.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+    x[path] = el.value.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
   } else {
     readInput(x, el);
   }

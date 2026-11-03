@@ -15,6 +15,8 @@
 //   effects      [{ stat, kind: 'flat' | 'pct', v }] attribute bonus per level
 //                (stats: data.js ATTRS; 'pct' multiplies, 0.01 = 1%)
 //   unlockSkill  skill id the item unlocks (level 1; e.g. a special)
+//   unlockEnemies [enemy id] (prestige): these enemies are hidden until the
+//                item is owned
 //   slots        extra skill slots per level
 //   startKills   { enemy, n }: every prestige starts with n kills of that
 //                enemy per level (never above its max kills)
@@ -39,6 +41,7 @@ export const SHOP = [
   { id: 'P10', shop: 'prestige', name: 'limit breaker: elites', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['elite'], requires: 'P09' },
   { id: 'P11', shop: 'prestige', name: 'limit breaker: bosses', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['boss'], requires: 'P09' },
   { id: 'P07', shop: 'prestige', name: 'head start', max: 10, cost: { base: 1, step: 0 }, startKills: { enemy: 'E001', n: 1 } },
+  { id: 'P14', shop: 'prestige', name: 'new targets', max: 1, cost: { base: 1, step: 0 }, unlockEnemies: ['E015', 'E016'] },
   { id: 'N01', shop: 'essence', name: 'attack', cost: { base: 20, step: 20 }, effects: [{ stat: 'damage', kind: 'pct', v: 0.01 }] },
   { id: 'N02', shop: 'essence', name: 'attack speed', cost: { base: 20, step: 20 }, effects: [{ stat: 'attackSpeed', kind: 'pct', v: 0.01 }] },
   { id: 'N03', shop: 'essence', name: 'magic power', cost: { base: 20, step: 20 }, effects: [{ stat: 'magicPower', kind: 'pct', v: 0.01 }] },

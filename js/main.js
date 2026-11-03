@@ -726,6 +726,8 @@ const effectText = (e) => `${G.STAT_LABEL[e.stat] || e.stat} +${e.kind === 'pct'
 function shopLines(x) {
   const out = (x.effects || []).map(effectText);
   const uk = x.unlockSkill && G.skillDef(x.unlockSkill);
+  const ue = (x.unlockEnemies || []).map((id) => G.enemyDef(id)).filter(Boolean);
+  if (ue.length) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`New targets to fight: ${ue.map((e) => `${e.id} ${e.name} (tier ${e.tier || 0})`).join(', ')}.`)}">unlocks ${ue.map((e) => e.name).join(' and ')}</span>`);
   if (uk) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`${uk.special ? 'Special (always active)' : 'Skill'}: ${describe(uk.levels[0], G.mergeLevels(uk.levels, 1), {}, G.derived(s)).join(', ') || uk.name}`)}">unlocks ${uk.id} ${uk.name}</span>`);
   if (x.slots) out.push(`skill slots +${x.slots}`);
   if (x.startKills) {

@@ -135,6 +135,8 @@ const SHOP_HEADER = `// Prestige and essence shop items. Written by the dev/shop
 //   effects      [{ stat, kind: 'flat' | 'pct', v }] attribute bonus per level
 //                (stats: data.js ATTRS; 'pct' multiplies, 0.01 = 1%)
 //   unlockSkill  skill id the item unlocks (level 1; e.g. a special)
+//   unlockEnemies [enemy id] (prestige): these enemies are hidden until the
+//                item is owned
 //   slots        extra skill slots per level
 //   startKills   { enemy, n }: every prestige starts with n kills of that
 //                enemy per level (never above its max kills)
@@ -146,7 +148,7 @@ const SHOP_HEADER = `// Prestige and essence shop items. Written by the dev/shop
 //   free         random free skills per prestige; freeExclude [skill id] never picked
 //   autoEquip    true: auto-equip toggles for skills unlocked at prestige start
 `;
-const SHOP_ORDER = ['id', 'shop', 'name', 'retired', 'max', 'cost', 'effects', 'unlockSkill', 'slots', 'startKills', 'limitGrowth', 'minKills', 'requires', 'essence', 'free', 'freeExclude', 'autoEquip'];
+const SHOP_ORDER = ['id', 'shop', 'name', 'retired', 'max', 'cost', 'effects', 'unlockSkill', 'unlockEnemies', 'slots', 'startKills', 'limitGrowth', 'minKills', 'requires', 'essence', 'free', 'freeExclude', 'autoEquip'];
 
 export function shopSource(items) {
   return `${SHOP_HEADER}export const SHOP = [\n${items.map((x) => `  ${lit(x, SHOP_ORDER)},`).join('\n')}\n];\n`;

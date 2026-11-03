@@ -422,6 +422,8 @@ export function buy(s, id) {
   syncSlots(s);
   syncHp(s);
   log(s, `prestige shop: ${x.id} ${x.name} lv${s.prestige.shop[id]} (${s.prestige.points} point${s.prestige.points === 1 ? '' : 's'} left)`, 'warn');
+  const opened = (x.unlockEnemies || []).map(enemyDef).filter((e) => e && enemyRevealed(s, e));
+  if (opened.length) log(s, `new targets: ${opened.map((e) => `${e.id} ${e.name}`).join(', ')}`, 'warn');
   if (raised.length) log(s, `max kills raised to ${raised.map((e) => `${limitOf(s, e)} on ${e.id} ${e.name}`).join(', ')} (shop)`, 'warn');
   return true;
 }
@@ -542,7 +544,13 @@ export function tierOpen(s, tier) {
   if (!REVEAL.tierBoss || !(tier >= 2)) return true;
   return C.enemies.some((b) => rankOf(b) === 'boss' && (b.tier || 0) === tier - 1 && (s.kills[b.id] || 0) > 0);
 }
-export const enemyRevealed = (s, e) => !!e && (!revealRule(e) || !!s.revealed[e.id]) && tierOpen(s, e.tier || 0);
+// Enemies a prestige shop item unlocks (unlockEnemies) stay hidden until
+// one such item is owned.
+export function enemyShopOpen(s, e) {
+  const items = PRESTIGE_SHOP.filter((x) => (x.unlockEnemies || []).includes(e.id));
+  return !items.length || items.some((x) => shopLevel(s, x.id) > 0);
+}
+export const enemyRevealed = (s, e) => !!e && (!revealRule(e) || !!s.revealed[e.id]) && tierOpen(s, e.tier || 0) && enemyShopOpen(s, e);
 export const shopRevealed = (s, x) => !!x && (!REVEAL.shop[x.id] || !!s.revealed[x.id]);
 export const visibleEnemies = (s) => C.enemies.filter((e) => enemyRevealed(s, e));
 export const visibleShop = (s) => PRESTIGE_SHOP.filter((x) => shopRevealed(s, x));
