@@ -14,11 +14,11 @@
 //                                     attribute (0.5 = +50%), applied last
 export const POWER = [
   { kind: 'tier', tier: 1, base: { maxHp: 30, damage: 1, attackSpeed: -0.333 } },
-  { kind: 'profile', id: 'default', name: 'default', mult: {}, add: {} },
-  { kind: 'profile', id: 'defensive', name: 'defensive', mult: { maxHp: 1.6, damage: 0.5 }, add: {} },
-  { kind: 'profile', id: 'offensive', name: 'offensive', mult: { maxHp: 0.7, damage: 2 }, add: {} },
+  { kind: 'profile', id: 'default', name: 'default', mult: {}, add: {}, skills: [{ skill: 'M03', level: 1 }] },
+  { kind: 'profile', id: 'defensive', name: 'defensive', mult: { maxHp: 1.6, damage: 0.5 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
+  { kind: 'profile', id: 'offensive', name: 'offensive', mult: { maxHp: 0.7, damage: 2 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
   { kind: 'profile', id: 'exploder', name: 'exploder', mult: { damage: 10 }, add: {}, skills: [{ skill: 'M01', level: 1 }] },
-  { kind: 'profile', id: 'quick', name: 'quick', mult: {}, add: {}, skills: [{ skill: 'M02', level: 1 }] },
+  { kind: 'profile', id: 'quick', name: 'quick', mult: {}, add: {}, skills: [{ skill: 'M03', level: 1 }, { skill: 'M02', level: 1 }] },
   { kind: 'rank', rank: 'elite', bonus: 0.2 },
   { kind: 'rank', rank: 'boss', bonus: 0.5 },
 ];
