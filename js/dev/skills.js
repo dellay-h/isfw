@@ -302,7 +302,8 @@ export function focusSkill(id) {
 
 // prefix: 'S' player skill, 'M' monster skill, 'X' special
 export function newSkill(name, prefix = 'S') {
-  const k = { id: nextId(S(), prefix, 2), name, levels: [{ attack: { base: 1, time: 1 } }] };
+  // monster skills start like the monster basic attack (hit = 100% of damage)
+  const k = { id: nextId(S(), prefix, 2), name, levels: [prefix === 'M' ? { attack: { type: 'physical', scaling: 1, time: 1, speedScaling: 1 } } : { attack: { base: 1, time: 1 } }] };
   S().push(k);
   persist('skills');
   return k;

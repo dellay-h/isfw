@@ -1011,10 +1011,11 @@ export function enemyPower(e, playerMaxHp = PLAYER_BASE.maxHp) {
 }
 // Power change of a profile (dev pages): power level of a reference enemy
 // with the profile ÷ the same enemy without one. Reference: the lowest tier
-// with a power level, using basic attack (S01 lv1), unless the profile has
+// with a power level, using the monster basic attack (M03 lv1: hit = 100%
+// of damage), unless the profile has
 // its own attack or spell (then only the profile's skills). Rank bonus left
 // out; start-of-fight effects (rush) don't count.
-export function profilePowerChange(id, refSkill = 'S01') {
+export function profilePowerChange(id, refSkill = 'M03') {
   const tiers = C.power.filter((x) => x.kind === 'tier').map((x) => x.tier).sort((a, b) => a - b);
   if (!tiers.length) return null;
   const p = profileDef(id);

@@ -86,6 +86,7 @@ function problems() {
     for (const u of x.skills || []) {
       const k = S().find((y) => y.id === u.skill);
       if (!k) out.push(`profile ${x.id}: unknown skill ${u.skill}`);
+      else if (E().some((e) => (e.skillRewards || []).some((r) => r.skill === u.skill))) out.push(`profile ${x.id}: ${u.skill} ${k.name} is a player skill (enemies use monster skills, M..)`);
       else if (u.level > k.levels.length) out.push(`profile ${x.id}: ${u.skill} has no level ${u.level}`);
     }
   }

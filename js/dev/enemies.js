@@ -36,6 +36,8 @@ const skillLabel = (k) => `${k.id} ${k.name}${k.special ? ' (special)' : ''}`;
 const killsOf = (e, at) => (at === 'first' ? 1 : at === 'final' ? e.limit : Number(at));
 
 // ---------- validation ----------
+// skills the player can get (awarded by an enemy); enemies should use monster skills instead
+const playerSkillIds = () => new Set(E().flatMap((e) => (e.skillRewards || []).map((u) => u.skill)));
 function problems() {
   const out = [];
   const per = new Map(E().map((e) => [e, []]));
@@ -54,6 +56,7 @@ function problems() {
     if (!(e.limit >= 1)) p.push('max kills must be at least 1');
     for (const u of e.skills || []) {
       const k = G.withContent(content(), () => G.skillDef(u.skill));
+      if (k && playerSkillIds().has(u.skill)) p.push(`${u.skill} ${k.name} is a player skill (enemies use monster skills, M..)`);
       if (!k) p.push(`unknown skill ${u.skill}`);
       else if (u.level > k.levels.length) p.push(`${u.skill} has no level ${u.level}`);
     }
@@ -319,7 +322,7 @@ function onAction(el) {
     case 'own-add': if (!el.value) return; (e.skills ||= []).push({ skill: el.value, level: 1 }); break;
     case 'own-del': e.skills.splice(j, 1); break;
     case 'own-new': {
-      const k = newSkill(`${e.name} attack`);
+      const k = newSkill(`${e.name} attack`, 'M'); // monster skill: enemies don't use player skills
       (e.skills ||= []).push({ skill: k.id, level: 1 });
       persist('enemies');
       focusSkill(k.id);

@@ -33,8 +33,8 @@ export const ENEMIES = [
   },
   {
     id: 'E014', name: 'squire', tier: 2, rank: 'challenge', limit: 1,
-    base: { maxHp: 50, block: 10, damage: 1, attackSpeed: -0.2, armor: 200 },
-    skills: [{ skill: 'S01', level: 1 }],
+    base: { maxHp: 50, block: 10, damage: 3, attackSpeed: -0.2, armor: 200 },
+    skills: [{ skill: 'M03', level: 1 }],
     rewards: [],
     skillRewards: [
       { skill: 'S16', level: 1, at: 'first' },
@@ -54,7 +54,7 @@ export const ENEMIES = [
   },
   {
     id: 'E011', name: 'goblin', tier: 1, rank: 'common', profile: 'default', limit: 50,
-    skills: [{ skill: 'S03', level: 1 }],
+    skills: [{ skill: 'M04', level: 1 }],
     rewards: [
       { stat: 'damage', total: 1 },
     ],
@@ -66,7 +66,8 @@ export const ENEMIES = [
   },
   {
     id: 'E002', name: 'slime', tier: 1, rank: 'common', profile: 'defensive', limit: 50,
-    skills: [{ skill: 'S01', level: 1 }],
+    base: { damage: 2 },
+    skills: [{ skill: 'M03', level: 1 }],
     rewards: [
       { stat: 'maxHp', total: 5 },
     ],
@@ -78,7 +79,7 @@ export const ENEMIES = [
   },
   {
     id: 'E003', name: 'archer', tier: 1, rank: 'common', profile: 'offensive', limit: 50,
-    skills: [{ skill: 'S03', level: 1 }],
+    skills: [{ skill: 'M04', level: 1 }],
     rewards: [
       { stat: 'attackSpeed', total: 0.2 },
     ],
@@ -90,7 +91,8 @@ export const ENEMIES = [
   },
   {
     id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'defensive', limit: 1,
-    skills: [{ skill: 'S01', level: 1 }, { skill: 'S10', level: 1 }],
+    base: { damage: 1.3333 },
+    skills: [{ skill: 'M03', level: 1 }, { skill: 'M09', level: 1 }],
     rewards: [
       { stat: 'damage', total: 0.5 },
       { stat: 'attackSpeed', total: 0.1 },
@@ -102,7 +104,7 @@ export const ENEMIES = [
   {
     id: 'E012', name: 'dropout sorcerer', tier: -3, rank: 'common', limit: 50, unlockCost: 1,
     base: { maxHp: 80, magicPower: 1, manaRegen: 0.5 },
-    skills: [{ skill: 'S13', level: 1 }, { skill: 'S15', level: 1 }],
+    skills: [{ skill: 'M10', level: 1 }, { skill: 'M12', level: 1 }],
     rewards: [
       { stat: 'magicSpeed', total: 0.05 },
     ],
@@ -115,7 +117,7 @@ export const ENEMIES = [
   {
     id: 'E004', name: 'fire wizard apprentice', tier: 2, rank: 'common', limit: 50,
     base: { maxHp: 200, magicPower: 1, magicSpeed: 0, maxMana: 0, manaRegen: 0.5, armor: 50 },
-    skills: [{ skill: 'S04', level: 1 }, { skill: 'S14', level: 1 }],
+    skills: [{ skill: 'M05', level: 1 }, { skill: 'M11', level: 1 }],
     rewards: [
       { stat: 'manaRegen', total: 1.75 },
     ],
@@ -126,8 +128,8 @@ export const ENEMIES = [
   },
   {
     id: 'E005', name: 'assassin', tier: -3, rank: 'elite', limit: 5,
-    base: { maxHp: 180, damage: 0.5 },
-    skills: [{ skill: 'S01', level: 1 }, { skill: 'S06', level: 1 }],
+    base: { maxHp: 180, damage: 2.1667 },
+    skills: [{ skill: 'M03', level: 1 }, { skill: 'M06', level: 1 }],
     rewards: [
       { stat: 'damage', total: 1.8 },
     ],
@@ -138,8 +140,8 @@ export const ENEMIES = [
   },
   {
     id: 'E006', name: 'ogre', tier: -3, rank: 'common', limit: 50,
-    base: { maxHp: 400, damage: 2, attackSpeed: -0.444, regenFlat: 2 },
-    skills: [{ skill: 'S01', level: 1 }],
+    base: { maxHp: 400, damage: 4, attackSpeed: -0.444, regenFlat: 2 },
+    skills: [{ skill: 'M03', level: 1 }],
     rewards: [
       { stat: 'maxHp', total: 4.8 },
     ],
@@ -150,8 +152,8 @@ export const ENEMIES = [
   },
   {
     id: 'E007', name: 'guard', tier: -3, rank: 'elite', limit: 5,
-    base: { maxHp: 400, armor: 50, block: 2, damage: 1, attackSpeed: -0.5, magicSpeed: -0.0833, manaRegen: 1 },
-    skills: [{ skill: 'S01', level: 1 }, { skill: 'S04', level: 1 }],
+    base: { maxHp: 400, armor: 50, block: 2, damage: 2.6667, attackSpeed: -0.5, magicSpeed: -0.0833, manaRegen: 1 },
+    skills: [{ skill: 'M03', level: 1 }, { skill: 'M05', level: 1 }],
     rewards: [
       { stat: 'armor', total: 30 },
     ],
@@ -163,7 +165,7 @@ export const ENEMIES = [
   {
     id: 'E008', name: 'satyr archer', tier: -3, rank: 'common', limit: 50,
     base: { maxHp: 300, damage: 5, attackSpeed: 0.25 },
-    skills: [{ skill: 'S03', level: 1 }, { skill: 'S08', level: 1 }],
+    skills: [{ skill: 'M04', level: 1 }, { skill: 'M07', level: 1 }],
     rewards: [
       { stat: 'attackSpeed', total: 0.3 },
     ],
@@ -175,7 +177,7 @@ export const ENEMIES = [
   {
     id: 'E009', name: 'arcane wizard apprentice', tier: -3, rank: 'elite', limit: 5,
     base: { maxHp: 350, magicPower: 5, manaRegen: 1 },
-    skills: [{ skill: 'S13', level: 1 }, { skill: 'S09', level: 1 }],
+    skills: [{ skill: 'M10', level: 1 }, { skill: 'M08', level: 1 }],
     rewards: [
       { stat: 'magicSpeed', total: 0.35 },
     ],
@@ -193,7 +195,7 @@ export const ENEMIES = [
   },
   {
     id: 'E016', name: 'quickling', tier: -1, rank: 'common', profile: 'quick', limit: 50,
-    skills: [{ skill: 'S03', level: 1 }],
+    skills: [{ skill: 'M04', level: 1 }],
     rewards: [
       { stat: 'attackSpeed', total: 0.1 },
     ],
