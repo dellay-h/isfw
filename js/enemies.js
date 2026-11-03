@@ -46,7 +46,7 @@ export const ENEMIES = [
     base: { maxHp: 30, regenFlat: -3 },
     skills: [],
     rewards: [
-      { stat: 'damage', total: 2 },
+      { stat: 'damage', total: 1 },
     ],
     skillRewards: [
       { skill: 'S01', level: 1, at: 'first' },
@@ -66,8 +66,8 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E002', name: 'slime', tier: 1, rank: 'common', profile: 'defensive', limit: 50,
-    base: { damage: 2 },
+    id: 'E002', name: 'slime', tier: 10, rank: 'common', profile: 'defensive', limit: 50,
+    base: { maxHp: 100 },
     skills: [],
     rewards: [
       { stat: 'maxHp', total: 5 },
@@ -79,7 +79,8 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E003', name: 'archer', tier: 1, rank: 'common', profile: 'offensive', limit: 50,
+    id: 'E003', name: 'archer', tier: 10, rank: 'common', profile: 'offensive', limit: 50,
+    base: { maxHp: 100 },
     skills: [],
     rewards: [
       { stat: 'attackSpeed', total: 0.2 },
