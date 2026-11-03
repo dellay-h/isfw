@@ -363,10 +363,11 @@ function onAction(el) {
 const PREVIEW_KEY = key('isfw.dev.preview');
 let preview = [];
 try { preview = JSON.parse(localStorage.getItem(PREVIEW_KEY)) || []; } catch {}
-// loaded skills (in slot order) and player level of the preview
+// loaded skills (in slot order), skill levels set by hand ({ id: level },
+// instead of the level from the kills) and player level of the preview
 const PREVIEW_OPT_KEY = key('isfw.dev.preview.opts');
-let pvOpts = { loaded: [], level: 0 };
-try { pvOpts = { ...pvOpts, ...(JSON.parse(localStorage.getItem(PREVIEW_OPT_KEY)) || {}) }; } catch {}
+let pvOpts = { loaded: [], levels: {}, level: 0 };
+try { const o = JSON.parse(localStorage.getItem(PREVIEW_OPT_KEY)) || {}; pvOpts = { loaded: o.loaded || [], levels: o.levels || {}, level: o.level || 0 }; } catch {}
 const savePreview = () => {
   try {
     localStorage.setItem(PREVIEW_KEY, JSON.stringify(preview));
@@ -381,9 +382,9 @@ const PREVIEW_ATTRS = [
   ['block', 'block', 1], ['blockShred', 'block shred', 1], ['regenOutHp', 'regen idle', 1],
 ];
 
-// The preview player: kills, player level, then the loaded skills (those
-// unlocked by these kills, up to the slots it has).
-function previewState() {
+// The preview player: kills, player level, skill levels set by hand, then
+// the loaded skills (those at level 1 or more, up to the slots it has).
+function previewState(withLevels = true) {
   return withC(() => {
     const s = G.newState();
     for (const r of preview) {
@@ -391,6 +392,7 @@ function previewState() {
       if (e) s.kills[e.id] = Math.max(0, Math.min(e.limit, Math.floor(r.kills || 0)));
     }
     s.level = Math.max(0, Math.floor(pvOpts.level || 0));
+    if (withLevels) s.devLevels = { ...pvOpts.levels };
     G.syncSlots(s);
     for (const id of pvOpts.loaded) G.equip(s, id);
     G.syncHp(s);
@@ -403,7 +405,7 @@ function renderPreview() {
   const { d, base, skills, sps, slots } = withC(() => ({
     d: G.derived(s),
     base: G.derived(G.newState()),
-    skills: G.playerSkills().map((k) => [k, G.skillLevel(s, k.id)]).filter(([, lv]) => lv > 0),
+    skills: G.playerSkills().map((k) => [k, G.skillLevel(s, k.id)]),
     sps: G.specials().map((k) => [k, G.skillLevel(s, k.id)]).filter(([, lv]) => lv > 0),
     slots: G.slotCount(s),
   }));
@@ -419,12 +421,19 @@ function renderPreview() {
     const dv = d[k] - base[k];
     return `<tr><td class="lbl">${label}</td><td class="num">${fmt(d[k], dp)}</td><td class="num muted">${Math.abs(dv) > 1e-9 ? `${dv > 0 ? '+' : ''}${fmt(dv, dp)}` : ''}</td></tr>`;
   }).join('');
-  // toggle to load / unload each unlocked skill (disabled when the slots are full)
+  // per skill: a toggle to load / unload it (disabled at level 0 or when the
+  // slots are full) and its level (from the kills unless set here)
   const full = !s.slots.includes(null);
+  const fromKills = previewState(false);
   const sk = skills.map(([k, lv]) => {
     const on = s.slots.includes(k.id);
-    return `<div><label class="pv-load"><input type="checkbox" data-pv="load" data-id="${esc(k.id)}" ${on ? 'checked' : ''} ${!on && full ? 'disabled title="all slots are in use"' : 'title="load / unload"'}> ${k.id}</label> ${esc(k.name)} <span class="muted">lv${lv}/${k.levels.length}</span></div>`;
-  }).join('') || '<div class="muted">none</div>';
+    const kl = withC(() => G.skillLevel(fromKills, k.id));
+    const why = lv < 1 ? 'disabled title="level 0: not unlocked"' : !on && full ? 'disabled title="all slots are in use"' : 'title="load / unload"';
+    return `<tr${lv < 1 ? ' class="muted"' : ''}>
+      <td><label class="pv-load"><input type="checkbox" data-pv="load" data-id="${esc(k.id)}" ${on ? 'checked' : ''} ${why}> ${k.id}</label></td>
+      <td class="pv-name" title="${esc(k.name)}">${esc(k.name)}</td>
+      <td class="nw">lv <input type="number" step="1" min="0" max="${k.levels.length}" class="w-lv" data-pv="slevel" data-id="${esc(k.id)}" value="${lv}"> <span class="muted">/ ${k.levels.length}</span>${lv !== kl ? ` <span class="warn" title="set by hand; the kills give level ${kl}">(kills ${kl})</span>` : ''}</td></tr>`;
+  }).join('');
   const loaded = s.slots.filter(Boolean);
   const pp = withC(() => G.playerPower(s));
   previewPower = pp.power;
@@ -438,7 +447,7 @@ function renderPreview() {
   const sp = sps.map(([k]) => `<div>${k.id} ${esc(k.name)}</div>`).join('');
   $('#de-preview').innerHTML = `
     <h2>player preview</h2>
-    <div class="calc">attributes after these kills, at this level, with the ticked skills loaded</div>
+    <div class="calc">attributes after these kills, at this level, with the ticked skills loaded (skill levels from the kills unless set below)</div>
     <table class="dev-table"><tr><td class="lbl">player level</td><td><input type="number" step="1" min="0" class="w-kill" data-pv="level" value="${esc(s.level)}"> <span class="muted">+${num(s.level)}% to all attributes</span></td></tr></table>
     ${rows ? `<table class="dev-table">${rows}</table>` : '<div class="muted">no kills</div>'}
     <div class="addrow">
@@ -450,8 +459,8 @@ function renderPreview() {
     <h2>attributes</h2>
     <table class="dev-table kv">${attrs}</table>
     ${pwHtml}
-    <h2>skills unlocked <span class="muted">· ${loaded.length}/${slots} slots loaded</span></h2>
-    ${sk}${sp ? `<h2>specials</h2>${sp}` : ''}`;
+    <h2>skills <span class="muted">· ${loaded.length}/${slots} slots loaded</span></h2>
+    <table class="dev-table pv-skills">${sk}</table>${sp ? `<h2>specials</h2>${sp}` : ''}`;
 }
 
 function onPreview(ev) {
@@ -460,6 +469,16 @@ function onPreview(ev) {
   if (el.dataset.pv === 'enemy') preview[j].enemy = el.value;
   else if (el.dataset.pv === 'kills') preview[j].kills = Math.max(0, parseInt(el.value, 10) || 0);
   else if (el.dataset.pv === 'level') pvOpts.level = Math.max(0, parseInt(el.value, 10) || 0);
+  else if (el.dataset.pv === 'slevel') {
+    const v = parseInt(el.value, 10);
+    if (!Number.isFinite(v)) return false;
+    const k = withC(() => G.skillDef(el.dataset.id));
+    const lv = Math.max(0, Math.min(k ? k.levels.length : v, v));
+    const kl = withC(() => G.skillLevel(previewState(false), el.dataset.id));
+    // back to the kills' level: no override
+    if (lv === kl) delete pvOpts.levels[el.dataset.id]; else pvOpts.levels[el.dataset.id] = lv;
+    if (lv < 1) pvOpts.loaded = pvOpts.loaded.filter((x) => x !== el.dataset.id);
+  }
   else if (el.dataset.pv === 'load') {
     const id = el.dataset.id;
     pvOpts.loaded = pvOpts.loaded.filter((x) => x !== id);
@@ -478,13 +497,13 @@ function onPreviewAction(el) {
     preview.push({ enemy: e?.id || '', kills: e?.limit || 1 });
   } else if (act === 'pv-del') preview.splice(j, 1);
   else if (act === 'pv-max') preview = E().filter((e) => !G.inDev(e)).map((e) => ({ enemy: e.id, kills: e.limit })); // the game's enemies only
-  else if (act === 'pv-clear') { preview = []; pvOpts = { loaded: [], level: 0 }; }
+  else if (act === 'pv-clear') { preview = []; pvOpts = { loaded: [], levels: {}, level: 0 }; }
   else if (act === 'pv-game') {
-    // kills, player level and loaded skills of the game save
+    // kills, player level and loaded skills of the game save (skill levels from the kills)
     const gs = getGameState();
     if (gs) {
       preview = Object.entries(gs.kills).filter(([, n]) => n > 0).map(([enemy, kills]) => ({ enemy, kills }));
-      pvOpts = { loaded: (gs.slots || []).filter(Boolean), level: gs.level || 0 };
+      pvOpts = { loaded: (gs.slots || []).filter(Boolean), levels: {}, level: gs.level || 0 };
     }
   } else return;
   savePreview();
@@ -497,7 +516,7 @@ export function initEnemies(opts = {}) {
   wire($('#de-list'), { input: onInput, action: onAction, rerender: renderEnemies, status: renderStatus });
   initPower({ rerender: renderEnemies });
   const pv = $('#de-preview');
-  pv.addEventListener('input', (ev) => { if ((ev.target.dataset.pv === 'kills' || ev.target.dataset.pv === 'level') && onPreview(ev)) renderPreviewKeepFocus(ev.target); });
+  pv.addEventListener('input', (ev) => { if (['kills', 'level', 'slevel'].includes(ev.target.dataset.pv) && onPreview(ev)) renderPreviewKeepFocus(ev.target); });
   pv.addEventListener('change', (ev) => { if (onPreview(ev)) renderPreview(); });
   pv.addEventListener('click', (ev) => { const b = ev.target.closest('button[data-act]'); if (b) onPreviewAction(b); });
 
@@ -524,6 +543,8 @@ export function initEnemies(opts = {}) {
 function renderPreviewKeepFocus(el) {
   const j = el.dataset.j;
   renderPreview();
-  const again = el.dataset.pv === 'level' ? document.querySelector('#de-preview input[data-pv="level"]') : document.querySelector(`#de-preview input[data-pv="kills"][data-j="${j}"]`);
+  const again = el.dataset.pv === 'slevel' ? document.querySelector(`#de-preview input[data-pv="slevel"][data-id="${CSS.escape(el.dataset.id)}"]`)
+    : el.dataset.pv === 'level' ? document.querySelector('#de-preview input[data-pv="level"]')
+    : document.querySelector(`#de-preview input[data-pv="kills"][data-j="${j}"]`);
   if (again) { again.focus(); const v = again.value; again.value = ''; again.value = v; }
 }

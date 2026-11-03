@@ -429,3 +429,6 @@ button.armed { color: var(--err); border-color: var(--err); }
 /* dev/enemies player preview: load toggles left of the skill id */
 #de-preview .pv-load { cursor: pointer; }
 #de-preview .pv-load input { margin-right: 2px; }
+#de-preview input.w-lv { width: 44px; }
+#de-preview .pv-skills td { padding: 0 4px 0 0; white-space: nowrap; }
+#de-preview .pv-skills td.pv-name { max-width: 104px; overflow: hidden; text-overflow: ellipsis; }

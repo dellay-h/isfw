@@ -608,6 +608,8 @@ export function reqMet(s, req) {
 export function skillLevel(s, id) {
   const k = skillDef(id);
   if (!k) return 0;
+  // dev/enemies player preview: levels set by hand (never in a game save)
+  if (s.devLevels && Object.hasOwn(s.devLevels, id)) return Math.max(0, Math.min(k.levels.length, Math.floor(s.devLevels[id] || 0)));
   let lv = !k.special && s.prestige.free.includes(id) ? 1 : 0;
   while (lv < k.levels.length && reqMet(s, levelReq(k, lv))) lv++;
   return lv;
