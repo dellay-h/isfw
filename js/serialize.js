@@ -63,11 +63,12 @@ const SKILLS_HEADER = `// Skill data, shared by the player and enemies. Written 
 //   slots:   extra skill slots (player)
 //   rush:    { attackSpeed, duration } +attackSpeed at the start of a fight,
 //            falling to 0 over duration seconds (enemies only for now)
+//   winHeal: heals this fraction of max hp after each win (player)
 `;
 
 const ENEMY_ORDER = ['id', 'name', 'tier', 'rank', 'boss', 'profile', 'limit', 'unlockCost', 'base', 'skills', 'rewards', 'skillRewards'];
 const ACTION_ORDER = ['type', 'base', 'scaling', 'time', 'speedScaling', 'hits', 'cost', 'lifesteal', 'dot', 'shield', 'heal', 'countdown'];
-const LEVEL_ORDER = ['attack', 'spell', 'onHit', 'empower', 'mods', 'slots', 'rush'];
+const LEVEL_ORDER = ['attack', 'spell', 'onHit', 'empower', 'mods', 'slots', 'rush', 'winHeal'];
 
 const key = (k) => (/^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k));
 const str = (s) => `'${String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
@@ -127,12 +128,13 @@ const SHOP_HEADER = `// Prestige and essence shop items. Written by the dev/shop
 //   retired    true: out of the game; saves that bought it get the cost back
 //              on load (in points or essence) and lose the levels. Clear it
 //              to bring the item back
-//   max        highest level (prestige items; essence items have no cap)
+//   max        highest level (essence items: optional, none = no cap)
 //   cost       { base, step }: the next level costs base + step x levels bought
 //
 // What each level gives (any combination):
 //   effects      [{ stat, kind: 'flat' | 'pct', v }] attribute bonus per level
 //                (stats: data.js ATTRS; 'pct' multiplies, 0.01 = 1%)
+//   unlockSkill  skill id the item unlocks (level 1; e.g. a special)
 //   slots        extra skill slots per level
 //   startKills   { enemy, n }: every prestige starts with n kills of that
 //                enemy per level (never above its max kills)
@@ -144,7 +146,7 @@ const SHOP_HEADER = `// Prestige and essence shop items. Written by the dev/shop
 //   free         random free skills per prestige; freeExclude [skill id] never picked
 //   autoEquip    true: auto-equip toggles for skills unlocked at prestige start
 `;
-const SHOP_ORDER = ['id', 'shop', 'name', 'retired', 'max', 'cost', 'effects', 'slots', 'startKills', 'limitGrowth', 'minKills', 'requires', 'essence', 'free', 'freeExclude', 'autoEquip'];
+const SHOP_ORDER = ['id', 'shop', 'name', 'retired', 'max', 'cost', 'effects', 'unlockSkill', 'slots', 'startKills', 'limitGrowth', 'minKills', 'requires', 'essence', 'free', 'freeExclude', 'autoEquip'];
 
 export function shopSource(items) {
   return `${SHOP_HEADER}export const SHOP = [\n${items.map((x) => `  ${lit(x, SHOP_ORDER)},`).join('\n')}\n];\n`;

@@ -34,6 +34,7 @@
 //   slots:   extra skill slots (player)
 //   rush:    { attackSpeed, duration } +attackSpeed at the start of a fight,
 //            falling to 0 over duration seconds (enemies only for now)
+//   winHeal: heals this fraction of max hp after each win (player)
 export const SKILLS = [
   {
     id: 'S01', name: 'basic attack',
@@ -155,6 +156,12 @@ export const SKILLS = [
     id: 'X03', name: 'deep roots', special: true,
     levels: [
       { slots: 1 },
+    ],
+  },
+  {
+    id: 'X04', name: 'recovery', special: true,
+    levels: [
+      { winHeal: 0.05 },
     ],
   },
   {

@@ -445,6 +445,7 @@ export const essenceLevel = (s, id) => (essenceDef(id) ? Math.max(0, Math.floor(
 export function essenceCost(s, id) {
   const x = essenceDef(id);
   if (!x) return null;
+  if (x.max > 0 && essenceLevel(s, id) >= x.max) return null; // max level (items without max have no cap)
   return (x.cost?.base || 0) + (x.cost?.step || 0) * essenceLevel(s, id);
 }
 // The essence system is unlocked by a prestige shop item (essence: P13).
@@ -611,8 +612,17 @@ export function skillLevel(s, id) {
   // dev/enemies player preview: levels set by hand (never in a game save)
   if (s.devLevels && Object.hasOwn(s.devLevels, id)) return Math.max(0, Math.min(k.levels.length, Math.floor(s.devLevels[id] || 0)));
   let lv = !k.special && s.prestige.free.includes(id) ? 1 : 0;
+  // shop items with unlockSkill grant level 1 (essence items only while essence is on)
+  if (shopUnlocks(s).has(id)) lv = Math.max(lv, 1);
   while (lv < k.levels.length && reqMet(s, levelReq(k, lv))) lv++;
   return lv;
+}
+// Skills unlocked by owned shop items (unlockSkill).
+export function shopUnlocks(s) {
+  const out = new Set();
+  for (const x of PRESTIGE_SHOP) if (x.unlockSkill && shopLevel(s, x.id) > 0) out.add(x.unlockSkill);
+  if (essenceOn(s)) for (const x of ESSENCE_SHOP) if (x.unlockSkill && essenceLevel(s, x.id) > 0) out.add(x.unlockSkill);
+  return out;
 }
 // Level from kills alone (ignores the free lv1).
 function earnedLevel(s, id) {
@@ -909,6 +919,10 @@ export function killEffects(kills, s = null) {
 // Player: base attributes + kill rewards + prestige shop + unlocked specials
 // + loaded skills.
 export function derived(s) {
+  return unit(PLAYER(), activeSkills(s), [...killEffects(s.kills, s), ...shopEffects(s), ...essenceEffects(s)], REGEN.outOfCombatFlat, levelBonus(s));
+}
+// The player's active skills: unlocked specials, loaded skills, free skills.
+function activeSkills(s) {
   const active = [];
   for (const k of specials()) {
     const L = levelData(s, k.id);
@@ -922,8 +936,10 @@ export function derived(s) {
     const L = freeActive(s, id) && !s.slots.includes(id) && levelData(s, id);
     if (L) active.push({ id, L });
   }
-  return unit(PLAYER(), active, [...killEffects(s.kills, s), ...shopEffects(s), ...essenceEffects(s)], REGEN.outOfCombatFlat, levelBonus(s));
+  return active;
 }
+// Heal after each win (skill part winHeal: fraction of max hp), e.g. X04.
+export const winHeal = (s) => activeSkills(s).reduce((a, { L }) => a + (L.winHeal || 0), 0);
 
 // ---------- enemy power (power.js) ----------
 // Tier power level: base attributes of every enemy of that tier (an enemy
@@ -1248,6 +1264,9 @@ function win(s, e) {
   s.kills[e.id] = n;
   syncSlots(s);
   syncHp(s);
+  // heal after a win (winHeal skills), before the next fight
+  const wh = winHeal(s);
+  if (wh > 0) { const d = derived(s); s.hp = Math.min(d.maxHp, s.hp + wh * d.maxHp); }
   s.stats.fights++;
   s.stats.wins++;
   gainXp(s, 1);

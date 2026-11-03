@@ -41,6 +41,7 @@ const PARTS = {
   mods: { label: 'attribute bonuses', make: () => ({ damageFlat: 1 }) },
   slots: { label: 'skill slots', make: () => 1 },
   rush: { label: 'rush (attack speed at fight start, decaying; enemies)', make: () => ({ attackSpeed: 3, duration: 4 }) },
+  winHeal: { label: 'heal after each win (max hp fraction; player)', make: () => 0.05 },
 };
 const SIMPLE = {
   onHit: [['base', 'base'], ['scaling', 'scaling (x dmg)']],
@@ -122,6 +123,8 @@ function partBlock(k, i, L, l, part) {
       ${left.length ? `<div class="addrow">${select(`data-act="mod-add" data-i="${i}" data-l="${l}"`, [['', '+ bonus'], ...left.map((m) => [m, MODS[m].label])], '')}</div>` : ''}`;
   } else if (part === 'slots') {
     body = `<table class="dev-table"><tr><td class="lbl">extra slots</td><td>${numInput(i, base, L.slots, { int: true })}</td></tr></table>`;
+  } else if (part === 'winHeal') {
+    body = `<table class="dev-table"><tr><td class="lbl">heals (0.05 = 5% max hp)</td><td>${numInput(i, base, L.winHeal)}</td></tr></table>`;
   }
   // later levels of an action inherit its type; only the level that adds it shows the select
   const merged = G.mergeLevels(k.levels, l);

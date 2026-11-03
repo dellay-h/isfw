@@ -156,6 +156,7 @@ function describe(L, total, prev, d) {
   }
   for (const [k, v] of Object.entries(L.mods || {})) parts.push(modText(k, v));
   if (L.slots) parts.push(`skill slots +${L.slots}`);
+  if (L.winHeal) parts.push(`heals ${fmt(L.winHeal * 100, 0)}% max hp after each win`);
   return parts;
 }
 
@@ -815,9 +816,13 @@ function renderEssence() {
     lastEssKey = key;
     $('#ess-items tbody').innerHTML = G.essenceItems().map((x) => {
       const lv = G.essenceLevel(s, x.id);
-      const per = (x.effects || []).map(effectText).join(', ');
-      const now = lv ? (x.effects || []).map((e) => effectText({ ...e, v: e.v * lv })).join(', ') : '';
-      return `<tr data-id="${x.id}"${lv ? '' : ' class="muted"'}><td>${x.id}</td><td>${x.name}<div class="muted">lv ${lv}</div></td><td>${per}<span class="muted">/lv</span>${now ? `<div class="muted">now ${now}</div>` : ''}</td><td><button data-act="ess-buy" data-id="${x.id}">${G.essenceCost(s, x.id)}</button></td></tr>`;
+      const cost = G.essenceCost(s, x.id);
+      const per = (x.effects || []).map(effectText);
+      const k = x.unlockSkill && G.skillDef(x.unlockSkill);
+      if (k) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`${k.special ? 'Special (always active)' : 'Skill'}: ${describe(k.levels[0], G.mergeLevels(k.levels, 1), {}, G.derived(s)).join(', ') || k.name}`)}">unlocks ${k.id} ${k.name}</span>`);
+      const now = lv && (x.effects || []).length ? (x.effects || []).map((e) => effectText({ ...e, v: e.v * lv })).join(', ') : '';
+      const btn = cost === null ? '<span class="muted">max</span>' : `<button data-act="ess-buy" data-id="${x.id}">${cost}</button>`;
+      return `<tr data-id="${x.id}"${lv ? '' : ' class="muted"'}><td>${x.id}</td><td>${x.name}<div class="muted">lv ${lv}${x.max > 0 ? `/${x.max}` : ''}</div></td><td>${per.join(', ')}${x.max === 1 ? '' : '<span class="muted">/lv</span>'}${now ? `<div class="muted">now ${now}</div>` : ''}</td><td>${btn}</td></tr>`;
     }).join('');
   }
   for (const b of document.querySelectorAll('#ess-items button[data-act=ess-buy]')) {

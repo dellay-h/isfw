@@ -21,6 +21,7 @@ const GROUPS = [['prestige', 'prestige shop'], ['essence', 'essence shop'], ['re
 // What a level can give besides attribute bonuses. prestige: the game only
 // reads it on prestige shop items.
 const FEATURES = {
+  unlockSkill: { label: 'unlocks skill (lv1)', make: () => K().find((k) => k.special)?.id || K()[0]?.id || '' },
   slots: { label: 'skill slots', prestige: true, make: () => 1 },
   startKills: { label: 'start kills', prestige: true, make: () => ({ enemy: E()[0]?.id || '', n: 1 }) },
   limitGrowth: { label: 'max kills growth', prestige: true, make: () => ['common'] },
@@ -57,6 +58,7 @@ function problems() {
       else if (r.retired) p.push(`requires ${r.id}, which is retired`);
       else if (r.shop !== 'prestige') p.push(`requires ${r.id}, not a prestige item`);
     }
+    if (x.unlockSkill !== undefined && !skillIds.has(x.unlockSkill)) p.push(`unlocks skill: unknown skill ${x.unlockSkill || '(none)'}`);
     if (x.startKills && !enemyIds.has(x.startKills.enemy)) p.push(`start kills: unknown enemy ${x.startKills.enemy || '(none)'}`);
     for (const id of x.freeExclude || []) if (!skillIds.has(id)) p.push(`free skills never pick: unknown skill ${id}`);
     if (x.limitGrowth && !x.limitGrowth.length) p.push('max kills growth: no rank ticked');
@@ -68,12 +70,13 @@ function problems() {
 const costAt = (x, lv) => (x.cost?.base || 0) + (x.cost?.step || 0) * lv;
 function costLine(x) {
   const unit = x.shop === 'essence' ? ' essence' : ' pt';
-  const n = x.shop === 'prestige' ? Math.max(0, Math.floor(x.max || 0)) : 5;
+  const capped = x.max > 0;
+  const n = capped ? Math.floor(x.max) : 5;
   const shown = Math.min(n, 5);
   const each = Array.from({ length: shown }, (_, l) => `lv${l + 1} ${num(costAt(x, l))}`).join(' · ');
-  const more = x.shop === 'essence' ? ' … (no cap)' : n > shown ? ' …' : '';
+  const more = !capped ? ' … (no cap)' : n > shown ? ' …' : '';
   let total = '';
-  if (x.shop === 'prestige' && n > 1) {
+  if (capped && n > 1) {
     let t = 0;
     for (let l = 0; l < n; l++) t += costAt(x, l);
     total = ` · all ${n} levels ${num(t)}${unit}`;
@@ -84,6 +87,7 @@ function costLine(x) {
 const fxText = (f) => `${ATTRS.find((a) => a.key === f.stat)?.label || f.stat} +${f.kind === 'pct' ? `${num(f.v * 100)}%` : num(f.v)}`;
 function summary(x) {
   const out = (x.effects || []).map(fxText);
+  if (x.unlockSkill) out.push(`unlocks ${x.unlockSkill}`);
   if (x.slots) out.push(`slots +${x.slots}`);
   if (x.startKills) out.push(`start kills ${x.startKills.enemy} +${x.startKills.n}`);
   if (x.limitGrowth) out.push(`growth ${x.limitGrowth.join('/')}`);
@@ -99,6 +103,11 @@ function featureRow(x, i, k) {
   const del = xBtn('feat-del', `data-i="${i}" data-k="${k}"`);
   let input = '';
   if (k === 'slots' || k === 'free') input = numInput(i, k, x[k], { int: true });
+  else if (k === 'unlockSkill') {
+    const opts = K().map((y) => [y.id, `${y.id} ${y.name}${y.special ? ' (special)' : ''}`]);
+    if (!opts.some(([id]) => id === x.unlockSkill)) opts.push([x.unlockSkill, `${x.unlockSkill || '(none)'} (unknown)`]);
+    input = select(`data-i="${i}" data-p="unlockSkill" data-t="text"`, opts, x.unlockSkill);
+  }
   else if (k === 'startKills') {
     input = `${select(`data-i="${i}" data-p="startKills.enemy" data-t="text"`, E().map((e) => [e.id, `${e.id} ${e.name}`]).concat(E().some((e) => e.id === x.startKills.enemy) ? [] : [[x.startKills.enemy, `${x.startKills.enemy || '(none)'} (unknown)`]]), x.startKills.enemy)}
       <span class="muted">kills per level</span> ${numInput(i, 'startKills.n', x.startKills.n, { int: true, cls: 'w-v' })}`;
@@ -121,7 +130,7 @@ function itemBlock(x, i, warns, first, last) {
   const fx = x.effects || [];
   const feats = Object.keys(FEATURES).filter((k) => x[k] !== undefined);
   const missing = Object.keys(FEATURES).filter((k) => x[k] === undefined && (x.shop === 'prestige' || !FEATURES[k].prestige));
-  const head = [x.shop === 'prestige' ? `max ${x.max ?? '?'}` : 'no cap', `cost ${num(x.cost?.base || 0)}${x.cost?.step ? ` +${num(x.cost.step)}/lv` : ''}`];
+  const head = [x.max > 0 ? `max ${x.max}` : x.shop === 'prestige' ? 'max ?' : 'no cap', `cost ${num(x.cost?.base || 0)}${x.cost?.step ? ` +${num(x.cost.step)}/lv` : ''}`];
   const what = summary(x);
   return `<details class="en${x.retired ? ' retired' : ''}" data-key="${esc(key)}"${open.has(key) ? ' open' : ''} data-item="${esc(x.id)}">
     <summary>${esc(x.id)} ${esc(x.name)}${x.retired ? ' <span class="muted">retired</span>' : ''} <span class="muted">· ${head.join(' · ')}${what ? ` · ${esc(what)}` : ''}</span>${warns.length ? ` <span class="warn">· ${warns.length} issue${warns.length > 1 ? 's' : ''}</span>` : ''}</summary>
@@ -139,7 +148,7 @@ function itemBlock(x, i, warns, first, last) {
       </div>
       ${warns.map((w) => `<div class="warn">${esc(w)}</div>`).join('')}
       <table class="dev-table">
-        ${x.shop === 'prestige' ? `<tr><td class="lbl">max level</td><td>${numInput(i, 'max', x.max, { int: true })}</td></tr>` : ''}
+        <tr><td class="lbl">max level${x.shop === 'essence' ? ' (0 = no cap)' : ''}</td><td>${numInput(i, 'max', x.max ?? 0, { int: true })}</td></tr>
         <tr><td class="lbl">cost (first level)</td><td>${numInput(i, 'cost.base', x.cost?.base)}</td></tr>
         <tr><td class="lbl">cost + per level bought</td><td>${numInput(i, 'cost.step', x.cost?.step)}</td></tr>
       </table>
@@ -213,6 +222,9 @@ function onInput(el) {
     x.shop = el.value;
     if (x.shop === 'prestige' && x.max === undefined) x.max = 1;
     if (x.shop === 'essence') delete x.max;
+  } else if (path === 'max' && x.shop === 'essence') {
+    const v = parseInt(el.value, 10);
+    if (v > 0) x.max = v; else delete x.max;
   } else if (t === 'rank-list') {
     const set = new Set(x.limitGrowth);
     if (el.checked) set.add(el.dataset.rank); else set.delete(el.dataset.rank);

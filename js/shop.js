@@ -8,12 +8,13 @@
 //   retired    true: out of the game; saves that bought it get the cost back
 //              on load (in points or essence) and lose the levels. Clear it
 //              to bring the item back
-//   max        highest level (prestige items; essence items have no cap)
+//   max        highest level (essence items: optional, none = no cap)
 //   cost       { base, step }: the next level costs base + step x levels bought
 //
 // What each level gives (any combination):
 //   effects      [{ stat, kind: 'flat' | 'pct', v }] attribute bonus per level
 //                (stats: data.js ATTRS; 'pct' multiplies, 0.01 = 1%)
+//   unlockSkill  skill id the item unlocks (level 1; e.g. a special)
 //   slots        extra skill slots per level
 //   startKills   { enemy, n }: every prestige starts with n kills of that
 //                enemy per level (never above its max kills)
@@ -44,4 +45,5 @@ export const SHOP = [
   { id: 'N04', shop: 'essence', name: 'cast speed', cost: { base: 20, step: 20 }, effects: [{ stat: 'magicSpeed', kind: 'pct', v: 0.01 }] },
   { id: 'N05', shop: 'essence', name: 'armor', cost: { base: 20, step: 20 }, effects: [{ stat: 'armor', kind: 'pct', v: 0.01 }] },
   { id: 'N06', shop: 'essence', name: 'hp', cost: { base: 20, step: 20 }, effects: [{ stat: 'maxHp', kind: 'pct', v: 0.01 }] },
+  { id: 'N07', shop: 'essence', name: 'recovery', max: 1, cost: { base: 500, step: 0 }, unlockSkill: 'X04' },
 ];
