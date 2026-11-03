@@ -81,7 +81,7 @@ work on, usually `dev`) before editing locally.
 
 ## Dev screens
 
-Every edit is saved to its file right away. "apply to game" reloads the page
+Every edit is saved to its file right away. "apply changes" reloads the page
 so the game uses the new data. If a save fails, the status line says why, the
 edits are kept in the browser (the header shows "dev draft") and are saved with
 the next change. If the page is not served by `server.py`, a red banner says so.
