@@ -15,11 +15,10 @@
 export const POWER = [
   { kind: 'tier', tier: 1, base: { maxHp: 30, damage: 1, attackSpeed: -0.333 } },
   { kind: 'profile', id: 'default', name: 'default', mult: {}, add: {} },
-  { kind: 'profile', id: 'defensive', name: 'defensive', mult: { maxHp: 2, damage: 0.5 }, add: {} },
-  { kind: 'profile', id: 'offensive', name: 'offensive', mult: { maxHp: 0.6, damage: 2 }, add: {} },
-  { kind: 'profile', id: 'tank', name: 'tank', mult: { maxHp: 4, damage: 0.8 }, add: { armor: 10, block: 1 } },
+  { kind: 'profile', id: 'defensive', name: 'defensive', mult: { maxHp: 1.6, damage: 0.5 }, add: {} },
+  { kind: 'profile', id: 'offensive', name: 'offensive', mult: { maxHp: 0.7, damage: 2 }, add: {} },
   { kind: 'profile', id: 'exploder', name: 'exploder', mult: { damage: 10 }, add: {}, skills: [{ skill: 'M01', level: 1 }] },
   { kind: 'profile', id: 'quick', name: 'quick', mult: {}, add: {}, skills: [{ skill: 'M02', level: 1 }] },
-  { kind: 'rank', rank: 'elite', bonus: 0.5 },
-  { kind: 'rank', rank: 'boss', bonus: 1 },
+  { kind: 'rank', rank: 'elite', bonus: 0.2 },
+  { kind: 'rank', rank: 'boss', bonus: 0.5 },
 ];

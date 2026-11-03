@@ -89,7 +89,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'tank', limit: 1,
+    id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'defensive', limit: 1,
     skills: [{ skill: 'S01', level: 1 }, { skill: 'S10', level: 1 }],
     rewards: [
       { stat: 'damage', total: 0.5 },
