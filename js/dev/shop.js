@@ -26,6 +26,7 @@ const FEATURES = {
   slots: { label: 'skill slots', prestige: true, make: () => 1 },
   startKills: { label: 'start kills', prestige: true, make: () => ({ enemy: E()[0]?.id || '', n: 1 }) },
   limitGrowth: { label: 'max kills growth', make: () => ['common'] },
+  limitShrink: { label: 'kill limit shrinking (at the cap)', make: () => true },
   minKills: { label: 'max kills at least', prestige: true, make: () => ({ common: 100 }) },
   requires: { label: 'requires item', make: (x) => SH().find((y) => !y.retired && y.id !== x.id)?.id || '' },
   essence: { label: 'unlocks essence', prestige: true, make: () => true },
@@ -95,6 +96,7 @@ function summary(x) {
   if (x.minKills) out.push(Object.entries(x.minKills).map(([r, n]) => `${r} ≥ ${n}`).join(', '));
   if (x.requires) out.push(`needs ${x.requires}`);
   if (x.essence) out.push('unlocks essence');
+  if (x.limitShrink) out.push('kill limit shrinking');
   if (x.free) out.push(`free skill +${x.free}`);
   if (x.autoEquip) out.push('auto-equip');
   if ((x.unlockEnemies || []).length) out.push(`unlocks ${x.unlockEnemies.join(', ')}`);

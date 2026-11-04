@@ -142,6 +142,8 @@ const SHOP_HEADER = `// Prestige and essence shop items. Written by the dev/shop
 //                enemy per level (never above its max kills)
 //   limitGrowth  [rank]: max kills growth/shrink on for those ranks (LIMIT_GROWTH;
 //                essence items only while essence is on)
+//   limitShrink  true: enemies at their max kills cap shrink again (without
+//                it they stay at the cap)
 //   minKills     { rank: n }: when bought, enemies of that rank still growing
 //                get at least n max kills
 //   requires     item id (either shop) that must be owned before this one
@@ -150,7 +152,7 @@ const SHOP_HEADER = `// Prestige and essence shop items. Written by the dev/shop
 //   free         random free skills per prestige; freeExclude [skill id] never picked
 //   autoEquip    true: auto-equip toggles for skills unlocked at prestige start
 `;
-const SHOP_ORDER = ['id', 'shop', 'name', 'retired', 'max', 'cost', 'effects', 'unlockSkill', 'unlockEnemies', 'slots', 'startKills', 'limitGrowth', 'minKills', 'requires', 'essence', 'free', 'freeExclude', 'autoEquip'];
+const SHOP_ORDER = ['id', 'shop', 'name', 'retired', 'max', 'cost', 'effects', 'unlockSkill', 'unlockEnemies', 'slots', 'startKills', 'limitGrowth', 'limitShrink', 'minKills', 'requires', 'essence', 'free', 'freeExclude', 'autoEquip'];
 
 export function shopSource(items) {
   return `${SHOP_HEADER}export const SHOP = [\n${items.map((x) => `  ${lit(x, SHOP_ORDER)},`).join('\n')}\n];\n`;

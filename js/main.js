@@ -301,6 +301,7 @@ function rewardsBreakdown(e) {
     rows.push(['max kills', `${lim}`, 'head']);
     rows.push(['base', `${e.limit}`]);
     if (!G.growthOn(s, e)) rows.push(['growth', 'off (prestige shop)']);
+    else if (st.capped && !G.shrinkOn(s)) rows.push(['at cap', `${st.cap} (shrinking: essence upgrade)`]);
     else rows.push([st.capped ? 'shrinking' : 'growing', st.capped ? `cap ${st.cap} reached, down to 1` : `up to ${st.cap}`]);
     if (g) rows.push(['next prestige', `${g > 0 ? '+' : ''}${g}`]);
   }
@@ -723,9 +724,11 @@ $('#btn-prestige').addEventListener('click', () => {
 // ---------- prestige shop ----------
 let lastShopKey = '';
 const effectText = (e) => `${G.STAT_LABEL[e.stat] || e.stat} +${e.kind === 'pct' ? `${exact(e.v * 100)}%` : exact(e.v)}`;
+const shrinkText = () => `<span class="tip" tabindex="0" data-tip="${esc('Enemies whose max kills reached their cap start shrinking: each kill lowers max kills on the next prestige (up to -10% of them, down to 1), while the total attribute reward stays at its cap value, so each kill gives more.')}">kill limit shrinking</span>`;
 function shopLines(x) {
   const out = (x.effects || []).map(effectText);
   const uk = x.unlockSkill && G.skillDef(x.unlockSkill);
+  if (x.limitShrink) out.push(shrinkText());
   const ue = (x.unlockEnemies || []).map((id) => G.enemyDef(id)).filter(Boolean);
   if (ue.length) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`New targets to fight: ${ue.map((e) => `${e.id} ${e.name} (tier ${e.tier || 0})`).join(', ')}.`)}">unlocks ${ue.map((e) => e.name).join(' and ')}</span>`);
   if (uk) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`${uk.special ? 'Special (always active)' : 'Skill'}: ${describe(uk.levels[0], G.mergeLevels(uk.levels, 1), {}, G.derived(s)).join(', ') || uk.name}`)}">unlocks ${uk.id} ${uk.name}</span>`);
@@ -739,7 +742,7 @@ function shopLines(x) {
   if (x.essence) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Unlocks essence: +1 per enemy kill, kept through prestiges, spent in the essence shop (small % bonuses to attributes).')}">essence</span>`);
   if (x.limitGrowth) {
     const ranks = x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ');
-    out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${ranks}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the rank's cap; after the cap they shrink again without lowering the total. Applies to kills from now on.`)}">${ranks} max kills growth</span>`);
+    out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${ranks}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the rank's cap, where they stay (unless kill limit shrinking is owned). Applies to kills from now on.`)}">${ranks} max kills growth</span>`);
   }
   for (const [rank, n] of Object.entries(x.minKills || {})) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Every ${rank} enemy gets at least ${n} max kills, right away (more total attribute reward, and its kill ${n} unlocks become reachable). Enemies already past the cap keep shrinking.`)}">${rank} max kills ${n}</span>`);
   if (x.free) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`On every prestige, ${x.free === 1 ? 'one skill' : `${x.free} skills`} chosen at random from the skills unlocked in the prestige that ended is free in the next one: level 1 without unlocking it (higher levels need their usual unlocks), active without using a skill slot, and can be unloaded.${(x.freeExclude || []).length ? ` Never picks ${x.freeExclude.map((id) => G.skillDef(id)?.name || id).join(', ')}.` : ''} Applies from the next prestige.`)}">free skill +${x.free}</span>`);
@@ -822,7 +825,8 @@ function renderEssence() {
       const lv = G.essenceLevel(s, x.id);
       const cost = G.essenceCost(s, x.id);
       const per = (x.effects || []).map(effectText);
-      if (x.limitGrowth) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the rank's cap; after the cap they shrink again without lowering the total.`)}">${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')} max kills growth</span>`);
+      if (x.limitGrowth) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the rank's cap, where they stay (unless kill limit shrinking is owned).`)}">${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')} max kills growth</span>`);
+      if (x.limitShrink) per.push(shrinkText());
       const miss = G.essenceMissing(s, x.id);
       const k = x.unlockSkill && G.skillDef(x.unlockSkill);
       if (k) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`${k.special ? 'Special (always active)' : 'Skill'}: ${describe(k.levels[0], G.mergeLevels(k.levels, 1), {}, G.derived(s)).join(', ') || k.name}`)}">unlocks ${k.id} ${k.name}</span>`);

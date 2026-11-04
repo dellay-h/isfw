@@ -22,6 +22,8 @@
 //                enemy per level (never above its max kills)
 //   limitGrowth  [rank]: max kills growth/shrink on for those ranks (LIMIT_GROWTH;
 //                essence items only while essence is on)
+//   limitShrink  true: enemies at their max kills cap shrink again (without
+//                it they stay at the cap)
 //   minKills     { rank: n }: when bought, enemies of that rank still growing
 //                get at least n max kills
 //   requires     item id (either shop) that must be owned before this one
@@ -53,4 +55,5 @@ export const SHOP = [
   { id: 'N07', shop: 'essence', name: 'recovery', max: 1, cost: { base: 500, step: 0 }, unlockSkill: 'X04' },
   { id: 'N08', shop: 'essence', name: 'limit breaker: elites', max: 1, cost: { base: 500, step: 0 }, limitGrowth: ['elite'], requires: 'P09' },
   { id: 'N09', shop: 'essence', name: 'limit breaker: bosses', max: 1, cost: { base: 2000, step: 0 }, limitGrowth: ['boss'], requires: 'P09' },
+  { id: 'N10', shop: 'essence', name: 'limit shrinker', max: 1, cost: { base: 5000, step: 0 }, limitShrink: true, requires: 'P09' },
 ];

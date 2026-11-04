@@ -45,7 +45,9 @@ export const RANKS = {
 //              Every kill gives the same reward, so the total grows with the
 //              max kills (base 100 -> 110 = +10% total).
 //   shrinking: once the cap is reached, -1 per kill, down to 1. The total
-//              stays at its cap value and is spread over fewer kills.
+//              stays at its cap value and is spread over fewer kills. Only
+//              with a shop item with `limitShrink` (N10); without it max
+//              kills stay at the cap.
 // Ranks with `fixed` (challenge, tutorial) never change.
 // Growth and shrink only happen for the ranks a prestige shop item with
 // `limitGrowth` covers (P09 common, P10 elite, P11 boss); other enemies keep

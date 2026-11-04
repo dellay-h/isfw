@@ -245,8 +245,14 @@ export function limitStep(s, e) {
   if (!e || !growthOn(s, e)) return 0;
   const { lim, cap, capped } = limitState(s, e);
   const step = Math.ceil(lim * LIMIT_GROWTH.share);
+  if (capped && !shrinkOn(s)) return 0; // at the cap: stays there without kill limit shrinking
   return capped ? -Math.max(0, Math.min(step, lim - 1)) : Math.max(0, Math.min(step, cap - lim));
 }
+// Kill limit shrinking (shop item limitShrink, e.g. N10): enemies that reached
+// their cap lose max kills again (the total reward stays at its cap value).
+// Essence items count only while essence is on.
+export const shrinkOn = (s) => PRESTIGE_SHOP.some((x) => x.limitShrink && shopLevel(s, x.id) > 0)
+  || (essenceOn(s) && ESSENCE_SHOP.some((x) => x.limitShrink && essenceLevel(s, x.id) > 0));
 // Change in max kills the next prestige will apply (1 per kill, up to
 // limitStep).
 export function limitGain(s, e) {
