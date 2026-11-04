@@ -172,16 +172,15 @@ function reqText(r, level, k = null) {
   return `lv${level} req ${r.enemy} ${Math.min(s.kills[r.enemy] || 0, need)}/${need}`;
 }
 
-// One line per level; levels not yet reached are muted with their requirement.
+// One line per level; levels not yet reached are muted (effects only, no
+// requirement text).
 function levelLines(k, lv, d) {
   return k.levels.map((L, i) => {
     const reached = i < lv;
-    const r = G.levelReq(k, i);
     const total = G.mergeLevels(k.levels, i + 1);
     const prev = G.mergeLevels(k.levels, i);
-    // one line per bonus, one "lvN" per level; the requirement on its own line
+    // one line per bonus, one "lvN" per level
     const lines = describe(L, total, prev, d).map((x) => `<div>${x}</div>`);
-    if (!reached) lines.push(`<div class="muted">${reqText(r, i + 1, k).replace(/^lv\d+ /, '')}</div>`);
     return `<div class="lvl ${reached ? '' : 'muted'}"><span class="lv muted">lv${i + 1}</span><div class="parts">${lines.join('')}</div></div>`;
   }).join('');
 }
