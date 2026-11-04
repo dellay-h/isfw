@@ -105,7 +105,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E004', name: 'fire wizard apprentice', tier: 2, rank: 'common', limit: 25,
+    id: 'E004', name: 'fire wizard apprentice', tier: -2, rank: 'common', limit: 25,
     base: { maxHp: 200, magicPower: 1, magicSpeed: 0, maxMana: 0, manaRegen: 0.5, armor: 50 },
     skills: [],
     rewards: [
@@ -175,6 +175,14 @@ export const ENEMIES = [
       { skill: 'S08', level: 1, at: 'first' },
       { skill: 'S08', level: 2, at: 100 },
     ],
+  },
+  {
+    id: 'E017', name: 'orc', tier: 2, rank: 'common', profile: 'default', limit: 25,
+    skills: [],
+    rewards: [
+      { stat: 'damage', total: 1 },
+    ],
+    skillRewards: [],
   },
   {
     id: 'E015', name: 'exploder', tier: 1, rank: 'elite', profile: 'exploder', limit: 5,
