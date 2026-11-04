@@ -17,6 +17,7 @@
 //                         (ignores armor and block). Default: attacks
 //                         physical, spells magic
 //     base, scaling       hit = base + power x scaling
+//     pctMaxHp            + this fraction of the target's max hp on each hit
 //     time, speedScaling  uses per second = 1 / time + speed x speedScaling
 //     hits                hits per use (default 1)
 //     cost                mana per use (waits until affordable)
@@ -209,7 +210,7 @@ export const SKILLS = [
   {
     id: 'M04', name: 'paladin smite',
     levels: [
-      { attack: { type: 'magic', time: 3 } },
+      { attack: { type: 'magic', pctMaxHp: 0.1, time: 3 } },
     ],
   },
 ];

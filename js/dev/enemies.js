@@ -128,7 +128,7 @@ function skillsField(e, i) {
   const { parts, unit } = withC(() => G.enemyDps(e, 20));
   const lines = parts.map(({ a, onHit, hit, dot }) => {
     const b = [`${a.kind} (${a.type})`];
-    if (a.hit) b.push(`hit ${num(a.hit)}${a.hits > 1 ? ` x${a.hits}` : ''}${onHit ? ` + ${num(onHit)} on hit` : ''}`);
+    if (a.hit || a.pct) b.push(`hit ${[a.hit ? num(a.hit) : '', a.pct ? `${fmt(a.pct * 100, 1)}% max hp` : ''].filter(Boolean).join(' + ')}${a.hits > 1 ? ` x${a.hits}` : ''}${onHit ? ` + ${num(onHit)} on hit` : ''}`);
     b.push(`every ${num(a.interval)}s`);
     if (a.dot) b.push(`dot ${num(a.dot.dps)}${a.dot.pct ? ` + ${fmt(a.dot.pct * 100, 1)}% max hp` : ''}/s for ${num(a.dot.duration)}s`);
     if (a.heal) b.push(`heals ${num(a.heal)}`);

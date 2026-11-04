@@ -870,6 +870,8 @@ function unit(base, active, extra = [], idleFlat = 0, lvl = 1) {
         type: damageType(def, kind),
         key: `${id}:${kind}`,
         hit: actionHit(def, power),
+        // + % of the target's max hp on each hit (pctMaxHp; 0.1 = 10%)
+        pct: def.pctMaxHp || 0,
         hits: def.hits || 1,
         rate,
         interval: 1 / rate,
@@ -1043,14 +1045,16 @@ export function rewardStep(e, n, r = rewardsOf(e)[0], s = null) {
 }
 
 // Sustained damage per second of an enemy's actions, before the player's
-// defenses. Dots count every stack they keep up. Countdown actions are
-// listed but not included in the total.
+// defenses. Dots count every stack they keep up; % max hp hits and burns use
+// playerMaxHp. Countdown actions are listed but not included in the total.
+// parts[].each: damage of one hit (flat + % of playerMaxHp).
 export function enemyDps(e, playerMaxHp) {
   const u = enemyUnit(e);
   const parts = u.actions.map((a) => {
     const onHit = a.kind === 'attack' ? u.onHit : 0;
     const dot = a.dot ? (a.dot.dps + a.dot.pct * playerMaxHp) * a.dot.duration : 0;
-    return { a, onHit, hit: a.rate * a.hits * (a.hit + onHit), dot: dot * a.rate };
+    const each = a.hit + a.pct * playerMaxHp;
+    return { a, onHit, each, hit: a.rate * a.hits * (each + onHit), dot: dot * a.rate };
   });
   const total = parts.filter((x) => !x.a.countdown).reduce((acc, x) => acc + x.hit + x.dot, 0);
   return { total, parts, unit: u };
@@ -1258,7 +1262,9 @@ function use(src, dst, a) {
   const attack = a.kind === 'attack';
   let mult = 1;
   let pen = 0;
-  if (attack && a.hit) {
+  // damage of each hit: flat hit + % of the target's max hp
+  const hit = a.hit + a.pct * dst.u.maxHp;
+  if (attack && hit) {
     // first ready empower is consumed by this attack
     const p = src.u.empowers.find((x) => src.empower[x.id] >= x.cooldown);
     if (p) {
@@ -1271,8 +1277,8 @@ function use(src, dst, a) {
   let physical = 0;
   for (let h = 0; h < a.hits; h++) {
     const sources = attack
-      ? [{ raw: a.hit * mult, type: a.type }, ...src.u.onHits.map((o) => ({ raw: o.dmg, type: o.type }))]
-      : [{ raw: a.hit, type: a.type }];
+      ? [{ raw: hit * mult, type: a.type }, ...src.u.onHits.map((o) => ({ raw: o.dmg, type: o.type }))]
+      : [{ raw: hit, type: a.type }];
     if (attack && src.u.blockShred) dst.shred = Math.min(dst.u.block, dst.shred + src.u.blockShred);
     for (const { raw, type } of sources) {
       if (!raw) continue;

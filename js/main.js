@@ -87,9 +87,11 @@ function describeAction(kind, L, total, prev, d) {
   const n = (x) => x || 0;
   const tip = [];
   const bits = [];
-  if (n(a.base) || n(a.scaling)) {
-    tip.push(formula('hit', G.actionHit(a, power), a.base, a.scaling, pl));
-    bits.push(`hit ${fmt(G.actionHit(a, power))}${n(a.hits) > 1 ? ` ×${a.hits}` : ''}`);
+  if (n(a.base) || n(a.scaling) || n(a.pctMaxHp)) {
+    const flat = n(a.base) || n(a.scaling);
+    if (flat) tip.push(formula('hit', G.actionHit(a, power), a.base, a.scaling, pl));
+    const pct = n(a.pctMaxHp) ? `${exact(a.pctMaxHp * 100)}% target max hp` : '';
+    bits.push(`hit ${[flat ? fmt(G.actionHit(a, power)) : '', pct].filter(Boolean).join(' + ')}${n(a.hits) > 1 ? ` ×${a.hits}` : ''}`);
   }
   const rate = G.actionRate(a, speed);
   // seconds per use = 1 / (1 / interval + speed scaling x speed); only the result is shown
@@ -208,9 +210,9 @@ function enemyBreakdown(e, d) {
   const vsOnHit = u.onHits.reduce((x, o) => x + vsT(o.type, o.dmg), 0);
   const vsText = (v, raw) => (v !== raw ? ` <span class="muted">(${fmt(v)} vs you)</span>` : '');
   let vsYou = 0;
-  for (const { a, onHit, hit, dot } of parts) {
+  for (const { a, onHit, each, hit, dot } of parts) {
     rows.push([a.name + (a.countdown ? ' (special)' : ''), `${a.kind}, ${a.type}, every ${fmt(a.interval, 1)}s`, 'head']);
-    if (a.hit) rows.push(['hit', `${fmt(a.hit)}${a.hits > 1 ? ` ×${a.hits}` : ''}${vsText(vsT(a.type, a.hit), a.hit)}`]);
+    if (each) rows.push(['hit', `${fmt(each)}${a.hits > 1 ? ` ×${a.hits}` : ''}${a.pct ? ` <span class="muted">(${a.hit ? `${fmt(a.hit)} + ` : ''}${exact(a.pct * 100)}% of your max hp)</span>` : ''}${vsText(vsT(a.type, each), each)}`]);
     if (onHit) rows.push(['on hit', `${fmt(onHit)}${a.hits > 1 ? ` ×${a.hits}` : ''}${vsText(vsOnHit, onHit)}`]);
     if (a.dot) {
       const p = [];
@@ -223,7 +225,7 @@ function enemyBreakdown(e, d) {
     if (a.heal) rows.push(['heals itself', fmt(a.heal)]);
     if (a.cost) rows.push(['mana', `${fmt(a.cost, 0)} per use`]);
     if (hit || dot) rows.push(['dps', a.countdown ? `${fmt(hit + dot)} <span class="muted">not in total</span>` : fmt(hit + dot)]);
-    if (!a.countdown) vsYou += a.rate * a.hits * (vsT(a.type, a.hit) + (onHit ? vsOnHit : 0)) + dot;
+    if (!a.countdown) vsYou += a.rate * a.hits * (vsT(a.type, each) + (onHit ? vsOnHit : 0)) + dot;
   }
   if (u.empowers.length) rows.push(['empowered attacks', u.empowers.map((p) => `+${fmt(p.mult * 100, 0)}% / ${fmt(p.cooldown, 0)}s`).join(', ')]);
   rows.push(['total', fmt(total), 'total']);
@@ -338,6 +340,7 @@ function breakdown(key, d) {
     for (const a of d.actions) {
       rows.push([`${a.id} ${G.skillDef(a.id).name}`, `${a.kind}, ${a.type}`, 'head']);
       if (a.hit) rows.push(['hit / interval', `${fmt(a.hit)}${a.hits > 1 ? ` ×${a.hits}` : ''} / ${secs(a.interval)}s = ${fmt(a.hit * a.hits * a.rate)}`]);
+      if (a.pct) rows.push(['+ % target max hp (not in total)', `${exact(a.pct * 100)}% per hit`]);
       if (a.kind === 'attack' && d.onHit) rows.push(['on hit / interval', `${fmt(d.onHit)}${a.hits > 1 ? ` ×${a.hits}` : ''} / ${secs(a.interval)}s = ${fmt(d.onHit * a.hits * a.rate)}`]);
       if (a.dot) rows.push(['burn (not in total)', `${a.dot.pct ? `${exact(a.dot.pct * 100)}% target hp + ` : ''}${fmt(a.dot.dps)}/s`]);
       if (a.shield) rows.push(['shield', `${fmt(a.shield.amount)} for ${fmt(a.shield.duration, 0)}s`]);
@@ -632,7 +635,7 @@ function render() {
       <div class="row"><span class="k">t</span><span class="v">${fmt(f.elapsed, 1)}s</span>${d.actions.length ? '' : '<span class="muted">no attack or spell loaded</span>'}</div>
       ${u.actions.map((a) => {
         if (!a.countdown) return '';
-        return `<div class="row warn"><span class="k"></span><span class="v">${fmt(Math.max(0, a.interval - (f.eTimers[a.key] || 0)), 1)}s</span><span>${e.id} ${a.name} (${fmt(a.hit, 0)})</span></div>`;
+        return `<div class="row warn"><span class="k"></span><span class="v">${fmt(Math.max(0, a.interval - (f.eTimers[a.key] || 0)), 1)}s</span><span>${e.id} ${a.name} (${fmt(a.hit + a.pct * d.maxHp, 0)})</span></div>`;
       }).join('')}`;
   } else if (s.retry) {
     pane.innerHTML = `

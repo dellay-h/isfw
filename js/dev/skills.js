@@ -17,6 +17,7 @@ const ACTION_PROPS = [
   { path: 'scaling', label: 'power scaling', def: 1 },
   { path: 'time', label: 'interval (s)', def: 1 },
   { path: 'speedScaling', label: 'speed scaling', def: 1 },
+  { path: 'pctMaxHp', label: '+ target max hp per hit (0.1 = 10%)', def: 0.1 },
   { path: 'hits', label: 'hits per use', def: 2, int: true },
   { path: 'cost', label: 'mana cost', def: 5 },
   { path: 'lifesteal', label: 'lifesteal (1 = 100%)', def: 0.5 },
