@@ -105,7 +105,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E004', name: 'fire wizard apprentice', tier: -2, rank: 'common', limit: 25,
+    id: 'E004', name: 'fire wizard apprentice', tier: -3, rank: 'common', limit: 25,
     base: { maxHp: 200, magicPower: 1, magicSpeed: 0, maxMana: 0, manaRegen: 0.5, armor: 50 },
     skills: [],
     rewards: [
