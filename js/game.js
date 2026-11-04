@@ -571,7 +571,17 @@ export const visibleShop = (s) => PRESTIGE_SHOP.filter((x) => shopRevealed(s, x)
 // or the player has it now.
 export function skillVisible(s, id) {
   const req = unlockReq(id, 1);
-  return (!!req.enemy && enemyRevealed(s, enemyDef(req.enemy))) || skillLevel(s, id) > 0;
+  return (!!req.enemy && enemyRevealed(s, enemyDef(req.enemy))) || skillLevel(s, id) > 0 || !!skillShopItem(s, id);
+}
+// The shop item the player can buy to unlock a skill (unlockSkill), if its
+// shop is open to them: prestige items once the prestige shop is open (and
+// the item is revealed), essence items while essence is on.
+export function skillShopItem(s, id) {
+  const p = PRESTIGE_SHOP.find((x) => x.unlockSkill === id && shopUnlocked(s) && shopRevealed(s, x));
+  if (p) return { item: p, shop: 'prestige', cost: shopCost(s, p.id) };
+  const e = essenceOn(s) && ESSENCE_SHOP.find((x) => x.unlockSkill === id);
+  if (e) return { item: e, shop: 'essence', cost: essenceCost(s, e.id) };
+  return null;
 }
 // Reveals what has met its condition; returns the newly revealed names.
 // legacy: old saves without a reveal list (see condMet).
@@ -655,7 +665,7 @@ function earnedLevel(s, id) {
 }
 
 // Skills the player can ever get (awarded by some enemy), not specials.
-export const playerSkills = () => C.skills.filter((k) => !k.special && k.levels.some((_, i) => levelReq(k, i).enemy));
+export const playerSkills = () => C.skills.filter((k) => !k.special && (k.levels.some((_, i) => levelReq(k, i).enemy) || [...PRESTIGE_SHOP, ...ESSENCE_SHOP].some((x) => x.unlockSkill === k.id)));
 export const specialUnlocked = (s, id) => !!specialDef(id) && skillLevel(s, id) > 0;
 // Free skills (prestige shop P06): active without a slot (never loaded into
 // one); the player can unload them and load them again.

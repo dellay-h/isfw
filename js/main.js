@@ -162,7 +162,10 @@ function describe(L, total, prev, d) {
 
 // "req E001 3/10", or "not awarded" when no enemy awards it.
 // "lv2 req E002 3/50", or "lv2 not awarded" when no enemy awards it.
-function reqText(r, level) {
+function reqText(r, level, k = null) {
+  // level 1 from a shop item (unlockSkill): which item, its cost and shop
+  const shop = k && level === 1 && G.skillShopItem(s, k.id);
+  if (shop) return `lv${level} buy ${shop.item.id} ${shop.item.name}${shop.cost !== null ? ` · ${shop.cost} ${shop.shop === 'essence' ? 'essence' : `pt${shop.cost === 1 ? '' : 's'}`}` : ''} (${shop.shop} shop)`;
   if (!r.enemy || !G.enemyDef(r.enemy)) return `lv${level} not awarded`;
   if (!G.enemyRevealed(s, G.enemyDef(r.enemy))) return `lv${level} req ???`;
   const need = G.reqKills(r, s);
@@ -178,7 +181,7 @@ function levelLines(k, lv, d) {
     const prev = G.mergeLevels(k.levels, i);
     // one line per bonus, one "lvN" per level; the requirement on its own line
     const lines = describe(L, total, prev, d).map((x) => `<div>${x}</div>`);
-    if (!reached) lines.push(`<div class="muted">${reqText(r, i + 1).replace(/^lv\d+ /, '')}</div>`);
+    if (!reached) lines.push(`<div class="muted">${reqText(r, i + 1, k).replace(/^lv\d+ /, '')}</div>`);
     return `<div class="lvl ${reached ? '' : 'muted'}"><span class="lv muted">lv${i + 1}</span><div class="parts">${lines.join('')}</div></div>`;
   }).join('');
 }
@@ -470,7 +473,7 @@ function renderSkills(d) {
   const lib = G.playerSkills().filter((k) => G.skillVisible(s, k.id));
   const sps = G.specials().filter((k) => G.skillVisible(s, k.id));
   const levels = lib.map((k) => G.skillLevel(s, k.id));
-  const key = JSON.stringify([s.slots, s.prestige.free, s.prestige.freeOff, s.prestige.auto, s.prestige.shop, s.revealed, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
+  const key = JSON.stringify([s.slots, s.prestige.free, s.prestige.freeOff, s.prestige.auto, s.prestige.shop, s.prestige.count, s.essence.shop, G.essenceOn(s), s.revealed, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
   if (key === lastSkillKey) return;
   lastSkillKey = key;
 
@@ -507,7 +510,8 @@ function renderSkills(d) {
   $('#library tbody').innerHTML = lib.map((k, idx) => {
     const lv = levels[idx];
     if (!lv) {
-      return `<tr class="muted"><td></td><td>${k.id}</td><td>${k.name}</td><td>${reqText(G.levelReq(k, 0), 1)}</td><td>${autoBtn(k)}</td></tr>`;
+      const body = G.skillShopItem(s, k.id) ? levelLines(k, 0, d) : reqText(G.levelReq(k, 0), 1);
+      return `<tr class="muted"><td></td><td>${k.id}</td><td>${k.name}</td><td>${body}</td><td>${autoBtn(k)}</td></tr>`;
     }
     const btn = G.isFree(s, k.id)
       ? (G.freeActive(s, k.id) ? '<span class="muted">free</span>' : `<button data-act="free-on" data-id="${k.id}">load</button>`)
@@ -520,7 +524,8 @@ function renderSkills(d) {
   $('#special tbody').innerHTML = sps.map((x) => {
     const lv = G.skillLevel(s, x.id);
     if (!lv) {
-      return `<tr class="muted"><td></td><td>${x.id}</td><td>${x.name}</td><td>${reqText(G.unlockReq(x.id, 1), 1)}</td><td></td></tr>`;
+      const body = G.skillShopItem(s, x.id) ? levelLines(x, 0, d) : reqText(G.unlockReq(x.id, 1), 1);
+      return `<tr class="muted"><td></td><td>${x.id}</td><td>${x.name}</td><td>${body}</td><td></td></tr>`;
     }
     return `<tr${freshAttr(x.id)}><td>${newTag(x.id)}</td><td>${x.id}</td><td>${x.name}</td><td>${levelLines(x, lv, d)}</td><td class="muted">active</td></tr>`;
   }).join('');
