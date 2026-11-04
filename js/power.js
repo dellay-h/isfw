@@ -23,5 +23,5 @@ export const POWER = [
   { kind: 'profile', id: 'quick', name: 'quick', mult: {}, add: {}, skills: [{ skill: 'M03', level: 1 }, { skill: 'M02', level: 1 }] },
   { kind: 'rank', rank: 'elite', bonus: 0.5 },
   { kind: 'rank', rank: 'boss', bonus: 1 },
-  { kind: 'tier', tier: 2, base: { maxHp: 80, damage: 7, attackSpeed: 0 } },
+  { kind: 'tier', tier: 2, base: { maxHp: 100, damage: 7.5, attackSpeed: 0 } },
 ];
