@@ -182,7 +182,9 @@ export const ENEMIES = [
     rewards: [
       { stat: 'damage', total: 1 },
     ],
-    skillRewards: [],
+    skillRewards: [
+      { skill: 'S18', level: 1, at: 'first' },
+    ],
   },
   {
     id: 'E015', name: 'exploder', tier: 1, rank: 'elite', profile: 'exploder', limit: 5,
@@ -224,6 +226,15 @@ export const ENEMIES = [
   {
     id: 'E019', name: 'troll', tier: 2, rank: 'common', profile: 'defensive', limit: 25,
     skills: [],
+    rewards: [
+      { stat: 'damage', total: 1 },
+    ],
+    skillRewards: [],
+  },
+  {
+    id: 'E020', name: 'paladin', tier: 2, rank: 'boss', profile: 'tank', limit: 1,
+    base: { armor: 30 },
+    skills: [{ skill: 'M04', level: 1 }],
     rewards: [
       { stat: 'damage', total: 1 },
     ],

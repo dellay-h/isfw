@@ -24,4 +24,5 @@ export const POWER = [
   { kind: 'rank', rank: 'elite', bonus: 0.5 },
   { kind: 'rank', rank: 'boss', bonus: 1 },
   { kind: 'tier', tier: 2, base: { maxHp: 100, damage: 12.5, attackSpeed: 0 } },
+  { kind: 'profile', id: 'tank', name: 'tank', mult: { maxHp: 2.5, damage: 0.6 }, add: { attackSpeed: -0.3 }, skills: [{ skill: 'M03', level: 1 }] },
 ];

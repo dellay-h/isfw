@@ -173,7 +173,7 @@ export const SKILLS = [
   {
     id: 'S16', name: 'warrior\'s bundle',
     levels: [
-      { mods: { damage: 0.05, maxHp: 0.05, hpFlat: 5 } },
+      { mods: { damage: 0.1, maxHp: 0.1, hpFlat: 5 } },
     ],
   },
   {
@@ -192,6 +192,24 @@ export const SKILLS = [
     id: 'M03', name: 'basic attack',
     levels: [
       { attack: { type: 'physical', scaling: 1, time: 1.6, speedScaling: 1 } },
+    ],
+  },
+  {
+    id: 'S17', name: 'heavy attack',
+    levels: [
+      { attack: { base: 6, scaling: 3, time: 5, speedScaling: 0.2 } },
+    ],
+  },
+  {
+    id: 'S18', name: 'patient strikes',
+    levels: [
+      { mods: { damage: 0.3, attackSpeed: -0.2 } },
+    ],
+  },
+  {
+    id: 'M04', name: 'paladin smite',
+    levels: [
+      { attack: { type: 'magic', time: 3 } },
     ],
   },
 ];
