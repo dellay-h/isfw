@@ -34,7 +34,7 @@ export const ENEMIES = [
   },
   {
     id: 'E014', name: 'squire', tier: 2, rank: 'challenge', limit: 1,
-    base: { maxHp: 50, block: 10, damage: 3, attackSpeed: -0.2, armor: 200 },
+    base: { maxHp: 50, block: 5, damage: 3, attackSpeed: -0.2, armor: 100 },
     skills: [{ skill: 'M03', level: 1 }],
     rewards: [],
     skillRewards: [
@@ -190,7 +190,9 @@ export const ENEMIES = [
     rewards: [
       { stat: 'maxHp', total: 5 },
     ],
-    skillRewards: [],
+    skillRewards: [
+      { skill: 'S06', level: 1, at: 'first' },
+    ],
   },
   {
     id: 'E016', name: 'quickling', tier: 1, rank: 'elite', profile: 'quick', limit: 5,
