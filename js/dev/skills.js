@@ -155,12 +155,28 @@ function levelBlock(k, i, L, l, awards) {
   return field(key, `level ${l + 1}`, `<span class="muted">${parts.map((p) => (p === 'mods' ? Object.keys(L.mods).join(', ') : p)).join(' · ')}</span>`, body);
 }
 
-function skillBlock(k, i, warns) {
+// Skill groups shown on the page, in this order: monster skills by id (M..),
+// specials by the special flag, everything else is a player skill.
+const GROUPS = [
+  { id: 'player', label: 'player skills', prefix: 'S' },
+  { id: 'special', label: 'special skills', prefix: 'X' },
+  { id: 'monster', label: 'monster skills', prefix: 'M' },
+];
+const groupOf = (k) => (/^M/.test(k.id) ? 'monster' : k.special ? 'special' : 'player');
+
+// Moves skill i to the next / previous skill of the same group.
+function moveInGroup(i, d) {
+  const g = groupOf(S()[i]);
+  for (let j = i + d; j >= 0 && j < S().length; j += d) {
+    if (groupOf(S()[j]) === g) { const [x] = S().splice(i, 1); S().splice(j, 0, x); return; }
+  }
+}
+
+function skillBlock(k, i, warns, first = false, last = false) {
   const { awards, users } = refs(k.id);
   const summary = [`${k.levels.length} level${k.levels.length === 1 ? '' : 's'}`];
   if (awards.length) summary.push(`player: ${awards.map((x) => `${x.e.id} lv${x.u.level}`).join(', ')}`);
   if (users.length) summary.push(`used by ${users.map((x) => x.e.id).join(', ')}`);
-  const n = S().length;
   const key = `sk:${k.id}`;
   return `<details class="en" data-key="${esc(key)}"${open.has(key) ? ' open' : ''} data-skill="${esc(k.id)}">
     <summary>${esc(k.id)} ${esc(k.name)}${k.special ? ' <span class="warn">special</span>' : ''} <span class="muted">· ${summary.join(' · ')}</span>${warns.length ? ` <span class="warn">· ${warns.length} issue${warns.length > 1 ? 's' : ''}</span>` : ''}</summary>
@@ -170,8 +186,8 @@ function skillBlock(k, i, warns) {
         <label>name</label>${textInput(i, 'name', k.name, 'w-name')}
         <label title="always active once unlocked, never loaded into a slot">${boolInput(i, 'special', k.special)}special</label>
         <span class="spacer"></span>
-        ${btn('↑', 'sk-up', `data-i="${i}" ${i === 0 ? 'disabled' : ''}`, 'quiet')}
-        ${btn('↓', 'sk-down', `data-i="${i}" ${i === n - 1 ? 'disabled' : ''}`, 'quiet')}
+        ${btn('↑', 'sk-up', `data-i="${i}" ${first ? 'disabled' : ''}`, 'quiet')}
+        ${btn('↓', 'sk-down', `data-i="${i}" ${last ? 'disabled' : ''}`, 'quiet')}
         ${btn('duplicate', 'sk-dup', `data-i="${i}"`, 'quiet')}
         ${btn('delete', 'sk-del', `data-i="${i}"`, 'quiet')}
       </div>
@@ -184,7 +200,12 @@ function skillBlock(k, i, warns) {
 
 export function renderSkills() {
   const per = problems();
-  $('#ds-list').innerHTML = S().map((k, i) => skillBlock(k, i, per.get(k))).join('');
+  // grouped (player / special / monster), keeping the file order inside each group
+  $('#ds-list').innerHTML = GROUPS.map((g) => {
+    const list = S().map((k, i) => [k, i]).filter(([k]) => groupOf(k) === g.id);
+    return `<h3 class="de-tier">${g.label} <span class="muted">(${list.length})</span> ${btn(`+ ${g.id}`, 'sk-new', `data-group="${g.id}"`, 'quiet')}</h3>`
+      + list.map(([k, i], n) => skillBlock(k, i, per.get(k), n === 0, n === list.length - 1)).join('');
+  }).join('');
   $('#ds-count').textContent = `(${S().length})`;
   renderStatus();
   if (pendingFocus) {
@@ -266,8 +287,8 @@ function onAction(el) {
       break;
     case 'lv-up': move(k.levels, l, -1); break;
     case 'lv-down': move(k.levels, l, 1); break;
-    case 'sk-up': move(S(), i, -1); break;
-    case 'sk-down': move(S(), i, 1); break;
+    case 'sk-up': moveInGroup(i, -1); break;
+    case 'sk-down': moveInGroup(i, 1); break;
     case 'sk-dup': {
       const c = structuredClone(k);
       c.id = nextId(S(), /^[A-Z]+/.exec(k.id)?.[0] || 'S', 2);
@@ -308,21 +329,33 @@ export function focusSkill(id) {
 export function newSkill(name, prefix = 'S') {
   // monster skills start like the monster basic attack (hit = 100% of damage)
   const k = { id: nextId(S(), prefix, 2), name, levels: [prefix === 'M' ? { attack: { type: 'physical', scaling: 1, time: 1, speedScaling: 1 } } : { attack: { base: 1, time: 1 } }] };
-  S().push(k);
+  // specials are always active: they start with an attribute bonus, not an attack
+  if (prefix === 'X') { k.special = true; k.levels = [{ mods: { damageFlat: 1 } }]; }
+  // after the last skill of its group, so it shows at the bottom of the group
+  const g = groupOf(k);
+  let at = -1;
+  S().forEach((x, j) => { if (groupOf(x) === g) at = j; });
+  S().splice(at < 0 ? S().length : at + 1, 0, k);
   persist('skills');
   return k;
 }
 
 export function initSkills() {
   wire($('#ds-list'), { input: onInput, action: onAction, rerender: renderSkills, status: renderStatus });
-  $('#ds-new').addEventListener('click', () => {
-    const k = newSkill('new skill');
+  const add = (prefix) => {
+    const k = newSkill(prefix === 'X' ? 'new special' : prefix === 'M' ? 'new monster skill' : 'new skill', prefix);
     open.add(`sk:${k.id}`);
     open.add(`sk:${k.id}:lv1`);
     saveOpen();
     renderSkills();
-    $('#ds-list').lastElementChild?.scrollIntoView({ block: 'nearest' });
-  });
+    document.querySelector(`#ds-list details[data-skill="${CSS.escape(k.id)}"]`)?.scrollIntoView({ block: 'nearest' });
+  };
+  $('#ds-new').addEventListener('click', () => add('S'));
+  // "+ player / + special / + monster" in the group headings
+  $('#ds-list').addEventListener('click', (ev) => {
+    const b = ev.target.closest('button[data-act="sk-new"]');
+    if (b) { ev.stopPropagation(); add(GROUPS.find((g) => g.id === b.dataset.group).prefix); }
+  }, true);
   const setAll = (on) => {
     for (const k of S()) for (const key of [`sk:${k.id}`, ...k.levels.map((_, l) => `sk:${k.id}:lv${l + 1}`)]) on ? open.add(key) : open.delete(key);
     saveOpen();
