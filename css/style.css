@@ -437,4 +437,9 @@ button.armed { color: var(--err); border-color: var(--err); }
 #proc .act-row { font-size: 11px; line-height: 1.3; }
 #proc .bar.mini { flex: 0 0 120px; height: 2px; }
 #proc .act-row .muted { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 640px) { #proc .act-row { display: none; } }
+@media (max-width: 640px) {
+  #proc .act-row { display: none; }
+  /* empowered attacks keep their countdown row on mobile, without the bar */
+  #proc .act-row.emp-row { display: flex; }
+  #proc .emp-row .bar.mini { display: none; }
+}

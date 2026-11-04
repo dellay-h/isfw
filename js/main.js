@@ -617,6 +617,11 @@ function render() {
         const wait = a.cost > s.mana + 1e-9 && done >= a.interval;
         return `<div class="row act-row"><span class="k"></span><span class="v">${wait ? 'mp' : `${fmt(Math.max(0, a.interval - done), 1)}s`}</span>${bar(done, a.interval, 'mini')}<span class="muted">${a.id} ${a.name}</span></div>`;
       }).join('')}
+      ${d.empowers.map((p) => {
+        // empowered attacks (heavy blow): cooldown until the next empowered hit
+        const done = Math.min(p.cooldown, f.empower[p.id] || 0);
+        return `<div class="row act-row emp-row"><span class="k"></span><span class="v">${done >= p.cooldown ? 'ready' : `${fmt(p.cooldown - done, 1)}s`}</span>${bar(done, p.cooldown, 'mini')}<span class="muted">${p.id} ${G.skillDef(p.id).name}</span></div>`;
+      }).join('')}
       <div class="row"><span class="k">${e.id}</span><span class="v">${fmt(Math.max(0, f.eHp), 1)} / ${fmt(u.maxHp, 1)}</span>${bar(f.eHp, u.maxHp)}${dotText(f.eDots, u.maxHp)}${shieldText(f.eShield)}${u.block ? `<span class="muted">block ${fmt(f.eBlock, 1)}</span>` : ''}</div>
       ${u.actions.filter((a) => !a.countdown).map((a) => {
         // the enemy's attacks and spells: time to the next use (desktop only)
@@ -625,10 +630,6 @@ function render() {
         return `<div class="row act-row"><span class="k"></span><span class="v">${wait ? 'mp' : `${fmt(Math.max(0, a.interval - done), 1)}s`}</span>${bar(done, a.interval, 'mini')}<span class="muted">${a.name}</span></div>`;
       }).join('')}
       <div class="row"><span class="k">t</span><span class="v">${fmt(f.elapsed, 1)}s</span>${d.actions.length ? '' : '<span class="muted">no attack or spell loaded</span>'}</div>
-      ${d.empowers.map((p) => {
-        const left = p.cooldown - (f.empower[p.id] || 0);
-        return `<div class="row"><span class="k"></span><span class="v">${left > 0 ? fmt(left, 1) + 's' : 'ready'}</span><span class="muted">${p.id} ${G.skillDef(p.id).name}</span></div>`;
-      }).join('')}
       ${u.actions.map((a) => {
         if (!a.countdown) return '';
         return `<div class="row warn"><span class="k"></span><span class="v">${fmt(Math.max(0, a.interval - (f.eTimers[a.key] || 0)), 1)}s</span><span>${e.id} ${a.name} (${fmt(a.hit, 0)})</span></div>`;
