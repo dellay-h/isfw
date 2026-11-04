@@ -203,7 +203,7 @@ function skillRewardsField(e, i) {
   return field(`${e.id}:skrews`, 'skill rewards', `(${list.length}) ${list.map((u) => `${u.skill} lv${u.level}`).join(', ')}`, body);
 }
 
-function enemyBlock(e, i, warns) {
+function enemyBlock(e, i, warns, first = false, last = false) {
   const dev = G.inDev(e);
   // the summary line stays short: power level (vs the player preview);
   // hp, dps, skills, rewards etc. are inside the entry
@@ -219,8 +219,8 @@ function enemyBlock(e, i, warns) {
         <label>id</label>${textInput(i, 'id', e.id, 'w-id')}
         <label>name</label>${textInput(i, 'name', e.name, 'w-name')}
         <span class="spacer"></span>
-        ${btn('↑', 'en-up', `data-i="${i}" ${i === 0 ? 'disabled' : ''}`, 'quiet')}
-        ${btn('↓', 'en-down', `data-i="${i}" ${i === n - 1 ? 'disabled' : ''}`, 'quiet')}
+        ${btn('↑', 'en-up', `data-i="${i}" ${first ? 'disabled' : ''}`, 'quiet')}
+        ${btn('↓', 'en-down', `data-i="${i}" ${last ? 'disabled' : ''}`, 'quiet')}
         ${btn('duplicate', 'en-dup', `data-i="${i}"`, 'quiet')}
         ${btn('delete', 'en-del', `data-i="${i}"`, 'quiet')}
       </div>
@@ -254,7 +254,7 @@ export function renderEnemies() {
   $('#de-list').innerHTML = tiers.map((t) => {
     const list = E().map((e, i) => [e, i]).filter(([e]) => G.tierAbs(e) === t);
     return `<h3 class="de-tier">tier ${t}</h3>`
-      + list.map(([e, i]) => enemyBlock(e, i, per.get(e))).join('');
+      + list.map(([e, i], n) => enemyBlock(e, i, per.get(e), n === 0, n === list.length - 1)).join('');
   }).join('');
   $('#de-warn').innerHTML = out.map((w) => `<div>${esc(w)}</div>`).join('');
   $('#de-count').textContent = `(${E().length})`;
@@ -268,6 +268,14 @@ function renderStatus() {
 }
 
 // ---------- editing ----------
+// Move an enemy up / down among the enemies of its tier group (as listed:
+// by tier absolute value, so enemies in development move with their tier).
+function moveInTier(i, d) {
+  const t = G.tierAbs(E()[i]);
+  for (let j = i + d; j >= 0 && j < E().length; j += d) {
+    if (G.tierAbs(E()[j]) === t) { const [x] = E().splice(i, 1); E().splice(j, 0, x); return; }
+  }
+}
 function onInput(el) {
   const e = E()[Number(el.dataset.i)];
   const path = el.dataset.p;
@@ -337,8 +345,8 @@ function onAction(el) {
       break;
     }
     case 'skr-del': e.skillRewards.splice(j, 1); break;
-    case 'en-up': move(E(), i, -1); break;
-    case 'en-down': move(E(), i, 1); break;
+    case 'en-up': moveInTier(i, -1); break;
+    case 'en-down': moveInTier(i, 1); break;
     case 'en-dup': {
       const c = structuredClone(e);
       c.id = nextId(E(), 'E', 3);
@@ -411,7 +419,7 @@ function renderPreview() {
     d: G.derived(s),
     base: G.derived(G.newState()),
     skills: G.playerSkills().map((k) => [k, G.skillLevel(s, k.id)]),
-    sps: G.specials().map((k) => [k, G.skillLevel(s, k.id)]).filter(([, lv]) => lv > 0),
+    sps: G.specials().map((k) => [k, G.skillLevel(s, k.id)]),
     slots: G.slotCount(s),
   }));
   const rows = preview.map((r, j) => {
@@ -448,7 +456,14 @@ function renderPreview() {
       <tr><td class="lbl">power level</td><td class="num">${num(pp.power)}</td></tr>
     </table>
     <div class="calc">${loaded.length ? `with ${loaded.join(', ')} loaded` : 'no skill loaded: tick skills below to get a dps'} · enemies show their power level relative to this</div>`;
-  const sp = sps.map(([k]) => `<div>${k.id} ${esc(k.name)}</div>`).join('');
+  // specials: always active from level 1; level from the kills unless set here
+  const sp = sps.map(([k, lv]) => {
+    const kl = withC(() => G.skillLevel(fromKills, k.id));
+    return `<tr${lv < 1 ? ' class="muted"' : ''}>
+      <td><span class="pv-load">${lv > 0 ? '●' : '○'} ${k.id}</span></td>
+      <td class="pv-name" title="${esc(k.name)}">${esc(k.name)}</td>
+      <td class="nw">lv <input type="number" step="1" min="0" max="${k.levels.length}" class="w-lv" data-pv="slevel" data-id="${esc(k.id)}" value="${lv}"> <span class="muted">/ ${k.levels.length}</span>${lv !== kl ? ` <span class="warn" title="set by hand; the kills give level ${kl}">(kills ${kl})</span>` : ''}</td></tr>`;
+  }).join('');
   $('#de-preview').innerHTML = `
     <h2>player preview</h2>
     <div class="calc">attributes after these kills, at this level, with the ticked skills loaded (skill levels from the kills unless set below)</div>
@@ -464,7 +479,8 @@ function renderPreview() {
     <table class="dev-table kv">${attrs}</table>
     ${pwHtml}
     <h2>skills <span class="${loaded.length > slots ? 'warn' : 'muted'}" title="loaded skills / slots the player would have (no limit in this preview)">· ${loaded.length}/${slots} slots loaded</span></h2>
-    <table class="dev-table pv-skills">${sk}</table>${sp ? `<h2>specials</h2>${sp}` : ''}`;
+    <table class="dev-table pv-skills">${sk}</table>
+    ${sp ? `<h2>specials <span class="muted">· active from level 1</span></h2><table class="dev-table pv-skills">${sp}</table>` : ''}`;
 }
 
 function onPreview(ev) {
