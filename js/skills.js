@@ -213,4 +213,10 @@ export const SKILLS = [
       { attack: { type: 'magic', scaling: 3, time: 4 } },
     ],
   },
+  {
+    id: 'M05', name: 'basic magic attack',
+    levels: [
+      { spell: { type: 'magic', scaling: 1, time: 2, speedScaling: 1, cost: 5 } },
+    ],
+  },
 ];

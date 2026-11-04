@@ -16,13 +16,14 @@
 //                                     extra attributes and its skills
 export const POWER = [
   { kind: 'tier', tier: 1, base: { maxHp: 20, damage: 2.5, attackSpeed: 0 } },
-  { kind: 'profile', id: 'default', name: 'default', mult: {}, add: {}, skills: [{ skill: 'M03', level: 1 }] },
-  { kind: 'profile', id: 'defensive', name: 'defensive', mult: { maxHp: 1.8, damage: 0.6 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
-  { kind: 'profile', id: 'offensive', name: 'offensive', mult: { maxHp: 0.6, damage: 2 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
-  { kind: 'profile', id: 'exploder', name: 'exploder', mult: { damage: 1, maxHp: 2 }, add: {}, skills: [{ skill: 'M01', level: 1 }] },
-  { kind: 'profile', id: 'quick', name: 'quick', mult: {}, add: {}, skills: [{ skill: 'M03', level: 1 }, { skill: 'M02', level: 1 }] },
+  { kind: 'profile', id: 'default', name: 'default', mult: { magicPower: 0, maxMana: 0, manaRegen: 0 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
+  { kind: 'profile', id: 'defensive', name: 'defensive', mult: { maxHp: 1.8, damage: 0.6, magicPower: 0, maxMana: 0, manaRegen: 0 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
+  { kind: 'profile', id: 'offensive', name: 'offensive', mult: { maxHp: 0.6, damage: 2, magicPower: 0, maxMana: 0, manaRegen: 0 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
+  { kind: 'profile', id: 'exploder', name: 'exploder', mult: { damage: 1, maxHp: 2, magicPower: 0, maxMana: 0, manaRegen: 0 }, add: {}, skills: [{ skill: 'M01', level: 1 }] },
+  { kind: 'profile', id: 'quick', name: 'quick', mult: { magicPower: 0, maxMana: 0, manaRegen: 0 }, add: {}, skills: [{ skill: 'M03', level: 1 }, { skill: 'M02', level: 1 }] },
   { kind: 'rank', rank: 'elite', bonus: 0.5 },
   { kind: 'rank', rank: 'boss', bonus: 1 },
-  { kind: 'tier', tier: 2, base: { maxHp: 100, damage: 12.5, attackSpeed: 0 } },
-  { kind: 'profile', id: 'tank', name: 'tank', mult: { maxHp: 2.5, damage: 0.4 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
+  { kind: 'tier', tier: 2, base: { maxHp: 100, damage: 12.5, attackSpeed: 0, magicPower: 12.5, maxMana: 20, manaRegen: 2.5 } },
+  { kind: 'profile', id: 'tank', name: 'tank', mult: { maxHp: 2.5, damage: 0.4, magicPower: 0, maxMana: 0, manaRegen: 0 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
+  { kind: 'profile', id: 'magic', name: 'default magic', mult: {}, add: {}, skills: [{ skill: 'M03', level: 1 }, { skill: 'M05', level: 1 }] },
 ];
