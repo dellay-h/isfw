@@ -44,6 +44,14 @@ export const SKILLS = [
     ],
   },
   {
+    id: 'S11', name: 'brute force',
+    levels: [
+      { mods: { damageFlat: 1 } },
+      { mods: { damageFlat: 0.5, damage: 0.05 } },
+      { mods: { damage: 0.1 } },
+    ],
+  },
+  {
     id: 'S02', name: 'gel coat',
     levels: [
       { mods: { hpFlat: 20 } },
@@ -103,14 +111,6 @@ export const SKILLS = [
     id: 'S10', name: 'lifesteal',
     levels: [
       { mods: { lifesteal: 0.05 } },
-    ],
-  },
-  {
-    id: 'S11', name: 'brute force',
-    levels: [
-      { mods: { damageFlat: 1 } },
-      { mods: { damageFlat: 0.5, damage: 0.05 } },
-      { mods: { damage: 0.1 } },
     ],
   },
   {
