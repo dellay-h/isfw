@@ -43,11 +43,13 @@ const PARTS = {
   slots: { label: 'skill slots', make: () => 1 },
   rush: { label: 'rush (attack speed at fight start, decaying; enemies)', make: () => ({ attackSpeed: 3, duration: 4 }) },
   winHeal: { label: 'heal after each win (max hp fraction; player)', make: () => 0.05 },
+  aura: { label: 'aura (damage/s to the opponent in fights)', make: () => ({ type: 'magic', base: 1 }) },
 };
 const SIMPLE = {
   onHit: [['base', 'base'], ['scaling', 'scaling (x dmg)']],
   empower: [['mult', 'bonus (1 = +100%)'], ['cooldown', 'cooldown (s)'], ['armorPen', 'armor pen']],
   rush: [['attackSpeed', 'aspd bonus at the start'], ['duration', 'falls to 0 over (s)']],
+  aura: [['base', 'damage/s'], ['pctMaxHp', '+ own max hp/s (0.05 = 5%)']],
 };
 
 // Who uses / awards a skill.
@@ -102,7 +104,7 @@ function typeRow(i, base, obj, kind) {
 function partBlock(k, i, L, l, part) {
   const base = `levels.${l}.${part}`;
   let body = '';
-  const typed = part === 'attack' || part === 'spell' || part === 'onHit';
+  const typed = part === 'attack' || part === 'spell' || part === 'onHit' || part === 'aura';
   if (part === 'attack' || part === 'spell') {
     const a = L[part];
     const missing = ACTION_PROPS.filter((p) => getP(a, p.path) === undefined);

@@ -159,6 +159,12 @@ function describe(L, total, prev, d) {
   for (const [k, v] of Object.entries(L.mods || {})) parts.push(modText(k, v));
   if (L.slots) parts.push(`skill slots +${L.slots}`);
   if (L.winHeal) parts.push(`heals ${fmt(L.winHeal * 100, 0)}% max hp after each win`);
+  if (L.aura) {
+    const o = total.aura;
+    const v = (o.base || 0) + (o.pctMaxHp || 0) * d.maxHp;
+    const f = `aura/s: ${exact(v)} = ${exact(o.base || 0)} + (${exact((o.pctMaxHp || 0) * 100)}% × max hp)`;
+    parts.push(`<span class="tip" tabindex="0" data-tip="${esc(f)}">deals ${fmt(v)} ${o.type === 'physical' ? 'physical' : 'magic'} damage/s to the enemy during fights</span>`);
+  }
   return parts;
 }
 
@@ -226,6 +232,12 @@ function enemyBreakdown(e, d) {
     if (a.cost) rows.push(['mana', `${fmt(a.cost, 0)} per use`]);
     if (hit || dot) rows.push(['dps', a.countdown ? `${fmt(hit + dot)} <span class="muted">not in total</span>` : fmt(hit + dot)]);
     if (!a.countdown) vsYou += a.rate * a.hits * (vsT(a.type, each) + (onHit ? vsOnHit : 0)) + dot;
+  }
+  for (const x of u.auras) {
+    rows.push([x.name, `aura, ${x.type}`, 'head']);
+    const v = G.auraDamage([x], d);
+    rows.push(['dps', `${fmt(x.dps)}${vsText(v, x.dps)}`]);
+    vsYou += v;
   }
   if (u.empowers.length) rows.push(['empowered attacks', u.empowers.map((p) => `+${fmt(p.mult * 100, 0)}% / ${fmt(p.cooldown, 0)}s`).join(', ')]);
   rows.push(['total', fmt(total), 'total']);
@@ -336,7 +348,8 @@ function breakdown(key, d) {
     if (key === 'armor') rows.push(['hit reduction', `${fmt(armorReduction(d.armor) * 100, 1)}%`]);
     if (key === 'block' && d.blockShred) rows.push(['your block shred', `${fmt(d.blockShred, 1)}/hit`]);
   } else if (key === 'dps') {
-    if (!d.actions.length) rows.push(['no attack or spell loaded', '0']);
+    if (!d.actions.length && !d.auras.length) rows.push(['no attack or spell loaded', '0']);
+    for (const x of d.auras) rows.push([`${x.id} ${x.name}`, `aura, ${x.type}: ${fmt(x.dps)}/s`, 'head']);
     for (const a of d.actions) {
       rows.push([`${a.id} ${G.skillDef(a.id).name}`, `${a.kind}, ${a.type}`, 'head']);
       if (a.hit) rows.push(['hit / interval', `${fmt(a.hit)}${a.hits > 1 ? ` ×${a.hits}` : ''} / ${secs(a.interval)}s = ${fmt(a.hit * a.hits * a.rate)}`]);

@@ -65,11 +65,14 @@ const SKILLS_HEADER = `// Skill data, shared by the player and enemies. Written 
 //   rush:    { attackSpeed, duration } +attackSpeed at the start of a fight,
 //            falling to 0 over duration seconds (enemies only for now)
 //   winHeal: heals this fraction of max hp after each win (player)
+//   aura:    { type, base, pctMaxHp } damage per second to the opponent during
+//            a fight = base + pctMaxHp x own max hp; type default magic
+//            (physical: reduced by armor, not block)
 `;
 
 const ENEMY_ORDER = ['id', 'name', 'tier', 'rank', 'boss', 'profile', 'limit', 'unlockCost', 'base', 'skills', 'rewards', 'skillRewards'];
 const ACTION_ORDER = ['type', 'base', 'scaling', 'pctMaxHp', 'time', 'speedScaling', 'hits', 'cost', 'lifesteal', 'dot', 'shield', 'heal', 'countdown'];
-const LEVEL_ORDER = ['attack', 'spell', 'onHit', 'empower', 'mods', 'slots', 'rush', 'winHeal'];
+const LEVEL_ORDER = ['attack', 'spell', 'onHit', 'empower', 'mods', 'slots', 'rush', 'winHeal', 'aura'];
 
 const key = (k) => (/^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k));
 const str = (s) => `'${String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;

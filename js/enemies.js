@@ -228,7 +228,9 @@ export const ENEMIES = [
     rewards: [
       { stat: 'damage', total: 1 },
     ],
-    skillRewards: [],
+    skillRewards: [
+      { skill: 'S19', level: 1, at: 'first' },
+    ],
   },
   {
     id: 'E020', name: 'paladin', tier: 2, rank: 'boss', profile: 'tank', limit: 1,

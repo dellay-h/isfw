@@ -852,8 +852,12 @@ function unit(base, active, extra = [], idleFlat = 0, lvl = 1) {
   const empowers = [];
   const onHits = [];
   const actions = [];
+  // auras: constant damage per second to the opponent during a fight
+  // (base + pctMaxHp x own max hp)
+  const auras = [];
   for (const { id, L } of active) {
     const name = skillDef(id)?.name ?? id;
+    if (L.aura) auras.push({ id, name, type: L.aura.type === 'physical' ? 'physical' : 'magic', dps: (L.aura.base || 0) + (L.aura.pctMaxHp || 0) * val.maxHp });
     if (L.empower) {
       empowers.push({ id, mult: L.empower.mult || 0, cooldown: L.empower.cooldown || 0, armorPen: L.empower.armorPen || 0 });
     }
@@ -894,8 +898,11 @@ function unit(base, active, extra = [], idleFlat = 0, lvl = 1) {
     empowers,
     onHits,
     onHit,
-    // direct hit damage per second, incl. on-hit (burns depend on the target, not included)
-    dps: actions.filter((x) => !x.countdown).reduce((a, x) => a + x.rate * x.hits * (x.hit + (x.kind === 'attack' ? onHit : 0)), 0),
+    auras,
+    aura: auras.reduce((a, x) => a + x.dps, 0),
+    // direct hit damage per second, incl. on-hit and auras (burns depend on the target, not included)
+    dps: actions.filter((x) => !x.countdown).reduce((a, x) => a + x.rate * x.hits * (x.hit + (x.kind === 'attack' ? onHit : 0)), 0)
+      + auras.reduce((a, x) => a + x.dps, 0),
     // hp per second
     regenInHp: val.regenIn * val.maxHp + val.regenFlat,
     regenOutHp: val.regenOut * val.maxHp + val.regenFlat + idleFlat,
@@ -1056,7 +1063,7 @@ export function enemyDps(e, playerMaxHp) {
     const each = a.hit + a.pct * playerMaxHp;
     return { a, onHit, each, hit: a.rate * a.hits * (each + onHit), dot: dot * a.rate };
   });
-  const total = parts.filter((x) => !x.a.countdown).reduce((acc, x) => acc + x.hit + x.dot, 0);
+  const total = parts.filter((x) => !x.a.countdown).reduce((acc, x) => acc + x.hit + x.dot, 0) + u.aura;
   return { total, parts, unit: u };
 }
 
@@ -1160,6 +1167,12 @@ function tickDots(dots, dt, maxHp = 0) {
   return dmg;
 }
 
+// Aura damage per second on a target: magic unreduced; physical reduced by
+// the target's armor (not block, it isn't a hit).
+export function auraDamage(auras, target) {
+  return auras.reduce((a, x) => a + (x.type === 'physical' ? x.dps * (1 - armorReduction(target.armor || 0)) : x.dps), 0);
+}
+
 function tickShield(sh, dt) {
   if (!sh) return null;
   sh.left -= dt;
@@ -1219,6 +1232,15 @@ export function step(s, dt) {
   f.eHp = Math.min(eu.maxHp, f.eHp + Math.max(0, eRegen));
   s.hp -= absorb(f.pShield, tickDots(f.pDots, dt, d.maxHp));
   if (s.hp <= 0) return lose(s, e, 'debuff');
+  // Auras: constant damage to the other side (shields absorb)
+  if (d.auras.length) {
+    f.eHp -= absorb(f.eShield, auraDamage(d.auras, eu) * dt);
+    if (f.eHp <= 0) return win(s, e);
+  }
+  if (eu.auras.length) {
+    s.hp -= absorb(f.pShield, auraDamage(eu.auras, d) * dt);
+    if (s.hp <= 0) return lose(s, e, eu.auras[0].name);
+  }
 
   // Advance timers. Skills loaded mid-fight start from 0.
   for (const side of [P, E]) {

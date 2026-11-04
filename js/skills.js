@@ -36,6 +36,9 @@
 //   rush:    { attackSpeed, duration } +attackSpeed at the start of a fight,
 //            falling to 0 over duration seconds (enemies only for now)
 //   winHeal: heals this fraction of max hp after each win (player)
+//   aura:    { type, base, pctMaxHp } damage per second to the opponent during
+//            a fight = base + pctMaxHp x own max hp; type default magic
+//            (physical: reduced by armor, not block)
 export const SKILLS = [
   {
     id: 'S01', name: 'basic attack',
@@ -205,6 +208,12 @@ export const SKILLS = [
     id: 'S18', name: 'patient strikes',
     levels: [
       { mods: { damage: 0.3, attackSpeed: -0.2 } },
+    ],
+  },
+  {
+    id: 'S19', name: 'troll aura',
+    levels: [
+      { aura: { type: 'magic', base: 2, pctMaxHp: 0.05 } },
     ],
   },
   {
