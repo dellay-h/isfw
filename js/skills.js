@@ -210,7 +210,7 @@ export const SKILLS = [
   {
     id: 'M04', name: 'paladin smite',
     levels: [
-      { attack: { type: 'magic', pctMaxHp: 0.1, time: 3 } },
+      { attack: { type: 'magic', scaling: 3, time: 4 } },
     ],
   },
 ];

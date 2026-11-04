@@ -233,7 +233,7 @@ export const ENEMIES = [
   },
   {
     id: 'E020', name: 'paladin', tier: 2, rank: 'boss', profile: 'tank', limit: 1,
-    base: { armor: 30 },
+    base: { armor: 100 },
     skills: [{ skill: 'M04', level: 1 }],
     rewards: [
       { stat: 'damage', total: 1 },
