@@ -20,10 +20,12 @@
 //   slots        extra skill slots per level
 //   startKills   { enemy, n }: every prestige starts with n kills of that
 //                enemy per level (never above its max kills)
-//   limitGrowth  [rank]: max kills growth/shrink on for those ranks (LIMIT_GROWTH)
+//   limitGrowth  [rank]: max kills growth/shrink on for those ranks (LIMIT_GROWTH;
+//                essence items only while essence is on)
 //   minKills     { rank: n }: when bought, enemies of that rank still growing
 //                get at least n max kills
-//   requires     item id that must be owned before this one can be bought
+//   requires     item id (either shop) that must be owned before this one
+//                can be bought
 //   essence      true: unlocks essence (gain, essence shop and its bonuses)
 //   free         random free skills per prestige; freeExclude [skill id] never picked
 //   autoEquip    true: auto-equip toggles for skills unlocked at prestige start
@@ -36,10 +38,10 @@ export const SHOP = [
   { id: 'P06', shop: 'prestige', name: 'muscle memory', retired: true, max: 1, cost: { base: 3, step: 0 }, free: 1, freeExclude: ['S01'] },
   { id: 'P08', shop: 'prestige', name: 'routine', retired: true, max: 1, cost: { base: 10, step: 0 }, autoEquip: true },
   { id: 'P12', shop: 'prestige', name: 'improved fighting', max: 1, cost: { base: 1, step: 0 }, unlockSkill: 'X05' },
-  { id: 'P13', shop: 'prestige', name: 'essence collector', max: 1, cost: { base: 0, step: 0 }, essence: true },
-  { id: 'P09', shop: 'prestige', name: 'limit breaker', max: 1, cost: { base: 10, step: 0 }, limitGrowth: ['common'], minKills: { common: 100 } },
-  { id: 'P10', shop: 'prestige', name: 'limit breaker: elites', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['elite'], requires: 'P09' },
-  { id: 'P11', shop: 'prestige', name: 'limit breaker: bosses', max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['boss'], requires: 'P09' },
+  { id: 'P13', shop: 'prestige', name: 'essence collector', max: 1, cost: { base: 10, step: 0 }, essence: true },
+  { id: 'P09', shop: 'prestige', name: 'limit breaker', max: 1, cost: { base: 0, step: 0 }, limitGrowth: ['common'] },
+  { id: 'P10', shop: 'prestige', name: 'limit breaker: elites', retired: true, max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['elite'], requires: 'P09' },
+  { id: 'P11', shop: 'prestige', name: 'limit breaker: bosses', retired: true, max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['boss'], requires: 'P09' },
   { id: 'P07', shop: 'prestige', name: 'head start', max: 10, cost: { base: 1, step: 0 }, startKills: { enemy: 'E001', n: 1 } },
   { id: 'P14', shop: 'prestige', name: 'new targets', max: 1, cost: { base: 1, step: 0 }, unlockEnemies: ['E015', 'E016'] },
   { id: 'N01', shop: 'essence', name: 'attack', cost: { base: 20, step: 20 }, effects: [{ stat: 'damage', kind: 'pct', v: 0.01 }] },
@@ -49,4 +51,6 @@ export const SHOP = [
   { id: 'N05', shop: 'essence', name: 'armor', cost: { base: 20, step: 20 }, effects: [{ stat: 'armor', kind: 'pct', v: 0.01 }] },
   { id: 'N06', shop: 'essence', name: 'hp', cost: { base: 20, step: 20 }, effects: [{ stat: 'maxHp', kind: 'pct', v: 0.01 }] },
   { id: 'N07', shop: 'essence', name: 'recovery', max: 1, cost: { base: 500, step: 0 }, unlockSkill: 'X04' },
+  { id: 'N08', shop: 'essence', name: 'limit breaker: elites', max: 1, cost: { base: 500, step: 0 }, limitGrowth: ['elite'], requires: 'P09' },
+  { id: 'N09', shop: 'essence', name: 'limit breaker: bosses', max: 1, cost: { base: 2000, step: 0 }, limitGrowth: ['boss'], requires: 'P09' },
 ];

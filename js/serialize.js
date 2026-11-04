@@ -140,10 +140,12 @@ const SHOP_HEADER = `// Prestige and essence shop items. Written by the dev/shop
 //   slots        extra skill slots per level
 //   startKills   { enemy, n }: every prestige starts with n kills of that
 //                enemy per level (never above its max kills)
-//   limitGrowth  [rank]: max kills growth/shrink on for those ranks (LIMIT_GROWTH)
+//   limitGrowth  [rank]: max kills growth/shrink on for those ranks (LIMIT_GROWTH;
+//                essence items only while essence is on)
 //   minKills     { rank: n }: when bought, enemies of that rank still growing
 //                get at least n max kills
-//   requires     item id that must be owned before this one can be bought
+//   requires     item id (either shop) that must be owned before this one
+//                can be bought
 //   essence      true: unlocks essence (gain, essence shop and its bonuses)
 //   free         random free skills per prestige; freeExclude [skill id] never picked
 //   autoEquip    true: auto-equip toggles for skills unlocked at prestige start

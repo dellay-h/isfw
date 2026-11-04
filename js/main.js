@@ -822,10 +822,12 @@ function renderEssence() {
       const lv = G.essenceLevel(s, x.id);
       const cost = G.essenceCost(s, x.id);
       const per = (x.effects || []).map(effectText);
+      if (x.limitGrowth) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the rank's cap; after the cap they shrink again without lowering the total.`)}">${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')} max kills growth</span>`);
+      const miss = G.essenceMissing(s, x.id);
       const k = x.unlockSkill && G.skillDef(x.unlockSkill);
       if (k) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`${k.special ? 'Special (always active)' : 'Skill'}: ${describe(k.levels[0], G.mergeLevels(k.levels, 1), {}, G.derived(s)).join(', ') || k.name}`)}">unlocks ${k.id} ${k.name}</span>`);
       const now = lv && (x.effects || []).length ? (x.effects || []).map((e) => effectText({ ...e, v: e.v * lv })).join(', ') : '';
-      const btn = cost === null ? '<span class="muted">max</span>' : `<button data-act="ess-buy" data-id="${x.id}">${cost}</button>`;
+      const btn = cost === null ? '<span class="muted">max</span>' : `<button data-act="ess-buy" data-id="${x.id}">${cost}</button>${miss ? `<div class="muted">needs ${miss}</div>` : ''}`;
       return `<tr data-id="${x.id}"${lv ? '' : ' class="muted"'}><td>${x.id}</td><td>${x.name}<div class="muted">lv ${lv}${x.max > 0 ? `/${x.max}` : ''}</div></td><td>${per.join(', ')}${x.max === 1 ? '' : '<span class="muted">/lv</span>'}${now ? `<div class="muted">now ${now}</div>` : ''}</td><td>${btn}</td></tr>`;
     }).join('');
   }

@@ -25,9 +25,9 @@ const FEATURES = {
   unlockEnemies: { label: 'unlocks targets (hidden until owned)', prestige: true, make: () => [] },
   slots: { label: 'skill slots', prestige: true, make: () => 1 },
   startKills: { label: 'start kills', prestige: true, make: () => ({ enemy: E()[0]?.id || '', n: 1 }) },
-  limitGrowth: { label: 'max kills growth', prestige: true, make: () => ['common'] },
+  limitGrowth: { label: 'max kills growth', make: () => ['common'] },
   minKills: { label: 'max kills at least', prestige: true, make: () => ({ common: 100 }) },
-  requires: { label: 'requires item', prestige: true, make: (x) => SH().find((y) => y.shop === 'prestige' && y.id !== x.id)?.id || '' },
+  requires: { label: 'requires item', make: (x) => SH().find((y) => !y.retired && y.id !== x.id)?.id || '' },
   essence: { label: 'unlocks essence', prestige: true, make: () => true },
   free: { label: 'free skills', prestige: true, make: () => 1 },
   freeExclude: { label: 'free skills never pick', prestige: true, make: () => [] },
@@ -45,7 +45,7 @@ function problems() {
     if (!x.id) p.push('missing id');
     else if (ids.filter((y) => y === x.id).length > 1) p.push(`id ${x.id} is used more than once`);
     if (!['prestige', 'essence'].includes(x.shop)) p.push('pick a shop');
-    if (x.shop === 'prestige' && !(x.max >= 1)) p.push('max level must be 1 or more');
+    if (x.shop === 'prestige' && !x.retired && !(x.max >= 1)) p.push('max level must be 1 or more');
     if (!x.cost || !Number.isFinite(x.cost.base)) p.push('missing cost');
     for (const [j, f] of (x.effects || []).entries()) {
       if (!ATTRS.some((a) => a.key === f.stat)) p.push(`bonus ${j + 1}: unknown attribute ${f.stat}`);
@@ -57,7 +57,6 @@ function problems() {
       if (!r) p.push(`requires ${x.requires || '(none)'}: no such item`);
       else if (r === x) p.push('requires itself');
       else if (r.retired) p.push(`requires ${r.id}, which is retired`);
-      else if (r.shop !== 'prestige') p.push(`requires ${r.id}, not a prestige item`);
     }
     if (x.unlockSkill !== undefined && !skillIds.has(x.unlockSkill)) p.push(`unlocks skill: unknown skill ${x.unlockSkill || '(none)'}`);
     if (x.startKills && !enemyIds.has(x.startKills.enemy)) p.push(`start kills: unknown enemy ${x.startKills.enemy || '(none)'}`);
@@ -119,7 +118,7 @@ function featureRow(x, i, k) {
   } else if (k === 'minKills') {
     input = GROW.map((r) => `<label class="muted">${r}</label> <input type="number" step="1" class="w-v" data-i="${i}" data-p="minKills" data-t="min-kills" data-rank="${r}" value="${esc(x.minKills[r] ?? '')}" placeholder="—">`).join(' ');
   } else if (k === 'requires') {
-    const opts = SH().filter((y) => y.shop === 'prestige' && y.id !== x.id && !y.retired).map((y) => [y.id, `${y.id} ${y.name}`]);
+    const opts = SH().filter((y) => y.id !== x.id && !y.retired).map((y) => [y.id, `${y.id} ${y.name} (${y.shop})`]);
     if (!opts.some(([id]) => id === x.requires)) opts.push([x.requires, `${x.requires || '(none)'} (not available)`]);
     input = select(`data-i="${i}" data-p="requires" data-t="text"`, opts, x.requires);
   } else if (k === 'freeExclude') {

@@ -209,7 +209,11 @@ export function limitState(s, e) {
 export const limitOf = (s, e) => (e ? limitState(s, e).lim : 0);
 // Max kills growth/shrink is bought per rank in the prestige shop
 // (limitGrowth: P09 common, P10 elite, P11 boss).
-export const growthRanks = (s) => new Set(PRESTIGE_SHOP.filter((x) => shopLevel(s, x.id) > 0).flatMap((x) => x.limitGrowth || []));
+// (prestige and essence items; essence ones only while essence is on)
+export const growthRanks = (s) => new Set([
+  ...PRESTIGE_SHOP.filter((x) => shopLevel(s, x.id) > 0),
+  ...(essenceOn(s) ? ESSENCE_SHOP.filter((x) => essenceLevel(s, x.id) > 0) : []),
+].flatMap((x) => x.limitGrowth || []));
 export const growthOwned = (s) => growthRanks(s).size > 0;
 export const growthOn = (s, e) => !!e && !isFixed(e) && growthRanks(s).has(rankOf(e));
 // Lowest max kills an enemy starts a prestige with (shop minKills by rank,
@@ -399,7 +403,10 @@ export function shopCost(s, id) {
   return (x.cost?.base || 0) + (x.cost?.step || 0) * lv;
 }
 // An item's `requires`: another item that must be owned first.
-export const shopMissing = (s, id) => { const r = shopDef(id)?.requires; return r && !shopLevel(s, r) ? r : null; };
+// requires: another item (prestige or essence) owned first
+export const itemOwned = (s, id) => shopLevel(s, id) > 0 || essenceLevel(s, id) > 0;
+export const shopMissing = (s, id) => { const r = shopDef(id)?.requires; return r && !itemOwned(s, r) ? r : null; };
+export const essenceMissing = (s, id) => { const r = essenceDef(id)?.requires; return r && !itemOwned(s, r) ? r : null; };
 // The prestige shop opens after the first prestige.
 export const shopUnlocked = (s) => s.prestige.count >= 1;
 // New-item notices: items in the shop the player hasn't looked at yet.
@@ -452,7 +459,7 @@ export function essenceCost(s, id) {
 }
 // The essence system is unlocked by a prestige shop item (essence: P13).
 export const essenceOn = (s) => PRESTIGE_SHOP.some((x) => x.essence && shopLevel(s, x.id) > 0);
-export const canBuyEssence = (s, id) => { const c = essenceCost(s, id); return c !== null && essenceOn(s) && s.essence.points >= c; };
+export const canBuyEssence = (s, id) => { const c = essenceCost(s, id); return c !== null && essenceOn(s) && !essenceMissing(s, id) && s.essence.points >= c; };
 export function buyEssence(s, id) {
   if (!canBuyEssence(s, id)) return false;
   const x = essenceDef(id);
