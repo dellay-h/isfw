@@ -114,7 +114,7 @@ export const SKILLS = [
   {
     id: 'S10', name: 'lifesteal',
     levels: [
-      { mods: { lifesteal: 0.05 } },
+      { mods: { lifesteal: 0.2 } },
     ],
   },
   {
@@ -177,7 +177,7 @@ export const SKILLS = [
   {
     id: 'S16', name: 'warrior\'s bundle',
     levels: [
-      { mods: { damage: 0.1, armorFlat: 10, hpFlat: 5 } },
+      { mods: { damage: 0.1, armorFlat: 10, hpFlat: 5, attackSpeed: 0.1 } },
     ],
   },
   {
@@ -220,7 +220,7 @@ export const SKILLS = [
   {
     id: 'S20', name: 'fire bolt',
     levels: [
-      { spell: { type: 'magic', base: 2, scaling: 1, time: 1.5, speedScaling: 1 } },
+      { spell: { type: 'magic', base: 4, scaling: 1, time: 1.5, speedScaling: 1 } },
     ],
   },
   {
