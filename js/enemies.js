@@ -92,19 +92,6 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E012', name: 'dropout sorcerer', tier: -3, rank: 'common', limit: 25, unlockCost: 1,
-    base: { maxHp: 80, magicPower: 1, manaRegen: 0.5 },
-    skills: [],
-    rewards: [
-      { stat: 'magicSpeed', total: 0.05 },
-    ],
-    skillRewards: [
-      { skill: 'S12', level: 1, at: 'first' },
-      { skill: 'S12', level: 2, at: 100 },
-      { skill: 'S12', level: 3, at: 'final' },
-    ],
-  },
-  {
     id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'defensive', limit: 1,
     base: { lifesteal: 0.4, damage: 1, attackSpeed: -0.15 },
     skills: [],
@@ -117,7 +104,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E005', name: 'assassin', tier: -3, rank: 'elite', limit: 5,
+    id: 'E005', name: 'assassin', rank: 'elite', limit: 5,
     base: { maxHp: 180, damage: 2.1667 },
     skills: [{ skill: 'M03', level: 1 }],
     rewards: [
@@ -126,42 +113,6 @@ export const ENEMIES = [
     skillRewards: [
       { skill: 'S05', level: 1, at: 'first' },
       { skill: 'S06', level: 2, at: 'final' },
-    ],
-  },
-  {
-    id: 'E006', name: 'ogre', tier: -3, rank: 'common', limit: 25,
-    base: { maxHp: 400, damage: 4, attackSpeed: -0.444, regenFlat: 2 },
-    skills: [{ skill: 'M03', level: 1 }],
-    rewards: [
-      { stat: 'maxHp', total: 4.8 },
-    ],
-    skillRewards: [
-      { skill: 'S06', level: 1, at: 'first' },
-      { skill: 'S05', level: 2, at: 100 },
-    ],
-  },
-  {
-    id: 'E007', name: 'guard', tier: -3, rank: 'elite', limit: 5,
-    base: { maxHp: 400, armor: 50, block: 2, damage: 2.6667, attackSpeed: -0.5, magicSpeed: -0.0833, manaRegen: 1 },
-    skills: [{ skill: 'M03', level: 1 }],
-    rewards: [
-      { stat: 'armor', total: 30 },
-    ],
-    skillRewards: [
-      { skill: 'S07', level: 1, at: 'first' },
-      { skill: 'S07', level: 2, at: 'final' },
-    ],
-  },
-  {
-    id: 'E008', name: 'satyr archer', tier: -3, rank: 'common', limit: 25,
-    base: { maxHp: 300, damage: 5, attackSpeed: 0.25 },
-    skills: [],
-    rewards: [
-      { stat: 'attackSpeed', total: 0.3 },
-    ],
-    skillRewards: [
-      { skill: 'S08', level: 1, at: 'first' },
-      { skill: 'S08', level: 2, at: 100 },
     ],
   },
   {
@@ -191,17 +142,6 @@ export const ENEMIES = [
       { stat: 'armor', total: 10 },
     ],
     skillRewards: [],
-  },
-  {
-    id: 'E009', name: 'arcane wizard apprentice', tier: -3, rank: 'elite', limit: 5,
-    base: { maxHp: 350, magicPower: 5, manaRegen: 1 },
-    skills: [],
-    rewards: [
-      { stat: 'magicSpeed', total: 0.35 },
-    ],
-    skillRewards: [
-      { skill: 'S09', level: 1, at: 'final' },
-    ],
   },
   {
     id: 'E018', name: 'hunter', tier: 2, rank: 'common', profile: 'offensive', limit: 25,
