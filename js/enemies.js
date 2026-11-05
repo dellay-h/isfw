@@ -160,7 +160,6 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S20', level: 1, at: 'first' },
-      { skill: 'X01', level: 1, at: 25 },
     ],
   },
   {
@@ -175,7 +174,7 @@ export const ENEMIES = [
   },
   {
     id: 'E020', name: 'paladin', tier: 2, rank: 'boss', profile: 'tank', limit: 1,
-    base: { armor: 100, maxHp: -250 },
+    base: { armor: 0, maxHp: 0, block: 0, damage: -4 },
     skills: [{ skill: 'M04', level: 1 }],
     rewards: [
       { stat: 'damage', total: 1 },

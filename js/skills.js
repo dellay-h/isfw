@@ -208,7 +208,7 @@ export const SKILLS = [
   {
     id: 'S18', name: 'patient strikes',
     levels: [
-      { mods: { damage: 0.3, attackSpeed: -0.2 } },
+      { mods: { damage: 0.5, attackSpeed: -0.3 } },
     ],
   },
   {
