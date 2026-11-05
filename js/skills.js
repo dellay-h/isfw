@@ -177,7 +177,7 @@ export const SKILLS = [
   {
     id: 'S16', name: 'warrior\'s bundle',
     levels: [
-      { mods: { damage: 0.1, maxHp: 0.1, hpFlat: 5 } },
+      { mods: { damage: 0.1, armorFlat: 10, hpFlat: 5 } },
     ],
   },
   {

@@ -215,7 +215,7 @@ export const ENEMIES = [
     id: 'E019', name: 'troll', tier: 2, rank: 'common', profile: 'defensive', limit: 25,
     skills: [],
     rewards: [
-      { stat: 'damage', total: 1 },
+      { stat: 'maxHp', total: 8 },
     ],
     skillRewards: [
       { skill: 'S19', level: 1, at: 'first' },
