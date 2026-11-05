@@ -92,18 +92,6 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'defensive', limit: 1,
-    base: { lifesteal: 0.4, damage: 1, attackSpeed: -0.15 },
-    skills: [],
-    rewards: [
-      { stat: 'damage', total: 0.5 },
-      { stat: 'attackSpeed', total: 0.1 },
-    ],
-    skillRewards: [
-      { skill: 'S10', level: 1, at: 1 },
-    ],
-  },
-  {
     id: 'E017', name: 'orc', tier: 2, rank: 'common', profile: 'default', limit: 25,
     skills: [],
     rewards: [
@@ -131,6 +119,18 @@ export const ENEMIES = [
       { stat: 'armor', total: 10 },
     ],
     skillRewards: [],
+  },
+  {
+    id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'defensive', limit: 1,
+    base: { lifesteal: 0.4, damage: 1, attackSpeed: -0.15 },
+    skills: [],
+    rewards: [
+      { stat: 'damage', total: 0.5 },
+      { stat: 'attackSpeed', total: 0.1 },
+    ],
+    skillRewards: [
+      { skill: 'S10', level: 1, at: 1 },
+    ],
   },
   {
     id: 'E018', name: 'druid', tier: 2, rank: 'common', profile: 'magic', limit: 25,
