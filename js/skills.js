@@ -108,7 +108,7 @@ export const SKILLS = [
   {
     id: 'S09', name: 'arcane shield',
     levels: [
-      { spell: { type: 'magic', time: 8, speedScaling: 1, cost: 8, shield: { base: 15, scaling: 5, duration: 8 } }, mods: { manaFlat: 10 } },
+      { spell: { type: 'magic', time: 6, speedScaling: 1, cost: 8, shield: { base: 15, scaling: 5, duration: 8 } }, mods: { manaFlat: 10 } },
     ],
   },
   {
