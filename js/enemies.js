@@ -130,7 +130,8 @@ export const ENEMIES = [
       { stat: 'maxHp', total: 5 },
     ],
     skillRewards: [
-      { skill: 'S06', level: 1, at: 'first' },
+      { skill: 'S17', level: 1, at: 'first' },
+      { skill: 'S17', level: 2, at: 'final' },
     ],
   },
   {
