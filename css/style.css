@@ -443,3 +443,7 @@ button.armed { color: var(--err); border-color: var(--err); }
   #proc .act-row.emp-row { display: flex; }
   #proc .emp-row .bar.mini { display: none; }
 }
+
+/* targets: a locked boss's row shows its unlock progress (BOSS_LOCK) */
+#targets tr.bosslock td { color: var(--muted); }
+#targets .lockbar { display: inline-block; width: 120px; max-width: 30%; vertical-align: middle; margin: 0 6px; }

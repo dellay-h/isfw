@@ -3,7 +3,7 @@
 // The player and enemies are both "units": base attributes plus a set of
 // active skills. A unit's attributes, attacks and spells are derived from
 // those (see unit()). Combat runs the same rules for both sides.
-import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, LEVELS, REVEAL, RETIRED_SHOP, ESSENCE, ESSENCE_SHOP, POWER, armorReduction } from './data.js';
+import { PLAYER_BASE, ENEMIES, SKILLS, REGEN, SKILL_SLOTS, MODS, HEURISTIC, PRESTIGE_SHOP, LIMIT_GROWTH, RANKS, LEVELS, REVEAL, RETIRED_SHOP, ESSENCE, ESSENCE_SHOP, POWER, BOSS_LOCK, armorReduction } from './data.js';
 import { key } from './site.js';
 
 const SAVE_KEY = key('isfw.save.v3');
@@ -1156,7 +1156,19 @@ export function mitigate(dmg, armor, block) {
 // ---------- combat ----------
 export function canFight(s, id) {
   const e = enemyDef(id);
-  return e && enemyRevealed(s, e) && isUnlocked(s, e) && (s.kills[id] || 0) < limitOf(s, e) && s.hp > 0;
+  return e && enemyRevealed(s, e) && isUnlocked(s, e) && !bossLock(s, e) && (s.kills[id] || 0) < limitOf(s, e) && s.hp > 0;
+}
+
+// Boss lock (BOSS_LOCK): a boss can't be fought until BOSS_LOCK.kills kills
+// of the other enemies of its tier this prestige (challenges and enemies in
+// development don't count). Returns { have, need } while locked, else null.
+export function bossLock(s, e) {
+  const need = BOSS_LOCK.kills || 0;
+  if (!e || rankOf(e) !== 'boss' || need <= 0) return null;
+  const have = C.enemies
+    .filter((x) => x !== e && !inDev(x) && (x.tier || 0) === (e.tier || 0) && !['boss', 'challenge'].includes(rankOf(x)))
+    .reduce((a, x) => a + (s.kills[x.id] || 0), 0);
+  return have >= need ? null : { have, need };
 }
 
 export function startFight(s, id) {

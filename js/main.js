@@ -16,7 +16,14 @@ const esc = (str) => String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').
 // ---------- static table rows ----------
 // Rebuilt when the set of enemies not hidden (REVEAL) changes.
 let targetsKey = '';
-const visibleKey = () => G.visibleEnemies(s).map((e) => e.id).join(',');
+// (a locked boss has its own row: rebuilt when it unlocks)
+const visibleKey = () => G.visibleEnemies(s).map((e) => `${e.id}${G.bossLock(s, e) ? ':lock' : ''}`).join(',');
+// Row of a locked boss (BOSS_LOCK): its place in the table shows the unlock
+// progress instead of the boss.
+function bossLockCell(e) {
+  const l = G.bossLock(s, e);
+  return `<span class="muted">tier ${e.tier || 0} boss: kill ${l.need} tier ${e.tier || 0} enemies to unlock</span> ${bar(l.have, l.need, 'lockbar')} <span class="nw">${l.have}/${l.need}</span>`;
+}
 function buildTargets() {
   const body = $('#targets tbody');
   body.innerHTML = '';
@@ -28,8 +35,16 @@ function buildTargets() {
   for (const e of byTier) {
     const tr = document.createElement('tr');
     const rank = G.rankOf(e);
+    const prev = body.lastElementChild && G.enemyDef(body.lastElementChild.dataset.id || body.lastElementChild.dataset.lock);
+    if (prev && tierOf(prev) !== tierOf(e)) tr.classList.add('tier-start');
+    if (G.bossLock(s, e)) {
+      tr.dataset.lock = e.id;
+      tr.classList.add('bosslock');
+      tr.innerHTML = `<td class="muted">?</td><td class="num">${e.tier || 0}</td><td colspan="8" data-f="lock">${bossLockCell(e)}</td>`;
+      body.appendChild(tr);
+      continue;
+    }
     tr.dataset.id = e.id;
-    if (body.lastElementChild && tierOf(G.enemyDef(body.lastElementChild.dataset.id)) !== tierOf(e)) tr.classList.add('tier-start');
     tr.innerHTML = `
       <td>${e.id}</td>
       <td class="num">${e.tier || 0}</td>
@@ -585,7 +600,12 @@ function render() {
   renderPrestige();
   renderPopup(d);
 
-  for (const tr of document.querySelectorAll('#targets tbody tr')) {
+  for (const tr of document.querySelectorAll('#targets tbody tr[data-lock]')) {
+    const html = bossLockCell(G.enemyDef(tr.dataset.lock));
+    const c = tr.querySelector('[data-f=lock]');
+    if (c.dataset.v !== html) { c.dataset.v = html; c.innerHTML = html; }
+  }
+  for (const tr of document.querySelectorAll('#targets tbody tr[data-id]')) {
     const e = G.enemyDef(tr.dataset.id);
     const k = s.kills[e.id];
     const lim = G.limitOf(s, e);

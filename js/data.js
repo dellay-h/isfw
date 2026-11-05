@@ -107,6 +107,11 @@ export const ESSENCE = { perKill: 1 };
 //   tierBoss  true: besides the rules above, every tier from 2 up is shown
 //             only while a boss of the tier before it has been defeated in
 //             the current prestige (not kept: hidden again after a prestige)
+// Boss lock: a tier's boss can't be fought until this many kills of the
+// other enemies of its tier (commons, elites; this prestige). Its row in the
+// targets table shows the progress instead.
+export const BOSS_LOCK = { kills: 50 };
+
 export const REVEAL = {
   tierBoss: true,
   tiers: {
