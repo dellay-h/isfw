@@ -133,12 +133,14 @@ export const ENEMIES = [
     skillRewards: [],
   },
   {
-    id: 'E018', name: 'hunter', tier: 2, rank: 'common', profile: 'offensive', limit: 25,
+    id: 'E018', name: 'druid', tier: 2, rank: 'common', profile: 'magic', limit: 25,
     skills: [],
     rewards: [
-      { stat: 'damage', total: 2 },
+      { stat: 'manaRegen', total: 1 },
     ],
-    skillRewards: [],
+    skillRewards: [
+      { skill: 'S09', level: 1, at: 'first' },
+    ],
   },
   {
     id: 'E019', name: 'troll', tier: 2, rank: 'common', profile: 'defensive', limit: 25,
