@@ -188,7 +188,7 @@ export const ENEMIES = [
     id: 'E016', name: 'quickling', tier: 1, rank: 'elite', profile: 'quick', limit: 5,
     skills: [],
     rewards: [
-      { stat: 'attackSpeed', total: 0.2 },
+      { stat: 'armor', total: 10 },
     ],
     skillRewards: [],
   },
