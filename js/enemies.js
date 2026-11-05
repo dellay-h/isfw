@@ -153,7 +153,7 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E004', name: 'fire wizard apprentice', tier: 2, rank: 'elite', profile: 'magic', limit: 5,
+    id: 'E004', name: 'fire wizard apprentice', tier: 2, rank: 'common', profile: 'magic', limit: 25,
     skills: [],
     rewards: [
       { stat: 'manaRegen', total: 3 },
