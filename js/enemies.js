@@ -104,15 +104,13 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E005', name: 'assassin', rank: 'elite', limit: 5,
-    base: { maxHp: 180, damage: 2.1667 },
-    skills: [{ skill: 'M03', level: 1 }],
+    id: 'E005', name: 'assassin', tier: 2, rank: 'elite', profile: 'offensive', limit: 5,
+    skills: [],
     rewards: [
       { stat: 'damage', total: 1.8 },
     ],
     skillRewards: [
-      { skill: 'S05', level: 1, at: 'first' },
-      { skill: 'S06', level: 2, at: 'final' },
+      { skill: 'S06', level: 1, at: 'first' },
     ],
   },
   {
