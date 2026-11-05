@@ -64,10 +64,11 @@ export function renderRun() {
     </tr>`).join('');
 }
 
-// The player's power level (max hp x dps of the loaded skills).
+// The player's power level (max hp x dps of the loaded skills, before any
+// enemy's resistances).
 function renderPower(s) {
   const p = G.playerPower(s);
-  const html = `${num(p.power)} <span class="muted">= hp ${num(p.hp)} × dps ${num(p.dps)}${p.dps ? '' : ' (no attack loaded)'}</span>`;
+  const html = `${num(p.power)} <span class="muted">= hp ${num(p.hp)} × dps ${num(p.dps)}${p.dps ? ` (${num(p.physical)} physical + ${num(p.magic)} magic, before the enemy's resistances)` : ' (no attack loaded)'}</span>`;
   const el = $('#dr-power');
   if (el.innerHTML !== html) el.innerHTML = html;
 }

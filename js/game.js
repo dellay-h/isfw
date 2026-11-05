@@ -1069,12 +1069,40 @@ export function enemyDps(e, playerMaxHp) {
 
 // Power level (dev pages only): max hp x dps, a rough measure of a unit's
 // total strength, to compare enemies with each other and with the player.
-// Enemy dps: hits and burns (burns on a player with playerMaxHp), before the
-// player's defenses. Player dps: hits of the loaded skills (burns depend on
-// the target, not counted), before the enemy's defenses.
-export function enemyPower(e, playerMaxHp = PLAYER_BASE.maxHp) {
-  const { total, unit: u } = enemyDps(e, playerMaxHp);
-  return { power: u.maxHp * total, hp: u.maxHp, dps: total };
+// The dps is split into physical and magic, each after the opponent's
+// resistances (see dpsVs).
+
+// Damage per second of a unit's actions against a target, split by damage
+// type. target: { maxHp, armor, block } (an enemy unit or the player's
+// derived attributes), or null for raw damage (no resistances; % max hp
+// hits and burns left out). Physical hits and on-hits: armor, then block,
+// per hit; physical auras: armor only; magic: unreduced (no magic
+// resistance yet); burns: unreduced, counted with their action's type.
+// Countdown actions and empowered attacks are left out.
+export function dpsVs(u, target = null) {
+  const out = { physical: 0, magic: 0 };
+  const add = (type, v) => { out[type === 'magic' ? 'magic' : 'physical'] += v; };
+  const red = (type, raw) => (target && type === 'physical' ? mitigate(raw, target.armor || 0, target.block || 0) : raw);
+  for (const a of u.actions) {
+    if (a.countdown) continue;
+    const hit = a.hit + (target ? (a.pct || 0) * target.maxHp : 0);
+    add(a.type, a.rate * a.hits * red(a.type, hit));
+    if (a.kind === 'attack') for (const o of u.onHits) add(o.type, a.rate * a.hits * red(o.type, o.dmg));
+    if (a.dot && target) add(a.type, a.rate * (a.dot.dps + a.dot.pct * target.maxHp) * a.dot.duration);
+  }
+  for (const x of u.auras) add(x.type, target ? auraDamage([x], target) : x.dps);
+  out.total = out.physical + out.magic;
+  return out;
+}
+const powerOf = (hp, v) => ({ power: hp * v.total, hp, dps: v.total, physical: v.physical, magic: v.magic });
+// The base player (no kills, no skills) as a target: hp and resistances.
+const basePlayer = () => ({ maxHp: PLAYER_BASE.maxHp, armor: PLAYER_BASE.armor || 0, block: PLAYER_BASE.block || 0 });
+
+// Enemy power level against a player (target: the player's derived
+// attributes; default the base player).
+export function enemyPower(e, target = basePlayer()) {
+  const u = enemyUnit(e);
+  return powerOf(u.maxHp, dpsVs(u, target));
 }
 // Power change of a profile (dev pages): power level of a reference enemy
 // with the profile ÷ the same enemy without one. Reference: the lowest tier
@@ -1092,8 +1120,10 @@ export function profilePowerChange(id, refSkill = 'M03') {
   const withP = enemyPower({ ...ref, profile: id, skills: own ? [] : ref.skills }).power;
   return base > 0 ? withP / base : null;
 }
-export function playerPower(s, d = derived(s)) {
-  return { power: d.maxHp * d.dps, hp: d.maxHp, dps: d.dps };
+// Player power level: against an enemy unit (target: enemyUnit(e)), or
+// raw (no target: before any resistance).
+export function playerPower(s, d = derived(s), target = null) {
+  return powerOf(d.maxHp, dpsVs(d, target));
 }
 
 // Effective hp: the damage of each type needed to defeat a unit, from its max

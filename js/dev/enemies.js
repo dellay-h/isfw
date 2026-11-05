@@ -207,11 +207,8 @@ function enemyBlock(e, i, warns, first = false, last = false) {
   const dev = G.inDev(e);
   // the summary line stays short: power level (vs the player preview);
   // hp, dps, skills, rewards etc. are inside the entry
-  const pw = withC(() => G.enemyPower(e)).power;
-  const ratio = `<span class="pwr" data-pw="${pw}">${ratioText(pw)}</span>`;
-  const pwTip = 'power level = max hp × dps (dps before the player\'s defenses; burns on a 20 hp player). Compared with the player preview\'s power level';
-  const summary = [`<span title="${pwTip}">power ${num(pw)}${ratio}</span>`];
-  const n = E().length;
+  const m = matchup(e);
+  const summary = [`<span class="pwr" data-i="${i}" title="${esc(m.tip)}">${m.text}</span>`];
   return `<details class="en${dev ? ' wip' : ''}" data-key="${esc(e.id)}"${open.has(e.id) ? ' open' : ''}>
     <summary>${esc(e.id)} ${esc(e.name)}${G.rankOf(e) === 'common' ? '' : ` <span class="${G.rankOf(e) === 'boss' ? 'warn' : 'muted'}">${G.rankOf(e)}</span>`} <span class="muted">· ${summary.join(' · ')}</span>${warns.length ? ` <span class="warn">· ${warns.length} issue${warns.length > 1 ? 's' : ''}</span>` : ''}</summary>
     <div class="body">
@@ -233,20 +230,36 @@ function enemyBlock(e, i, warns, first = false, last = false) {
   </details>`;
 }
 
-// Power level of the player preview (its kills, level and loaded skills);
-// enemies show theirs relative to it.
-let previewPower = 0;
-const ratioText = (pw) => (previewPower > 0 ? ` (${num(pw / previewPower)}× player)` : '');
+// Power levels, enemy vs the player preview (its kills, level and loaded
+// skills): each side's dps is split into physical and magic, after the
+// other side's resistances (armor and block on physical hits).
+let previewD = null; // derived attributes of the player preview
+function matchup(e) {
+  return withC(() => {
+    const d = previewD || G.derived(previewState());
+    const en = G.enemyPower(e, d);
+    const pl = G.playerPower(null, d, G.enemyUnit(e));
+    const split = (x) => `${num(x.physical)} physical + ${num(x.magic)} magic`;
+    const tip = `power level = max hp × dps, the dps after the opponent's resistances (armor, then block, on each physical hit; magic unreduced)\n`
+      + `enemy vs the preview: ${num(en.hp)} hp × (${split(en)}) = ${num(en.power)}\n`
+      + `preview vs the enemy: ${num(pl.hp)} hp × (${split(pl)}) = ${num(pl.power)}`;
+    const text = `power ${num(en.power)}${pl.power > 0 ? ` (${num(en.power / pl.power)}× player)` : ' (player: no damage)'}`;
+    return { text, tip };
+  });
+}
 function updateRatios() {
   for (const el of document.querySelectorAll('#de-list .pwr')) {
-    const txt = ratioText(Number(el.dataset.pw));
-    if (el.textContent !== txt) el.textContent = txt;
+    const e = E()[Number(el.dataset.i)];
+    if (!e) continue;
+    const m = matchup(e);
+    if (el.textContent !== m.text) el.textContent = m.text;
+    if (el.title !== m.tip) el.title = m.tip;
   }
 }
 
 export function renderEnemies() {
   renderPower();
-  previewPower = withC(() => G.playerPower(previewState())).power;
+  previewD = withC(() => G.derived(previewState()));
   const { out, per } = problems();
   // grouped by tier (absolute value: enemies in development sit with the tier
   // they're made for), keeping the file order inside each group
@@ -448,14 +461,15 @@ function renderPreview() {
   }).join('');
   const loaded = s.slots.filter(Boolean);
   const pp = withC(() => G.playerPower(s));
-  previewPower = pp.power;
+  previewD = d;
   updateRatios();
   const pwHtml = `<h2>power level</h2>
     <table class="dev-table kv">
+      <tr><td class="lbl">dps</td><td class="num">${num(pp.physical)} physical + ${num(pp.magic)} magic</td></tr>
       <tr><td class="lbl">hp × dps</td><td class="num">${num(pp.hp)} × ${num(pp.dps)}</td></tr>
       <tr><td class="lbl">power level</td><td class="num">${num(pp.power)}</td></tr>
     </table>
-    <div class="calc">${loaded.length ? `with ${loaded.join(', ')} loaded` : 'no skill loaded: tick skills below to get a dps'} · enemies show their power level relative to this</div>`;
+    <div class="calc">${loaded.length ? `with ${loaded.join(', ')} loaded` : 'no skill loaded: tick skills below to get a dps'} · before any enemy's resistances. Each enemy's line compares the two sides with resistances applied: its power level vs this preview, over the preview's vs it (hover it for the split)</div>`;
   // specials: always active from level 1; level from the kills unless set here
   const sp = sps.map(([k, lv]) => {
     const kl = withC(() => G.skillLevel(fromKills, k.id));
