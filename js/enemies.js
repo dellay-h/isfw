@@ -121,7 +121,7 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S17', level: 1, at: 'first' },
-      { skill: 'S17', level: 2, at: 'final' },
+      { skill: 'S17', level: 2, at: 25 },
     ],
   },
   {
@@ -158,7 +158,7 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S20', level: 1, at: 'first' },
-      { skill: 'X01', level: 1, at: 'final' },
+      { skill: 'X01', level: 1, at: 25 },
     ],
   },
   {
