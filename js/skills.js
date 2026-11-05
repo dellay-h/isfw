@@ -217,6 +217,12 @@ export const SKILLS = [
     ],
   },
   {
+    id: 'S20', name: 'fire bolt',
+    levels: [
+      { spell: { type: 'magic', base: 2, scaling: 1, time: 1.5, speedScaling: 1 } },
+    ],
+  },
+  {
     id: 'M04', name: 'paladin smite',
     levels: [
       { attack: { type: 'magic', scaling: 3, time: 4 } },

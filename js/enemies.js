@@ -228,7 +228,7 @@ export const ENEMIES = [
       { stat: 'manaRegen', total: 1.75 },
     ],
     skillRewards: [
-      { skill: 'S04', level: 1, at: 'first' },
+      { skill: 'S20', level: 1, at: 'first' },
       { skill: 'X01', level: 1, at: 'final' },
     ],
   },
