@@ -47,6 +47,7 @@ export const SHOP = [
   { id: 'P07', shop: 'prestige', name: 'head start', max: 10, cost: { base: 1, step: 0 }, startKills: { enemy: 'E001', n: 1 } },
   { id: 'P14', shop: 'prestige', name: 'new targets', max: 1, cost: { base: 1, step: 0 }, unlockEnemies: ['E015', 'E016'] },
   { id: 'P15', shop: 'prestige', name: 'fire wizard apprentice', max: 1, cost: { base: 1, step: 0 }, unlockEnemies: ['E004'] },
+  { id: 'P16', shop: 'prestige', name: 'inward connection', max: 1, cost: { base: 5, step: 0 }, slots: 1 },
   { id: 'N01', shop: 'essence', name: 'attack', cost: { base: 20, step: 20 }, effects: [{ stat: 'damage', kind: 'pct', v: 0.01 }] },
   { id: 'N02', shop: 'essence', name: 'attack speed', cost: { base: 20, step: 20 }, effects: [{ stat: 'attackSpeed', kind: 'pct', v: 0.01 }] },
   { id: 'N03', shop: 'essence', name: 'magic power', cost: { base: 20, step: 20 }, effects: [{ stat: 'magicPower', kind: 'pct', v: 0.01 }] },
