@@ -983,8 +983,19 @@ export const winHeal = (s) => activeSkills(s).reduce((a, { L }) => a + (L.winHea
 
 // ---------- enemy power (power.js) ----------
 // Tier power level: base attributes of every enemy of that tier (an enemy
-// in development uses the tier it is made for).
-export const tierPower = (tier) => C.power.find((x) => x.kind === 'tier' && x.tier === tier) || null;
+// in development uses the tier it is made for). Tier 1 lists its attributes
+// (base); every other tier is tier 1 x a multiple (mult), e.g. tier 2 = tier
+// 1 x 5. A tier with base and no mult uses its own base.
+export const TIER_REF = 1;
+export function tierPower(tier) {
+  const x = C.power.find((y) => y.kind === 'tier' && y.tier === tier);
+  if (!x) return null;
+  if (tier === TIER_REF || x.mult === undefined) return x;
+  const ref = C.power.find((y) => y.kind === 'tier' && y.tier === TIER_REF);
+  const base = {};
+  for (const [k, v] of Object.entries(ref?.base || {})) base[k] = Number(((v || 0) * (x.mult || 0)).toPrecision(12));
+  return { ...x, base };
+}
 export const profileDef = (id) => C.power.find((x) => x.kind === 'profile' && x.id === id) || null;
 export const profiles = () => C.power.filter((x) => x.kind === 'profile');
 // Rank bonus (power.js { kind: 'rank', rank, bonus }): elites and bosses get

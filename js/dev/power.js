@@ -35,13 +35,20 @@ function attrRows(i, path, obj, kind) {
     ${left.length ? `<div class="addrow">${select(`data-act="pw-add" data-i="${i}" data-p="${path}" data-kind="${kind}"`, [['', '+ attribute'], ...left.map((a) => [a.key, a.label])], '')}</div>` : ''}`;
 }
 
+// Tier 1 lists its base attributes; every other tier is tier 1 x a multiple.
 function tierBlock(x, i) {
   const n = E().filter((e) => e.profile && Math.abs(e.tier || 0) === x.tier).length;
+  const ref = x.tier === G.TIER_REF;
+  const computed = G.withContent({ enemies: store.enemies, skills: store.skills, power: store.power }, () => G.tierPower(x.tier))?.base || {};
   const body = `<div class="ident"><label>tier</label>${numInput(i, 'tier', x.tier, { int: true, cls: 'w-id' })}
-      <span class="calc">base attributes of the enemies of this tier that have a profile (${n} now)</span>
-      <span class="spacer"></span>${btn('delete', 'tier-del', `data-i="${i}"`, 'quiet')}</div>
-    ${attrRows(i, 'base', x.base, 'base')}`;
-  return field(`pw:tier:${x.tier}`, `tier ${x.tier}`, `<span class="muted">${esc(short(x.base, num))}</span>`, body);
+      <span class="calc">base attributes of the enemies of this tier that have a profile (${n} now)${ref ? ' · every other tier is these × its multiple' : ''}</span>
+      <span class="spacer"></span>${ref ? '' : btn('delete', 'tier-del', `data-i="${i}"`, 'quiet')}</div>
+    ${ref || x.mult === undefined
+      ? attrRows(i, 'base', x.base, 'base')
+      : `<table class="dev-table"><tr><td class="lbl">tier ${G.TIER_REF} ×</td><td>${numInput(i, 'mult', x.mult)}</td></tr></table>
+        <div class="calc">→ ${esc(short(computed, num)) || 'tier 1 has no attributes'}</div>`}`;
+  const sum = ref || x.mult === undefined ? short(x.base, num) : `tier ${G.TIER_REF} × ${num(x.mult)}: ${short(computed, num)}`;
+  return field(`pw:tier:${x.tier}`, `tier ${x.tier}`, `<span class="muted">${esc(sum)}</span>`, body);
 }
 
 function skillRows(x, i) {
@@ -180,7 +187,11 @@ function onAction(el) {
     case 'tier-add': {
       const top = tiers().reduce((m, [t]) => Math.max(m, t.tier), 0);
       const last = tiers().at(-1)?.[0];
-      const t = { kind: 'tier', tier: top + 1, base: structuredClone(last?.base || { maxHp: 100, damage: 1 }) };
+      // the first tier is the reference (its own attributes); later tiers:
+      // a multiple of it, starting at 5x the previous tier's multiple
+      const t = top < G.TIER_REF
+        ? { kind: 'tier', tier: G.TIER_REF, base: { maxHp: 20, damage: 2.5 } }
+        : { kind: 'tier', tier: top + 1, mult: (last?.mult || 1) * 5 };
       P().push(t);
       open.add('pw:tiers'); open.add(`pw:tier:${t.tier}`); saveOpen();
       break;
@@ -208,7 +219,7 @@ function onAction(el) {
     }
     default: return;
   }
-  for (const y of P()) { if (y.kind === 'profile') { y.mult ??= {}; y.add ??= {}; } if (y.kind === 'tier') y.base ??= {}; }
+  for (const y of P()) { if (y.kind === 'profile') { y.mult ??= {}; y.add ??= {}; } if (y.kind === 'tier' && y.mult === undefined) y.base ??= {}; }
   persist('power');
   afterEdit();
 }

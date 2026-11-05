@@ -168,6 +168,9 @@ const POWER_HEADER = `// Enemy power: tier power levels and enemy profiles. Writ
 //   { kind: 'tier', tier, base }      power level of a tier: the base
 //                                     attributes of every enemy of that tier
 //                                     that has a profile (keys: data.js ATTRS)
+//   { kind: 'tier', tier, mult }      every tier but tier 1: tier 1's base
+//                                     attributes x mult (tier 2 mult 5 = 5x
+//                                     tier 1)
 //   { kind: 'profile', id, name, mult, add, skills }
 //                                     an enemy profile: each attribute =
 //                                     tier base x mult (default 1) + add
