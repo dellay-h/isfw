@@ -104,16 +104,6 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E005', name: 'assassin', tier: 2, rank: 'elite', profile: 'offensive', limit: 5,
-    skills: [],
-    rewards: [
-      { stat: 'damage', total: 1.8 },
-    ],
-    skillRewards: [
-      { skill: 'S06', level: 1, at: 'first' },
-    ],
-  },
-  {
     id: 'E017', name: 'orc', tier: 2, rank: 'common', profile: 'default', limit: 25,
     skills: [],
     rewards: [
@@ -169,6 +159,16 @@ export const ENEMIES = [
     skillRewards: [
       { skill: 'S20', level: 1, at: 'first' },
       { skill: 'X01', level: 1, at: 'final' },
+    ],
+  },
+  {
+    id: 'E005', name: 'assassin', tier: 2, rank: 'elite', profile: 'offensive', limit: 5,
+    skills: [],
+    rewards: [
+      { stat: 'damage', total: 1.8 },
+    ],
+    skillRewards: [
+      { skill: 'S06', level: 1, at: 'first' },
     ],
   },
   {
