@@ -220,7 +220,7 @@ export const SKILLS = [
   {
     id: 'S20', name: 'fire bolt',
     levels: [
-      { spell: { type: 'magic', base: 4, scaling: 1, time: 1.5, speedScaling: 1 } },
+      { spell: { type: 'magic', base: 4, scaling: 1, time: 1.5, speedScaling: 1, cost: 2 } },
     ],
   },
   {
