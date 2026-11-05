@@ -44,7 +44,7 @@ export const SKILLS = [
     id: 'S01', name: 'basic attack',
     levels: [
       { attack: { type: 'physical', base: 2, scaling: 1, time: 1.5, speedScaling: 1 } },
-      { mods: { damageFlat: 0.8 } },
+      { attack: { base: 0.8 } },
     ],
   },
   {
