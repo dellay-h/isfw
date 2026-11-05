@@ -201,7 +201,7 @@ export const SKILLS = [
   {
     id: 'S17', name: 'heavy attack',
     levels: [
-      { attack: { type: 'physical', base: 4, scaling: 1.6667, time: 2.5, speedScaling: 1 } },
+      { attack: { type: 'physical', base: 5, scaling: 2, time: 2.5, speedScaling: 0.5 } },
       { mods: { damageFlat: 1 } },
     ],
   },

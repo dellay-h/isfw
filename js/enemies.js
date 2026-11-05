@@ -107,7 +107,7 @@ export const ENEMIES = [
     id: 'E017', name: 'orc', tier: 2, rank: 'common', profile: 'default', limit: 25,
     skills: [],
     rewards: [
-      { stat: 'damage', total: 1 },
+      { stat: 'damage', total: 2 },
     ],
     skillRewards: [
       { skill: 'S18', level: 1, at: 'first' },
@@ -136,7 +136,7 @@ export const ENEMIES = [
     id: 'E018', name: 'hunter', tier: 2, rank: 'common', profile: 'offensive', limit: 25,
     skills: [],
     rewards: [
-      { stat: 'damage', total: 1 },
+      { stat: 'damage', total: 2 },
     ],
     skillRewards: [],
   },
@@ -144,7 +144,7 @@ export const ENEMIES = [
     id: 'E019', name: 'troll', tier: 2, rank: 'common', profile: 'defensive', limit: 25,
     skills: [],
     rewards: [
-      { stat: 'maxHp', total: 8 },
+      { stat: 'maxHp', total: 12 },
     ],
     skillRewards: [
       { skill: 'S19', level: 1, at: 'first' },
