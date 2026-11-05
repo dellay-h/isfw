@@ -105,17 +105,6 @@ export const ENEMIES = [
     ],
   },
   {
-    id: 'E004', name: 'fire wizard apprentice', tier: 2, rank: 'elite', profile: 'magic', limit: 5,
-    skills: [],
-    rewards: [
-      { stat: 'manaRegen', total: 1.75 },
-    ],
-    skillRewards: [
-      { skill: 'S04', level: 1, at: 'first' },
-      { skill: 'X01', level: 1, at: 'final' },
-    ],
-  },
-  {
     id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'defensive', limit: 1,
     base: { lifesteal: 0.4, damage: 1, attackSpeed: -0.15 },
     skills: [],
@@ -230,6 +219,17 @@ export const ENEMIES = [
     ],
     skillRewards: [
       { skill: 'S19', level: 1, at: 'first' },
+    ],
+  },
+  {
+    id: 'E004', name: 'fire wizard apprentice', tier: 2, rank: 'elite', profile: 'magic', limit: 5,
+    skills: [],
+    rewards: [
+      { stat: 'manaRegen', total: 1.75 },
+    ],
+    skillRewards: [
+      { skill: 'S04', level: 1, at: 'first' },
+      { skill: 'X01', level: 1, at: 'final' },
     ],
   },
   {
