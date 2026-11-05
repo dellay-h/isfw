@@ -7,7 +7,7 @@ export const PLAYER_BASE = {
   magicPower: 0,    // scales spells
   magicSpeed: 0,    // added to each spell's rate, times its speed scaling
   maxMana: 0,
-  manaRegen: 0,     // mana per second (in and out of combat)
+  manaRegen: 0,     // mana per second, only during fights (mana empties when a fight ends)
   armor: 0,         // % reduction of physical hits taken = armor / (armor + 100)
   block: 0,         // flat reduction of each physical hit taken (after armor)
   blockShred: 0,    // each of your attack hits lowers the target's block by

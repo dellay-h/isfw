@@ -1162,6 +1162,7 @@ export function canFight(s, id) {
 export function startFight(s, id) {
   if (s.fight || !canFight(s, id)) return false;
   const u = enemyUnit(enemyDef(id));
+  s.mana = 0; // every fight starts with empty mana
   s.retry = null;
   s.fight = {
     enemyId: id,
@@ -1185,6 +1186,7 @@ export function startFight(s, id) {
 
 export function stopFight(s) {
   s.fight = null;
+  s.mana = 0;
   s.retry = null;
 }
 
@@ -1244,9 +1246,10 @@ export function step(s, dt) {
   const d = derived(s);
   const f = s.fight;
   syncHp(s, d);
-  s.mana = Math.min(d.maxMana, s.mana + d.manaRegen * dt);
 
   if (!f) {
+    // mana only regenerates during a fight and is emptied when it ends
+    s.mana = 0;
     s.hp = Math.min(d.maxHp, s.hp + d.regenOutHp * dt);
     // Repeat after a defeat: rerun the same enemy once hp is fully restored.
     if (s.retry && s.hp >= d.maxHp) {
@@ -1260,6 +1263,7 @@ export function step(s, dt) {
   if (!e) { s.fight = null; return; }
   const eu = enemyUnit(e, f.elapsed);
   const { P, E } = sides(s, f, d, eu);
+  s.mana = Math.min(d.maxMana, s.mana + d.manaRegen * dt);
   f.elapsed += dt;
   if (d.regenInHp) s.hp = Math.min(d.maxHp, s.hp + d.regenInHp * dt);
   f.eMana = Math.min(eu.maxMana, f.eMana + eu.manaRegen * dt);
@@ -1369,6 +1373,7 @@ function win(s, e) {
   if (wh > 0) { const d = derived(s); s.hp = Math.min(d.maxHp, s.hp + wh * d.maxHp); }
   s.stats.fights++;
   s.stats.wins++;
+  s.mana = 0; // mana is emptied at the end of every fight
   gainXp(s, 1);
   gainEssence(s);
   const lim = limitOf(s, e);
@@ -1403,6 +1408,7 @@ function win(s, e) {
 function lose(s, e, cause) {
   const eu = enemyUnit(e);
   s.hp = 0;
+  s.mana = 0;
   s.stats.fights++;
   s.stats.losses++;
   log(s, `${e.id} ${e.name} hp depleted by ${cause}, left process (target hp ${Math.max(0, s.fight.eHp).toFixed(1)}/${eu.maxHp})`, 'err');
