@@ -66,7 +66,7 @@ function problems() {
       if (!k) { p.push(`skill reward: unknown skill ${u.skill}`); continue; }
       if (u.level < 1 || u.level > k.levels.length) p.push(`${u.skill} has no level ${u.level} (max ${k.levels.length})`);
       const n = killsOf(e, u.at);
-      // kills above max kills are allowed: max kills grow with prestiges (up to the rank's cap)
+      // kills above max kills are allowed: max kills grow with prestiges (up to the cap, 40x the base)
       const top = G.capOf(e);
       if (!(n >= 1) || n > top) p.push(`${u.skill} lv${u.level} is awarded at kill ${u.at}, outside 1–${top}`);
       const key = `${u.skill} lv${u.level}`;

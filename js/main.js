@@ -320,7 +320,8 @@ function rewardsBreakdown(e) {
       rows.push([G.STAT_LABEL[r.stat], `${show(t * G.rewardShare(e, lim, s))} total`, 'grp']);
       if (lim !== e.limit) rows.push(['base', `${show(t)} over ${e.limit} kills`, 'sub']);
       rows.push(['earned', show(t * G.rewardShare(e, n, s))]);
-      rows.push(['per kill', show(G.rewardStep(e, 1, r, s))]);
+      // kills past the base max kills give less and less (LIMIT_GROWTH)
+      if (n < lim) rows.push(['next kill', show(G.rewardStep(e, n + 1, r, s))]);
     }
   }
   if (!rows.length) rows.push(['none', '']);
@@ -789,7 +790,7 @@ function shopLines(x) {
   if (x.essence) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Unlocks essence: +1 per enemy kill, kept through prestiges, spent in the essence shop (small % bonuses to attributes).')}">essence</span>`);
   if (x.limitGrowth) {
     const ranks = x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ');
-    out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${ranks}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the rank's cap, where they stay (unless kill limit shrinking is owned). Applies to kills from now on.`)}">${ranks} max kills growth</span>`);
+    out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${ranks}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the cap (40x the base max kills, 4x the total attribute reward), where they stay (unless kill limit shrinking is owned). Kills past the base max kills give less and less. Applies to kills from now on.`)}">${ranks} max kills growth</span>`);
   }
   for (const [rank, n] of Object.entries(x.minKills || {})) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Every ${rank} enemy gets at least ${n} max kills, right away (more total attribute reward, and its kill ${n} unlocks become reachable). Enemies already past the cap keep shrinking.`)}">${rank} max kills ${n}</span>`);
   if (x.free) out.push(`<span class="tip" tabindex="0" data-tip="${esc(`On every prestige, ${x.free === 1 ? 'one skill' : `${x.free} skills`} chosen at random from the skills unlocked in the prestige that ended is free in the next one: level 1 without unlocking it (higher levels need their usual unlocks), active without using a skill slot, and can be unloaded.${(x.freeExclude || []).length ? ` Never picks ${x.freeExclude.map((id) => G.skillDef(id)?.name || id).join(', ')}.` : ''} Applies from the next prestige.`)}">free skill +${x.free}</span>`);
@@ -872,7 +873,7 @@ function renderEssence() {
       const lv = G.essenceLevel(s, x.id);
       const cost = G.essenceCost(s, x.id);
       const per = (x.effects || []).map(effectText);
-      if (x.limitGrowth) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the rank's cap, where they stay (unless kill limit shrinking is owned).`)}">${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')} max kills growth</span>`);
+      if (x.limitGrowth) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the cap (40x the base max kills, 4x the total attribute reward), where they stay (unless kill limit shrinking is owned). Kills past the base max kills give less and less.`)}">${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')} max kills growth</span>`);
       if (x.limitShrink) per.push(shrinkText());
       const miss = G.essenceMissing(s, x.id);
       const k = x.unlockSkill && G.skillDef(x.unlockSkill);

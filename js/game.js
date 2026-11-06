@@ -58,7 +58,7 @@ export function newState() {
     fresh: {},                           // unlocked for the first time, not looked at yet: { id: true }
     revealed: {},                        // hidden enemies / shop items revealed for good: { id: true } (REVEAL)
     seenShop: {},                        // prestige shop items the player has looked at: { id: true } (new-item notices)
-    prestige: { points: 0, count: 0, shop: {}, maxKills: {}, capped: {}, unlocked: {}, free: [], freeOff: {}, auto: [] }, // kept through prestiges; only a full reset clears it
+    prestige: { points: 0, count: 0, capRule: LIMIT_GROWTH.capMult, shop: {}, maxKills: {}, capped: {}, unlocked: {}, free: [], freeOff: {}, auto: [] }, // kept through prestiges; only a full reset clears it
                                          // shop: { item id: level bought }
                                          // maxKills: { enemy id: max kills after LIMIT_GROWTH }
                                          // capped: { enemy id: true } reached its cap (now shrinking)
@@ -94,6 +94,9 @@ export function load() {
       }
       s.prestige.maxKills = { ...(saved.prestige?.maxKills || {}) };
       s.prestige.capped = { ...(saved.prestige?.capped || {}) };
+      // caps changed to 40x the base max kills (v1.27): enemies that reached
+      // an old cap grow again (max kills above the new cap are clamped)
+      if (saved.prestige?.capRule !== LIMIT_GROWTH.capMult) s.prestige.capped = {};
       // saves before v0.54 kept the kills added to the base limit
       if (saved.prestige?.limits && !saved.prestige.maxKills) {
         for (const [id, add] of Object.entries(saved.prestige.limits)) {
@@ -194,17 +197,16 @@ function clampPools(s) {
 // The rank's cap for max kills (never below the base limit).
 // Ranks marked `fixed` (challenge, tutorial) never change max kills.
 export const isFixed = (e) => !!RANKS[rankOf(e)]?.fixed;
-export const capOf = (e) => (isFixed(e) ? e.limit : Math.max(e.limit, RANKS[rankOf(e)]?.cap ?? LIMIT_GROWTH.cap));
+export const capOf = (e) => (isFixed(e) ? e.limit : Math.max(1, e.limit) * LIMIT_GROWTH.capMult);
 // lim: max kills this prestige; capped: reached the cap once (shrinking
-// phase); pool: what all lim kills are worth, in base kills (grows with lim
-// until the cap, then stays at the cap).
+// phase).
 export function limitState(s, e) {
   const cap = capOf(e);
-  if (isFixed(e)) return { lim: e.limit, cap, capped: false, pool: e.limit };
+  if (isFixed(e)) return { lim: e.limit, cap, capped: false };
   const stored = Math.floor(s.prestige.maxKills[e.id] || 0);
   const lim = Math.max(1, stored > 0 ? Math.min(stored, cap) : e.limit);
   const capped = !!s.prestige.capped[e.id] || lim >= cap;
-  return { lim, cap, capped, pool: capped ? cap : lim };
+  return { lim, cap, capped };
 }
 export const limitOf = (s, e) => (e ? limitState(s, e).lim : 0);
 // Max kills growth/shrink is bought per rank in the prestige shop
@@ -910,15 +912,32 @@ function unit(base, active, extra = [], idleFlat = 0, lvl = 1) {
   };
 }
 
+// Reward curve (LIMIT_GROWTH): share of the base total earned after x kills
+// (x may be fractional). Kills 1..L (L = base max kills) give 1 / L each, so
+// 1 at L. Kills L+1..C (C = the cap) give rewardMult - 1 more in total,
+// falling linearly: kill k weighs C - k + 1 (the last kill 1, the one before
+// it 2, ...), out of the sum of all weights. rewardMult at the cap.
+export function rewardCurve(e, x) {
+  const L = e.limit;
+  if (!(x > 0) || !(L > 0)) return 0;
+  if (x <= L) return x / L;
+  const D = capOf(e) - L;
+  if (D <= 0) return 1;
+  const m = Math.min(x - L, D);
+  // sum of the first m weights (D, D - 1, ...) / sum of all D weights
+  return 1 + ((LIMIT_GROWTH.rewardMult - 1) * m * (2 * D - m + 1)) / (D * (D + 1));
+}
 // Share of an enemy's base total earned after n kills. Without a state: the
-// base max kills (each kill 1 / limit). With a state: the current max kills
-// (LIMIT_GROWTH), each kill giving pool / lim of a base kill, so the share at
-// lim kills is pool / limit (above 1 once max kills have grown).
+// base max kills (each kill 1 / limit). With a state: up to the current max
+// kills, along the reward curve. After the cap, max kills can shrink (kill
+// limit shrinking): the whole curve (rewardMult at the cap) is squeezed into
+// the current max kills, so each kill gives more.
 export function rewardShare(e, n, s = null) {
   if (!(n > 0) || !(e.limit > 0)) return 0;
   if (!s) return Math.min(n, e.limit) / e.limit;
-  const { lim, pool } = limitState(s, e);
-  return (Math.min(n, lim) * pool) / (lim * e.limit);
+  const { lim, cap, capped } = limitState(s, e);
+  const k = Math.min(n, lim);
+  return rewardCurve(e, capped && lim < cap ? (k * cap) / lim : k);
 }
 
 // Balancing heuristic: the total a common enemy's reward should have so that
