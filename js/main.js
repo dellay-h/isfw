@@ -20,9 +20,16 @@ let targetsKey = '';
 const visibleKey = () => G.visibleEnemies(s).map((e) => `${e.id}${G.bossLock(s, e) ? ':lock' : ''}`).join(',');
 // Row of a locked boss (BOSS_LOCK): its place in the table shows the unlock
 // progress instead of the boss.
-function bossLockCell(e) {
+// Same cells as a normal row (phones hide some columns), the progress in the
+// rewards and count columns.
+function bossLockCells(e) {
   const l = G.bossLock(s, e);
-  return `<span class="muted">tier ${e.tier || 0} boss: kill ${l.need} tier ${e.tier || 0} enemies to unlock</span> ${bar(l.have, l.need, 'lockbar')} <span class="nw">${l.have}/${l.need}</span>`;
+  const t = e.tier || 0;
+  return {
+    label: `tier ${t} boss <span class="warn">locked</span><div class="sub">kill ${l.need} tier ${t} enemies to unlock</div>`,
+    bar: bar(l.have, l.need, 'lockbar'),
+    count: `<span class="nw">${l.have}/${l.need}</span>`,
+  };
 }
 function buildTargets() {
   const body = $('#targets tbody');
@@ -40,7 +47,9 @@ function buildTargets() {
     if (G.bossLock(s, e)) {
       tr.dataset.lock = e.id;
       tr.classList.add('bosslock');
-      tr.innerHTML = `<td class="muted">?</td><td class="num">${e.tier || 0}</td><td colspan="8" data-f="lock">${bossLockCell(e)}</td>`;
+      const c = bossLockCells(e);
+      tr.innerHTML = `<td>?</td><td class="num">${e.tier || 0}</td><td data-f="lock-label">${c.label}</td><td></td><td></td>`
+        + `<td data-f="lock-bar">${c.bar}</td><td class="num" data-f="lock-count">${c.count}</td><td></td><td>locked</td><td class="muted"><span class="m-only">locked</span></td>`;
       body.appendChild(tr);
       continue;
     }
@@ -576,8 +585,8 @@ function render() {
   $('#p-xpbar').innerHTML = bar(s.xp, G.xpToNext(s));
   $('#p-lbonus').textContent = `+${fmt((G.levelBonus(s) - 1) * 100, 0)}%`;
   $('#p-hp').textContent = `${fmt(Math.max(0, s.hp), 1)} / ${fmt(d.maxHp, 1)}`;
-  const mhp = `hp ${fmt(Math.max(0, s.hp), 0)}/${fmt(d.maxHp, 0)}${s.fight ? ` · ${s.fight.enemyId}` : s.retry ? ' · regen' : ''}`;
-  if ($('#m-hp').textContent !== mhp) $('#m-hp').textContent = mhp;
+  const mhp = `hp ${fmt(Math.max(0, s.hp), 0)}/${fmt(d.maxHp, 0)}${s.fight ? ` <span class="m-wide">· ${s.fight.enemyId}</span>` : s.retry ? ' <span class="m-wide">· regen</span>' : ''}`;
+  if ($('#m-hp').innerHTML !== mhp) $('#m-hp').innerHTML = mhp;
   $('#p-hpbar').innerHTML = bar(s.hp, d.maxHp);
   $('#p-dmg').textContent = fmt(d.damage, 3);
   $('#p-aspd').textContent = fmt(d.attackSpeed, 3);
@@ -602,9 +611,11 @@ function render() {
   renderPopup(d);
 
   for (const tr of document.querySelectorAll('#targets tbody tr[data-lock]')) {
-    const html = bossLockCell(G.enemyDef(tr.dataset.lock));
-    const c = tr.querySelector('[data-f=lock]');
-    if (c.dataset.v !== html) { c.dataset.v = html; c.innerHTML = html; }
+    const c = bossLockCells(G.enemyDef(tr.dataset.lock));
+    for (const k of ['bar', 'count']) {
+      const td = tr.querySelector(`[data-f=lock-${k}]`);
+      if (td.dataset.v !== c[k]) { td.dataset.v = c[k]; td.innerHTML = c[k]; }
+    }
   }
   for (const tr of document.querySelectorAll('#targets tbody tr[data-id]')) {
     const e = G.enemyDef(tr.dataset.id);
