@@ -549,6 +549,11 @@ function condMet(s, c, legacy = false) {
     if ((s.prestige.maxKills[c.enemy] || 0) > e.limit) return true;
     return (e.skillRewards || []).some((u) => s.known[u.skill] && reqKills({ enemy: e.id, at: u.at ?? 'first' }) <= n);
   }
+  if (c.tier !== undefined) {
+    // any enemy of that tier (not in development) defeated
+    return C.enemies.some((e) => !inDev(e) && (e.tier || 0) === c.tier
+      && ((s.kills[e.id] || 0) > 0 || (legacy && (s.prestige.maxKills[e.id] || 0) > e.limit)));
+  }
   if (c.prestiges !== undefined) return s.prestige.count >= c.prestiges;
   if (c.level !== undefined) return s.level >= c.level;
   return false;

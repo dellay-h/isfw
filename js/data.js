@@ -107,6 +107,7 @@ export const ESSENCE = { perKill: 1 };
 //   shop     { item id: condition } a prestige shop item
 // Conditions (a list = all of them):
 //   { enemy, kills }   that enemy defeated `kills` times in one prestige (default 1)
+//   { tier: n }        any enemy of tier n defeated
 //   { prestiges: n }   n prestiges done
 //   { level: n }       player level n reached
 // Skills and specials have no rule of their own: they show when an enemy that
@@ -127,7 +128,9 @@ export const REVEAL = {
   enemies: {
     E013: { enemy: 'E010', kills: 1 },   // elder sapling after the first vampire kill
   },
-  shop: {},
+  shop: {
+    P15: { tier: 2 },                    // fire wizard apprentice after the first tier 2 kill
+  },
 };
 
 // Attributes shared by the player and enemies (enemy `base` uses these keys).
