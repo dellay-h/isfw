@@ -433,15 +433,16 @@ button.armed { color: var(--err); border-color: var(--err); }
 #de-preview .pv-skills td { padding: 0 4px 0 0; white-space: nowrap; }
 #de-preview .pv-skills td.pv-name { max-width: 104px; overflow: hidden; text-overflow: ellipsis; }
 
-/* process box: small progress bars for the player's attacks and spells (desktop only) */
+/* process box: small progress bars for each side's attacks and spells
+   (and empowered attacks) */
 #proc .act-row { font-size: 11px; line-height: 1.3; }
 #proc .bar.mini { flex: 0 0 120px; height: 2px; }
 #proc .act-row .muted { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 640px) {
-  #proc .act-row { display: none; }
-  /* empowered attacks keep their countdown row on mobile, without the bar */
-  #proc .act-row.emp-row { display: flex; }
-  #proc .emp-row .bar.mini { display: none; }
+  /* phones: same-width bars, the skill name takes the rest (cut if long) */
+  #proc .act-row { font-size: 10px; }
+  #proc .bar.mini { flex: 0 0 64px; min-width: 0; }
+  #proc .act-row .muted { flex: 1 1 0; min-width: 0; }
 }
 
 /* targets: a locked boss's row shows its unlock progress (BOSS_LOCK) */
