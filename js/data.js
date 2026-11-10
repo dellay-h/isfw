@@ -166,6 +166,7 @@ export const MODS = {
   manaFlat: { label: 'max mp +', to: [['maxMana', 'flat']] },
   manaRegenFlat: { label: 'mp regen +/s', to: [['manaRegen', 'flat']] },
   armorFlat: { label: 'armor +', to: [['armor', 'flat']] },
+  armor: { label: 'armor +% (0.1 = 10%)', to: [['armor', 'pct']] },
   blockFlat: { label: 'block +', to: [['block', 'flat']] },
   blockShredFlat: { label: 'block shred +/hit', to: [['blockShred', 'flat']] },
   regenFlat: { label: 'regen +hp/s', to: [['regenFlat', 'flat']] },

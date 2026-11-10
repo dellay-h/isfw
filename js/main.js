@@ -84,6 +84,7 @@ const MOD_TEXT = {
   magicPowerFlat: (v) => `mag pwr ${sg(v)}${exact(v)}`,
   magicSpeedFlat: (v) => `mag spd ${sg(v)}${exact(v)}`,
   armorFlat: (v) => `armor ${sg(v)}${exact(v)}`,
+  armor: (v) => `armor ${sg(v)}${exact(v * 100)}%`,
   blockFlat: (v) => `block ${sg(v)}${exact(v)}`,
   blockShredFlat: (v) => `block shred ${sg(v)}${exact(v)}/hit`,
   maxHp: (v) => `max hp ${sg(v)}${exact(v * 100)}%`,
