@@ -151,9 +151,9 @@ attribute = (base + sum of flat effects) x (1 + sum of % effects).
   reduced by armor and block separately.
 - **Attack penalty** (player only): an attack skill can carry a penalty that
   applies once the player has a set number of active attack skills or more
-  (e.g. 3). Each active attack skill applies its own penalty, so they add up.
+  (e.g. 2). Each active attack skill applies its own penalty, so they add up.
   Penalties are negative attribute bonuses; currently every player attack
-  skill (S01, S03, S17) has dmg -10% and aspd -10% at 3 attacks. They are
+  skill (S01, S03, S17) has dmg -10% and aspd -10% at 2 attacks. They are
   listed as "penalties" in the attribute breakdowns.
 
 ### Defenses

@@ -46,7 +46,7 @@ export const SKILLS = [
   {
     id: 'S01', name: 'basic attack',
     levels: [
-      { attack: { type: 'physical', base: 2, scaling: 1, time: 1.5, speedScaling: 1 }, attackPenalty: { at: 3, mods: { damage: -0.1, attackSpeed: -0.1 } } },
+      { attack: { type: 'physical', base: 2, scaling: 1, time: 1.5, speedScaling: 1 }, attackPenalty: { at: 2, mods: { damage: -0.1, attackSpeed: -0.1 } } },
       { attack: { base: 0.8 } },
     ],
   },
@@ -69,7 +69,7 @@ export const SKILLS = [
   {
     id: 'S03', name: 'quick attack',
     levels: [
-      { attack: { type: 'physical', base: 1.48, scaling: 0.6, time: 0.9, speedScaling: 1 }, attackPenalty: { at: 3, mods: { damage: -0.1, attackSpeed: -0.1 } } },
+      { attack: { type: 'physical', base: 1.48, scaling: 0.6, time: 0.9, speedScaling: 1 }, attackPenalty: { at: 2, mods: { damage: -0.1, attackSpeed: -0.1 } } },
       { mods: { attackSpeedFlat: 0.25 } },
       { mods: { magicPowerFlat: 1 } },
     ],
@@ -204,7 +204,7 @@ export const SKILLS = [
   {
     id: 'S17', name: 'heavy attack',
     levels: [
-      { attack: { type: 'physical', base: 6.6, scaling: 2, time: 2.5, speedScaling: 0.5 }, attackPenalty: { at: 3, mods: { damage: -0.1, attackSpeed: -0.1 } } },
+      { attack: { type: 'physical', base: 6.6, scaling: 2, time: 2.5, speedScaling: 0.5 }, attackPenalty: { at: 2, mods: { damage: -0.1, attackSpeed: -0.1 } } },
       { mods: { damageFlat: 1 } },
     ],
   },

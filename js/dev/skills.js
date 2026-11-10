@@ -36,7 +36,7 @@ const ACTION_PROPS = [
 ];
 const PARTS = {
   attack: { label: 'attack (dmg, aspd; on-hit, empower)', make: () => ({ type: 'physical', base: 1, time: 1 }) },
-  attackPenalty: { label: 'attack penalty (player, with this many attacks or more)', make: () => ({ at: 3, mods: { damage: -0.1, attackSpeed: -0.1 } }) },
+  attackPenalty: { label: 'attack penalty (player, with this many attacks or more)', make: () => ({ at: 2, mods: { damage: -0.1, attackSpeed: -0.1 } }) },
   spell: { label: 'spell (mag pwr, mag spd)', make: () => ({ type: 'magic', base: 1, time: 2 }) },
   onHit: { label: 'on-hit damage', make: () => ({ type: 'physical', base: 1 }) },
   empower: { label: 'empower (next attack)', make: () => ({ mult: 1, cooldown: 5 }) },
