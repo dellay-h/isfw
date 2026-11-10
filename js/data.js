@@ -174,9 +174,9 @@ export const MODS = {
 };
 
 // ---------- enemies, skills and shop items ----------
-// They live in enemies.js, skills.js and shop.js (the dev screens save every
-// edit there). If a save failed, the edits kept in the browser are used
-// instead until they are saved.
+// They live in enemies.js, skills.js, shop.js and power.js (the dev screens
+// commit edits there). In the dev version, edits not committed yet are kept
+// in the browser as drafts and used instead.
 import { SITE, key } from './site.js';
 import { loadRemote, token } from './github.js';
 import { ENEMIES as LOCAL_ENEMIES } from './enemies.js';
@@ -232,14 +232,6 @@ function readDraft(name) {
     return d.data;
   } catch { return null; }
 }
-
-// Drafts from older versions of the dev screens: set aside, never used.
-if (SITE.mode === 'local') try {
-  for (const [old, name] of [['isfw.dev.enemies', 'enemies'], ['isfw.dev.enemies.v2', 'enemies'], ['isfw.dev.skills.v2', 'skills']]) {
-    const raw = localStorage.getItem(old);
-    if (raw) { setAside(name, raw); localStorage.removeItem(old); }
-  }
-} catch { /* storage unavailable */ }
 
 const drafts = { enemies: readDraft('enemies'), skills: readDraft('skills'), shop: readDraft('shop'), power: readDraft('power') };
 export const USING_DRAFT = !!(drafts.enemies || drafts.skills || drafts.shop || drafts.power);

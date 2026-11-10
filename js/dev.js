@@ -1,10 +1,10 @@
 // Dev screens (dev/enemies, dev/skills, dev/shop). They edit in-memory copies
-// of the enemy, skill and shop lists (dev/store.js): saved to their files on
-// every change locally, committed to GitHub from the online dev version.
+// of the enemy, skill and shop lists (dev/store.js), committed to GitHub from
+// the dev version.
 import { STALE_DRAFTS } from './data.js';
 import { SITE } from './site.js';
 import {
-  initStore, onChange, flush, server, READONLY, SIGNED_IN, gh, uncommitted, commit, releaseToPlay, signIn, signOut,
+  initStore, onChange, READONLY, SIGNED_IN, gh, uncommitted, commit, releaseToPlay, signIn, signOut,
 } from './dev/store.js';
 import { initEnemies, renderEnemies } from './dev/enemies.js';
 import { initSkills, renderSkills } from './dev/skills.js';
@@ -18,14 +18,13 @@ let current = null;
 function renderBanner() {
   const b = $('#dev-banner');
   const msgs = [];
-  if (server.ok === false) msgs.push(server.msg);
   if (gh.error) msgs.push(gh.error);
-  if (STALE_DRAFTS.length) msgs.push(`Unsaved dev edits to ${[...new Set(STALE_DRAFTS)].join(', ')} were made on an older version of the file, so the file was used instead. They are kept aside in this browser (localStorage isfw${SITE.mode === 'dev' ? '.devsite' : ''}.dev.stale.*).`);
+  if (STALE_DRAFTS.length) msgs.push(`Uncommitted dev edits to ${[...new Set(STALE_DRAFTS)].join(', ')} were made on an older version of the file, so the file was used instead. They are kept aside in this browser (localStorage isfw.devsite.dev.stale.*).`);
   b.hidden = !current || !msgs.length;
   b.innerHTML = msgs.map((m) => `<div>${m}</div>`).join('');
 }
 
-// ---------- GitHub bar (online dev version) ----------
+// ---------- GitHub bar (dev version) ----------
 // Built once; renderBar only updates texts and buttons, so the inputs keep
 // their focus and contents.
 function buildBar() {
@@ -113,9 +112,9 @@ export function initDev({ getState, save, getSpeed, setSpeed } = {}) {
   if (READONLY) lockEditing();
   buildBar();
   for (const id of ['#de-apply', '#ds-apply', '#dp-apply']) {
-    $(id).addEventListener('click', async () => { await flush(); location.reload(); });
+    $(id).addEventListener('click', () => location.reload());
   }
-  // A save, commit or check finished: refresh the visible page.
+  // A commit or check finished: refresh the visible page.
   onChange(() => { if (current) showDev(current); });
   initStore();
 }

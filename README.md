@@ -2,21 +2,9 @@
 
 Text-based idle/incremental game disguised as a data monitor.
 
-## Run
+## Versions (GitHub Pages)
 
-Double-click `start.bat` (needs Python). It starts `server.py`, which opens the
-game at http://localhost:8000. Keep that window open while playing; close it to
-stop the server. Only one server can run at a time: if the port is taken (an
-older server window is still open), the new one says so and stops.
-
-A server is needed because the code uses ES modules, which browsers block when
-opening `index.html` directly from disk. `server.py` also turns caching off and
-lets the dev screens save their files.
-
-The top band switches between **monitor** (the game), **dev/enemies** and
-**dev/skills**.
-
-## Online versions (GitHub Pages)
+The game runs only on GitHub Pages; there is no local server.
 
 | version     | branch | address                             | dev pages |
 |-------------|--------|-------------------------------------|-----------|
@@ -24,8 +12,8 @@ The top band switches between **monitor** (the game), **dev/enemies** and
 | development | `dev`  | https://dellay-h.github.io/isfw/dev/ | read-only, or editable after signing in |
 
 `.github/workflows/pages.yml` publishes both on every push to `main` or `dev`
-(only `index.html`, `css/` and `js/`, with a generated `js/site.js` saying
-which version each copy is). Pages only deploys from `main`, so a push to
+(only `index.html`, `css/` and `js/`; the playable copy gets a generated
+`js/site.js` saying it is the playable version). Pages only deploys from `main`, so a push to
 `dev` restarts the workflow on `main`, which builds both branches. One-time
 setup: repo Settings → Pages → Source: **GitHub Actions**.
 
@@ -33,7 +21,7 @@ The two versions share one address, so the dev version keeps its game save,
 drafts and settings in the browser under `isfw.devsite.*`; the playable save
 (`isfw.save.v3`) is never touched by it.
 
-### Editing online (dev version)
+### Editing (dev version)
 
 1. Create a fine-grained token: GitHub → Settings → Developer settings →
    Personal access tokens → Fine-grained tokens → Generate new token.
@@ -55,9 +43,8 @@ drafts and settings in the browser under `isfw.devsite.*`; the playable save
    `dev` into `main` if `main` has commits of its own). The playable site
    updates about a minute later. It needs all changes committed first.
 
-Locally (`start.bat`) nothing changes: the dev pages save straight to the
-files. Online commits land on GitHub, so run `git pull` (on the branch you
-work on, usually `dev`) before editing locally.
+Commits from the dev pages land on GitHub, so run `git pull` (on `dev`)
+before editing the files by hand.
 
 ## Layout
 
@@ -72,23 +59,19 @@ work on, usually `dev`) before editing locally.
 - `js/main.js` – game loop, monitor rendering, input, view switching
 - `js/dev.js`, `js/dev/*.js` – dev screens (shared store, enemy page, skill page, shop page, run page)
 - `js/serialize.js` – writes `enemies.js` / `skills.js` / `shop.js` / `power.js` source
-- `js/migrate.js` – converts dev edits saved in the old enemy format
 - `design/` – design notes: archetype ideas, skill ideas
-- `server.py` – local server (no caching, `/api/ping`, saves `/api/enemies`, `/api/skills`, `/api/shop` and `/api/power`)
-- `js/site.js` – which version this copy is (local / play / dev) and browser storage names; replaced in the online copies
-- `js/github.js` – GitHub access for the online dev version (load, commit, release)
+- `js/site.js` – which version this copy is (dev; the playable copy gets its own) and browser storage names
+- `js/github.js` – GitHub access for the dev version (load, commit, release)
 - `.github/workflows/pages.yml` – publishes the playable and dev versions to GitHub Pages
 
 ## Dev screens
 
-Every edit is saved to its file right away. "apply changes" reloads the page
-so the game uses the new data. If a save fails, the status line says why, the
-edits are kept in the browser (the header shows "dev draft") and are saved with
-the next change. If the page is not served by `server.py`, a red banner says so.
-Kept edits are only used while the file is still the version they were made
-from; if the file changed in the meantime, the file wins and the edits are set
-aside (the banner says so). A page that loaded an older version of a file can't
-save over a newer one: the server refuses it and the page asks for a reload.
+Only in the dev version. The top band switches between **monitor** (the game)
+and the dev pages. Edits stay in the browser until committed (see above);
+"apply to game" reloads the page so the game uses them. Edits are only used
+while the file on `dev` is still the version they were made from; if it
+changed in the meantime, the file wins and the edits are set aside (a banner
+says so).
 
 ### dev/enemies
 At the top, **power**: tier power levels (the base attributes of every enemy

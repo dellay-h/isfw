@@ -1,9 +1,8 @@
 # Publishes both versions of the game to GitHub Pages:
 #   branch main -> https://dellay-h.github.io/isfw/      (playable, no dev pages)
 #   branch dev  -> https://dellay-h.github.io/isfw/dev/  (development version)
-# Only the game files go online (index.html, css/, js/); server.py, start.bat,
-# README.md and design/ stay in the repo only. Each copy gets its own
-# js/site.js saying which version it is.
+# Only the game files go online (index.html, css/, js/); README.md and design/
+# stay in the repo only. js/site.js says 'dev'; the playable copy gets its own.
 #
 # Pages deploys only from main (the default github-pages environment rule),
 # so a push to dev just starts this workflow again on main, which then builds
@@ -62,7 +61,6 @@ jobs:
           if [ -d dev ]; then
             mkdir _site/dev
             cp -r dev/index.html dev/css dev/js _site/dev/
-            sed -i "s/mode: 'local'/mode: 'dev'/" _site/dev/js/site.js
             grep -q "mode: 'dev'" _site/dev/js/site.js
           fi
           touch _site/.nojekyll

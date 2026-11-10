@@ -1015,7 +1015,6 @@ if (PLAY) {
 }
 if (SITE.mode === 'dev') {
   $('#version').textContent += ' · dev';
-  $('#draft-tag').title = 'enemies/skills/shop come from dev edits not committed to the dev branch yet';
 }
 function showView() {
   let v = location.hash.slice(1);
