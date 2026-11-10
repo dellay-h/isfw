@@ -30,6 +30,8 @@
 //                can be bought
 //   free         random free skills per prestige; freeExclude [skill id] never picked
 //   autoEquip    true: auto-equip toggles for skills unlocked at prestige start
+//   loadouts     skill loadout slots per level (save the loaded skills, load
+//                them again with one click)
 export const SHOP = [
   { id: 'P01', shop: 'prestige', name: 'whetstone', retired: true, cost: { base: 1, step: 1 } },
   { id: 'P02', shop: 'prestige', name: 'thick skin', retired: true, cost: { base: 1, step: 1 } },
@@ -57,4 +59,6 @@ export const SHOP = [
   { id: 'N08', shop: 'essence', name: 'limit breaker: elites', max: 1, cost: { base: 500, step: 0 }, limitGrowth: ['elite'], requires: 'P09' },
   { id: 'N09', shop: 'essence', name: 'limit breaker: bosses', max: 1, cost: { base: 2000, step: 0 }, limitGrowth: ['boss'], requires: 'P09' },
   { id: 'N10', shop: 'essence', name: 'limit shrinker', max: 1, cost: { base: 5000, step: 0 }, limitShrink: true, requires: 'P09' },
+  { id: 'N11', shop: 'essence', name: 'load out', max: 1, cost: { base: 500, step: 0 }, loadouts: 1 },
+  { id: 'N12', shop: 'essence', name: 'loadout slots', max: 5, cost: { base: 250, step: 250 }, requires: 'N11', loadouts: 1 },
 ];

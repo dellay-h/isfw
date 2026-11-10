@@ -20,7 +20,7 @@
     <span class="spacer"></span>
     <span id="speed-tag" class="warn" title="dev time speed (dev/run)" hidden></span>
     <span id="draft-tag" class="warn" title="enemies/skills/shop come from dev edits not committed to the dev branch yet" hidden>dev draft&nbsp;&nbsp;</span>
-    <span class="muted" id="version">v1.38</span>
+    <span class="muted" id="version">v1.39</span>
   </header>
 
   <main id="view-monitor">
@@ -84,6 +84,11 @@
     <section id="skills">
       <h2>slots <span id="slot-count"></span> <span id="auto-count" class="muted" hidden></span></h2>
       <table id="slots" class="grid"><colgroup><col class="c-n"><col class="c-id"><col class="c-name"><col><col class="c-act"></colgroup><tbody></tbody></table>
+
+      <div id="loadouts-box" hidden>
+      <h2><span class="tip" tabindex="0" data-tip="Save the skills loaded now into a loadout, and load them again with one click. Loading a loadout replaces the loaded skills; skills that aren't available are skipped. Kept through prestiges.">loadouts</span></h2>
+      <table id="loadouts" class="grid"><colgroup><col class="c-n"><col><col class="c-act"></colgroup><tbody></tbody></table>
+      </div>
 
       <h2>library <span class="badge" id="new-lib" hidden></span></h2>
       <table id="library" class="grid"><colgroup><col class="c-n"><col class="c-id"><col class="c-name"><col><col class="c-act"></colgroup><tbody></tbody></table>

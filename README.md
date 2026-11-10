@@ -112,7 +112,7 @@ get the cost back in points or essence), max level (prestige items), cost
 (first level + increase per level bought, with the cost of the first levels
 shown), attribute bonuses per level, and other effects (skill slots, start
 kills, max kills growth per rank, minimum max kills per rank, required item,
-unlocks essence, free skills, auto-equip). Changing an id updates the items
+unlocks essence, free skills, auto-equip, skill loadout slots). Changing an id updates the items
 that require it. Prefer retiring to deleting an item players may own.
 
 ## Rules (v0.33)

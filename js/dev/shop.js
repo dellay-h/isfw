@@ -32,6 +32,7 @@ const FEATURES = {
   free: { label: 'free skills', prestige: true, make: () => 1 },
   freeExclude: { label: 'free skills never pick', prestige: true, make: () => [] },
   autoEquip: { label: 'auto-equip', prestige: true, make: () => true },
+  loadouts: { label: 'skill loadout slots', make: () => 1 },
 };
 
 // ---------- validation ----------
@@ -97,6 +98,7 @@ function summary(x) {
   if (x.limitShrink) out.push('kill limit shrinking');
   if (x.free) out.push(`free skill +${x.free}`);
   if (x.autoEquip) out.push('auto-equip');
+  if (x.loadouts) out.push(`loadouts +${x.loadouts}`);
   if ((x.unlockEnemies || []).length) out.push(`unlocks ${x.unlockEnemies.join(', ')}`);
   return out.join(', ');
 }
@@ -104,7 +106,7 @@ function summary(x) {
 function featureRow(x, i, k) {
   const del = xBtn('feat-del', `data-i="${i}" data-k="${k}"`);
   let input = '';
-  if (k === 'slots' || k === 'free') input = numInput(i, k, x[k], { int: true });
+  if (k === 'slots' || k === 'free' || k === 'loadouts') input = numInput(i, k, x[k], { int: true });
   else if (k === 'unlockSkill') {
     const opts = K().map((y) => [y.id, `${y.id} ${y.name}${y.special ? ' (special)' : ''}`]);
     if (!opts.some(([id]) => id === x.unlockSkill)) opts.push([x.unlockSkill, `${x.unlockSkill || '(none)'} (unknown)`]);

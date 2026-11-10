@@ -58,6 +58,7 @@ export function newState() {
     fresh: {},                           // unlocked for the first time, not looked at yet: { id: true }
     revealed: {},                        // hidden enemies / shop items revealed for good: { id: true } (REVEAL)
     seenShop: {},                        // prestige shop items the player has looked at: { id: true } (new-item notices)
+    loadouts: [],                        // saved skill loadouts: [[skill id]] (shop loadouts); kept through prestiges
     prestige: { points: 0, count: 0, capRule: LIMIT_GROWTH.capMult, shop: {}, maxKills: {}, capped: {}, unlocked: {}, free: [], freeOff: {}, auto: [] }, // kept through prestiges; only a full reset clears it
                                          // shop: { item id: level bought }
                                          // maxKills: { enemy id: max kills after LIMIT_GROWTH }
@@ -151,6 +152,7 @@ export function load() {
       if (!saved.revealed) updateReveals(s, true, false);
       // saves before v0.84 had no list: what the shop shows now counts as seen
       s.seenShop = saved.seenShop ? { ...saved.seenShop } : Object.fromEntries((shopUnlocked(s) ? visibleShop(s) : []).map((x) => [x.id, true]));
+      s.loadouts = Array.isArray(saved.loadouts) ? saved.loadouts.map((l) => (Array.isArray(l) ? l.filter((id) => typeof id === 'string') : [])) : [];
     }
   } catch { /* corrupt or unavailable storage: fresh state */ }
   s.slots = s.slots.map((id) => (id && canLoad(s, id) ? id : null));
@@ -165,8 +167,8 @@ export function load() {
 
 export function save(s) {
   try {
-    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, xp, essence, seenShop } = s;
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, level0: true, xp, essence, seenShop }));
+    const { hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, xp, essence, seenShop, loadouts } = s;
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ hp, hpMax, mana, kills, slots, stats, log, repeat, retry, prestige, known, fresh, revealed, level, level0: true, xp, essence, seenShop, loadouts }));
   } catch { /* storage unavailable: run without saving */ }
 }
 
@@ -759,6 +761,53 @@ export function unequip(s, i) {
   clampPools(s);
   return true;
 }
+
+// ---------- loadouts (shop item loadouts, e.g. N11 / N12) ----------
+// Saved sets of skills to load with one click. A loadout keeps the skills
+// that were loaded when it was saved; loading it empties the slots, then
+// loads its skills in order. Skills that can't be loaded now (not unlocked,
+// a free skill, no slot left) are skipped. Kept through prestiges.
+export function loadoutCount(s) {
+  let n = 0;
+  for (const x of PRESTIGE_SHOP) n += (x.loadouts || 0) * shopLevel(s, x.id);
+  if (essenceOn(s)) for (const x of ESSENCE_SHOP) n += (x.loadouts || 0) * essenceLevel(s, x.id);
+  return n;
+}
+export const loadoutOf = (s, i) => (Array.isArray(s.loadouts[i]) ? s.loadouts[i] : []);
+// Skills of a loadout that would be loaded now.
+export function loadoutUsable(s, i) {
+  const out = [];
+  for (const id of loadoutOf(s, i)) if (canLoad(s, id) && !out.includes(id) && out.length < s.slots.length) out.push(id);
+  return out;
+}
+export function saveLoadout(s, i) {
+  if (i < 0 || i >= loadoutCount(s)) return false;
+  while (s.loadouts.length <= i) s.loadouts.push([]);
+  s.loadouts[i] = s.slots.filter(Boolean);
+  return true;
+}
+export function clearLoadout(s, i) {
+  if (!s.loadouts[i]) return false;
+  s.loadouts[i] = [];
+  return true;
+}
+// Returns { loaded: [id], skipped: [id] } or null.
+export function equipLoadout(s, i) {
+  if (i < 0 || i >= loadoutCount(s) || !loadoutOf(s, i).length) return null;
+  const loaded = loadoutUsable(s, i);
+  if (!loaded.length) return null; // nothing available: keep the slots as they are
+  s.slots = s.slots.map(() => null);
+  loaded.forEach((id, j) => { s.slots[j] = id; });
+  syncHp(s);
+  clampPools(s);
+  return { loaded, skipped: loadoutOf(s, i).filter((id) => !loaded.includes(id)) };
+}
+// The loaded skills are exactly this loadout's usable skills (any order).
+export const loadoutActive = (s, i) => {
+  const u = loadoutUsable(s, i);
+  const cur = s.slots.filter(Boolean);
+  return u.length > 0 && u.length === cur.length && u.every((id) => cur.includes(id));
+};
 
 // ---------- dev/run: direct edits of the current run ----------
 // After kills or max kills change: drop skills no longer unlocked from the

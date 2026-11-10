@@ -523,7 +523,7 @@ function renderSkills(d) {
   const lib = G.playerSkills().filter((k) => G.skillVisible(s, k.id));
   const sps = G.specials().filter((k) => G.skillVisible(s, k.id));
   const levels = lib.map((k) => G.skillLevel(s, k.id));
-  const key = JSON.stringify([s.slots, s.prestige.free, s.prestige.freeOff, s.prestige.auto, s.prestige.shop, s.prestige.count, s.essence.shop, G.essenceOn(s), s.revealed, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
+  const key = JSON.stringify([s.slots, s.loadouts, s.prestige.free, s.prestige.freeOff, s.prestige.auto, s.prestige.shop, s.prestige.count, s.essence.shop, G.essenceOn(s), s.revealed, levels, sps.map((x) => G.skillLevel(s, x.id)), s.kills, s.fresh, fmt(d.damage, 3), fmt(d.attackSpeed, 3), fmt(d.magicPower, 3), fmt(d.magicSpeed, 3)]);
   if (key === lastSkillKey) return;
   lastSkillKey = key;
 
@@ -581,10 +581,34 @@ function renderSkills(d) {
   }).join('');
 
   $('#slot-count').textContent = `${s.slots.filter(Boolean).length}/${s.slots.length}`;
+  renderLoadouts();
   const ac = $('#auto-count');
   ac.hidden = !G.autoEquipOwned(s);
   ac.textContent = `auto ${autoN}/${autoMax}`;
   ac.title = 'skills auto-equipped at the start of a prestige / slots a prestige starts with';
+}
+
+// Skill loadouts (shop item loadouts): one row per loadout slot.
+function renderLoadouts() {
+  const n = G.loadoutCount(s);
+  $('#loadouts-box').hidden = !n;
+  if (!n) return;
+  $('#loadouts tbody').innerHTML = Array.from({ length: n }, (_, i) => {
+    const ids = G.loadoutOf(s, i);
+    const usable = G.loadoutUsable(s, i);
+    const names = ids.map((id) => {
+      const k = G.skillDef(id);
+      const label = `${id} ${k ? k.name : '(removed)'}`;
+      return usable.includes(id) ? label : `<span class="muted" title="not available now: skipped when loading">${label}</span>`;
+    }).join(', ');
+    const active = G.loadoutActive(s, i);
+    const load = active
+      ? '<span class="muted">loaded</span>'
+      : `<button data-act="lo-load" data-i="${i}" ${usable.length ? '' : 'disabled'}>load</button>`;
+    const saveTip = ids.length ? 'replace this loadout with the skills loaded now' : 'save the skills loaded now into this loadout';
+    return `<tr><td class="muted">L${i + 1}</td><td>${names || '<span class="muted">empty</span>'}</td>
+      <td>${ids.length ? load : ''}<div><button class="quiet" data-act="lo-save" data-i="${i}" title="${saveTip}" ${s.slots.some(Boolean) ? '' : 'disabled'}>save</button>${ids.length ? ` <button class="quiet" data-act="lo-clear" data-i="${i}">clear</button>` : ''}</div></td></tr>`;
+  }).join('');
 }
 
 function render() {
@@ -752,6 +776,16 @@ $('#skills').addEventListener('click', (ev) => {
   if (btn.dataset.act === 'free-on') G.setFreeActive(s, btn.dataset.id, true);
   if (btn.dataset.act === 'free-off') G.setFreeActive(s, btn.dataset.id, false);
   if (btn.dataset.act === 'auto-on' || btn.dataset.act === 'auto-off') { G.setAuto(s, btn.dataset.id, btn.dataset.act === 'auto-on'); G.save(s); }
+  if (btn.dataset.act === 'lo-save') { G.saveLoadout(s, Number(btn.dataset.i)); G.save(s); }
+  if (btn.dataset.act === 'lo-clear') {
+    if (!btn.dataset.armed) { btn.dataset.armed = '1'; btn.textContent = 'confirm'; setTimeout(() => { delete btn.dataset.armed; btn.textContent = 'clear'; }, 3000); return; }
+    G.clearLoadout(s, Number(btn.dataset.i)); G.save(s);
+  }
+  if (btn.dataset.act === 'lo-load') {
+    const r = G.equipLoadout(s, Number(btn.dataset.i));
+    if (r && r.skipped.length) G.log(s, `loadout L${Number(btn.dataset.i) + 1}: skipped ${r.skipped.join(', ')} (not available)`, 'warn');
+    G.save(s);
+  }
   render();
 });
 
@@ -802,6 +836,7 @@ function shopLines(x) {
     const name = e ? e.name : x.startKills.enemy;
     out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Every prestige starts with ${x.startKills.n} ${name} kill${x.startKills.n === 1 ? '' : 's'} per level already done (never above its max kills), with the rewards and unlocks of those kills. Applies from the next prestige.`)}">start kills +${x.startKills.n}</span>`);
   }
+  if (x.loadouts) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Save the skills loaded now into a loadout and load them again with one click (loadouts section, under the slots). Skills that are not available are skipped. Kept through prestiges.')}">loadout slots +${x.loadouts}</span>`);
   if (x.autoEquip) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Skills already unlocked when a prestige starts (challenge specials and head start kills) get an auto-equip toggle in the library: toggled skills are loaded into the slots at the start of every prestige, no more than the slots a prestige starts with.')}">auto-equip</span>`);
   if (x.limitGrowth) {
     const ranks = x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ');
@@ -890,6 +925,7 @@ function renderEssence() {
       const per = (x.effects || []).map(effectText);
       if (x.limitGrowth) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the cap (40x the base max kills, 4x the total attribute reward), where they stay (unless kill limit shrinking is owned). Kills past the base max kills give less and less.`)}">${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')} max kills growth</span>`);
       if (x.limitShrink) per.push(shrinkText());
+      if (x.loadouts) per.push(`<span class="tip" tabindex="0" data-tip="${esc('Save the skills loaded now into a loadout and load them again with one click (loadouts section, under the slots). Skills that are not available are skipped. Kept through prestiges.')}">loadout slots +${x.loadouts}</span>`);
       const miss = G.essenceMissing(s, x.id);
       const k = x.unlockSkill && G.skillDef(x.unlockSkill);
       if (k) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`${k.special ? 'Special (always active)' : 'Skill'}: ${describe(k.levels[0], G.mergeLevels(k.levels, 1), {}, G.derived(s)).join(', ') || k.name}`)}">unlocks ${k.id} ${k.name}</span>`);
