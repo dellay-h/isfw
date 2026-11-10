@@ -29,7 +29,6 @@ const FEATURES = {
   limitShrink: { label: 'kill limit shrinking (at the cap)', make: () => true },
   minKills: { label: 'max kills at least', prestige: true, make: () => ({ common: 100 }) },
   requires: { label: 'requires item', make: (x) => SH().find((y) => !y.retired && y.id !== x.id)?.id || '' },
-  essence: { label: 'unlocks essence', prestige: true, make: () => true },
   free: { label: 'free skills', prestige: true, make: () => 1 },
   freeExclude: { label: 'free skills never pick', prestige: true, make: () => [] },
   autoEquip: { label: 'auto-equip', prestige: true, make: () => true },
@@ -95,7 +94,6 @@ function summary(x) {
   if (x.limitGrowth) out.push(`growth ${x.limitGrowth.join('/')}`);
   if (x.minKills) out.push(Object.entries(x.minKills).map(([r, n]) => `${r} ≥ ${n}`).join(', '));
   if (x.requires) out.push(`needs ${x.requires}`);
-  if (x.essence) out.push('unlocks essence');
   if (x.limitShrink) out.push('kill limit shrinking');
   if (x.free) out.push(`free skill +${x.free}`);
   if (x.autoEquip) out.push('auto-equip');

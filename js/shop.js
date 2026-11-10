@@ -28,7 +28,6 @@
 //                get at least n max kills
 //   requires     item id (either shop) that must be owned before this one
 //                can be bought
-//   essence      true: unlocks essence (gain, essence shop and its bonuses)
 //   free         random free skills per prestige; freeExclude [skill id] never picked
 //   autoEquip    true: auto-equip toggles for skills unlocked at prestige start
 export const SHOP = [
@@ -40,7 +39,7 @@ export const SHOP = [
   { id: 'P06', shop: 'prestige', name: 'muscle memory', retired: true, max: 1, cost: { base: 3, step: 0 }, free: 1, freeExclude: ['S01'] },
   { id: 'P08', shop: 'prestige', name: 'routine', retired: true, max: 1, cost: { base: 10, step: 0 }, autoEquip: true },
   { id: 'P12', shop: 'prestige', name: 'improved fighting', max: 1, cost: { base: 1, step: 0 }, unlockSkill: 'X05' },
-  { id: 'P13', shop: 'prestige', name: 'essence collector', max: 1, cost: { base: 10, step: 0 }, essence: true },
+  { id: 'P13', shop: 'prestige', name: 'essence collector', retired: true, max: 1, cost: { base: 10, step: 0 } },
   { id: 'P09', shop: 'prestige', name: 'limit breaker', max: 1, cost: { base: 0, step: 0 }, limitGrowth: ['common'] },
   { id: 'P10', shop: 'prestige', name: 'limit breaker: elites', retired: true, max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['elite'], requires: 'P09' },
   { id: 'P11', shop: 'prestige', name: 'limit breaker: bosses', retired: true, max: 1, cost: { base: 1, step: 0 }, limitGrowth: ['boss'], requires: 'P09' },

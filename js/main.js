@@ -808,7 +808,6 @@ function shopLines(x) {
     out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Every prestige starts with ${x.startKills.n} ${name} kill${x.startKills.n === 1 ? '' : 's'} per level already done (never above its max kills), with the rewards and unlocks of those kills. Applies from the next prestige.`)}">start kills +${x.startKills.n}</span>`);
   }
   if (x.autoEquip) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Skills already unlocked when a prestige starts (challenge specials and head start kills) get an auto-equip toggle in the library: toggled skills are loaded into the slots at the start of every prestige, no more than the slots a prestige starts with.')}">auto-equip</span>`);
-  if (x.essence) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Unlocks essence: +1 per enemy kill, kept through prestiges, spent in the essence shop (small % bonuses to attributes).')}">essence</span>`);
   if (x.limitGrowth) {
     const ranks = x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ');
     out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${ranks}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the cap (40x the base max kills, 4x the total attribute reward), where they stay (unless kill limit shrinking is owned). Kills past the base max kills give less and less. Applies to kills from now on.`)}">${ranks} max kills growth</span>`);
@@ -870,7 +869,8 @@ $('#shop').addEventListener('click', (ev) => {
 });
 
 // ---------- essence shop ----------
-// Locked (hidden: totals row, side tab, shop) until P13 essence collector.
+// Locked (hidden: totals row, side tab, shop) until the first tier 2 boss kill
+// (ESSENCE.unlockTier).
 function renderEssenceLock() {
   const off = !G.essenceOn(s);
   if ($('#essence').hidden !== off) {

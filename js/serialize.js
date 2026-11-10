@@ -155,11 +155,10 @@ const SHOP_HEADER = `// Prestige and essence shop items. Written by the dev/shop
 //                get at least n max kills
 //   requires     item id (either shop) that must be owned before this one
 //                can be bought
-//   essence      true: unlocks essence (gain, essence shop and its bonuses)
 //   free         random free skills per prestige; freeExclude [skill id] never picked
 //   autoEquip    true: auto-equip toggles for skills unlocked at prestige start
 `;
-const SHOP_ORDER = ['id', 'shop', 'name', 'retired', 'max', 'cost', 'effects', 'unlockSkill', 'unlockEnemies', 'slots', 'startKills', 'limitGrowth', 'limitShrink', 'minKills', 'requires', 'essence', 'free', 'freeExclude', 'autoEquip'];
+const SHOP_ORDER = ['id', 'shop', 'name', 'retired', 'max', 'cost', 'effects', 'unlockSkill', 'unlockEnemies', 'slots', 'startKills', 'limitGrowth', 'limitShrink', 'minKills', 'requires', 'free', 'freeExclude', 'autoEquip'];
 
 export function shopSource(items) {
   return `${SHOP_HEADER}export const SHOP = [\n${items.map((x) => `  ${lit(x, SHOP_ORDER)},`).join('\n')}\n];\n`;

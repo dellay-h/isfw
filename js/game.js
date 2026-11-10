@@ -53,7 +53,7 @@ export function newState() {
     stats: { fights: 0, wins: 0, losses: 0 },
     level: 0,                            // player level, from 0 (kept through prestiges)
     xp: 0,                               // xp towards the next level
-    essence: { points: 0, shop: {} },    // essence (ESSENCE) and essence shop levels { item id: level }; kept through prestiges
+    essence: { on: false, points: 0, shop: {} }, // essence (ESSENCE): on = unlocked for good (first boss kill of ESSENCE.unlockTier), points, shop levels { item id: level }; kept through prestiges
     known: {},                           // skills (and specials) ever unlocked: { id: true }
     fresh: {},                           // unlocked for the first time, not looked at yet: { id: true }
     revealed: {},                        // hidden enemies / shop items revealed for good: { id: true } (REVEAL)
@@ -80,6 +80,9 @@ export function load() {
       Object.assign(s.stats, saved.stats || {});
       Object.assign(s.prestige, saved.prestige || {});
       s.prestige.shop = { ...(saved.prestige?.shop || {}) };
+      // saves before v1.34 unlocked essence with the prestige shop's P13
+      // essence collector (now retired and refunded): they keep it unlocked
+      s.essence.on = !!saved.essence?.on || (saved.prestige?.shop?.P13 || 0) > 0;
       // removed shop items: refund what was spent on them
       const refunds = [];
       for (const [id, x] of Object.entries(RETIRED_SHOP)) {
@@ -155,6 +158,8 @@ export function load() {
   syncHp(s);
   clampPools(s);
   updateReveals(s, true, false); // also counts what the save shows was reached in earlier prestiges
+  // a boss of the essence tier already defeated this prestige (saves before v1.34)
+  if (!s.essence.on && C.enemies.some((e) => essenceUnlocker(e) && (s.kills[e.id] || 0) > 0)) s.essence.on = true;
   return s;
 }
 
@@ -465,8 +470,22 @@ export function essenceCost(s, id) {
   if (x.max > 0 && essenceLevel(s, id) >= x.max) return null; // max level (items without max have no cap)
   return (x.cost?.base || 0) + (x.cost?.step || 0) * essenceLevel(s, id);
 }
-// The essence system is unlocked by a prestige shop item (essence: P13).
-export const essenceOn = (s) => PRESTIGE_SHOP.some((x) => x.essence && shopLevel(s, x.id) > 0);
+// The essence system is unlocked for good by the first kill of a boss of
+// tier ESSENCE.unlockTier (s.essence.on; a full reset locks it again).
+export const essenceOn = (s) => !!s.essence.on;
+const essenceUnlocker = (e) => rankOf(e) === 'boss' && !inDev(e) && (e.tier || 0) === ESSENCE.unlockTier;
+// Unlocks essence on a qualifying boss kill; true when it was just unlocked.
+function checkEssenceUnlock(s, e) {
+  if (essenceOn(s) || !essenceUnlocker(e)) return false;
+  s.essence.on = true;
+  return true;
+}
+// Dev: turn essence on or off (points and shop levels are kept).
+export function devSetEssenceOn(s, on) {
+  s.essence.on = !!on;
+  afterRunEdit(s);
+  return true;
+}
 export const canBuyEssence = (s, id) => { const c = essenceCost(s, id); return c !== null && essenceOn(s) && !essenceMissing(s, id) && s.essence.points >= c; };
 export function buyEssence(s, id) {
   if (!canBuyEssence(s, id)) return false;
@@ -1425,6 +1444,7 @@ function win(s, e) {
   s.stats.wins++;
   s.mana = 0; // mana is emptied at the end of every fight
   gainXp(s, 1);
+  const essenceNew = checkEssenceUnlock(s, e); // before the gain: the unlocking kill already gives essence
   gainEssence(s);
   const lim = limitOf(s, e);
   const tag = n === 1 ? ' [first]' : n === lim ? ' [final]' : '';
@@ -1434,6 +1454,7 @@ function win(s, e) {
   }).join(', ');
   log(s, `${e.id} ${e.name} cleared ${n}/${lim} in ${s.fight.elapsed.toFixed(1)}s  ${rText}${tag}`, 'ok');
   if (REVEAL.tierBoss && rankOf(e) === 'boss' && n === 1 && C.enemies.some((x) => (x.tier || 0) === (e.tier || 0) + 1)) log(s, `tier ${(e.tier || 0) + 1} open for this prestige (${e.id} ${e.name} defeated)`, 'warn');
+  if (essenceNew) log(s, `essence unlocked for good (${e.id} ${e.name} defeated): +${ESSENCE.perKill} essence per kill, essence shop open`, 'warn');
   s.fight = null;
   noteSkills(s);
   // a whole tier revealed for the first time (REVEAL.tiers, e.g. tier 1 after

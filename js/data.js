@@ -92,9 +92,10 @@ export const LEVELS = { xpPer: 100, attrPer: 0.01 };
 
 // Essence: a granular resource for small, specific upgrades. Gained like xp
 // (perKill for every enemy kill), kept through prestiges; a full reset
-// clears it. Spent in the essence shop. Locked until the prestige shop's
-// essence collector (P13) is bought.
-export const ESSENCE = { perKill: 1 };
+// clears it. Spent in the essence shop. Locked until a boss of tier
+// unlockTier is defeated for the first time (kept for good; a full reset
+// locks it again).
+export const ESSENCE = { perKill: 1, unlockTier: 2 };
 // TODO: essence shop unlock items (qol, features, skills): one level, cost only.
 // TODO: an item that costs one resource and increases the gain of another
 //       (e.g. pay prestige points for more essence per kill).

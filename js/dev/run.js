@@ -46,6 +46,7 @@ export function renderRun() {
     .map((v) => `<option value="${v}" ${v === sp ? 'selected' : ''}>×${v}</option>`).join('');
   $('#dr-points').value = s.prestige.points;
   $('#dr-essence').value = Math.floor(s.essence.points);
+  $('#dr-essence-on').checked = G.essenceOn(s);
   $('#dr-level').value = s.level;
   $('#dr-xp').value = Math.floor(s.xp);
   $('#dr-xpnext').textContent = `/ ${G.xpToNext(s)}`;
@@ -114,6 +115,8 @@ function onChange(ev) {
     G.devSetLevel(s, s.level, el.value);
   } else if (el.id === 'dr-essence') {
     G.devSetEssence(s, el.value);
+  } else if (el.id === 'dr-essence-on') {
+    G.devSetEssenceOn(s, el.checked);
   } else if (el.dataset.run === 'eshop') {
     G.devSetEssenceShop(s, el.closest('tr[data-eshop]').dataset.eshop, el.value);
   } else if (el.dataset.run === 'shop') {
