@@ -820,8 +820,8 @@ export const actionRate = (a, speed) => (a.time ? 1 / a.time : 0) + (a.speedScal
 
 // Attributes are never modified directly. Everything that changes one is an
 // effect { group, label, stat, kind: 'flat' | 'pct', v }.
-// group is 'enemies' (kill rewards), 'skills' (active skills) or 'prestige'
-// (prestige shop).
+// group is 'enemies' (kill rewards), 'skills' (active skills), 'prestige'
+// (prestige shop), 'essence' (essence shop) or 'penalties' (attack penalties).
 // Each attribute = (base + sum of flat effects) x (1 + sum of pct effects).
 const STATS = ['maxHp', 'damage', 'attackSpeed', 'magicPower', 'magicSpeed', 'maxMana', 'manaRegen',
   'armor', 'block', 'blockShred', 'regenFlat', 'regenIn', 'regenOut', 'lifesteal'];
@@ -981,9 +981,23 @@ export function killEffects(kills, s = null) {
 }
 
 // Player: base attributes + kill rewards + prestige shop + unlocked specials
-// + loaded skills.
+// + loaded skills + attack penalties.
 export function derived(s) {
-  return unit(PLAYER(), activeSkills(s), [...killEffects(s.kills, s), ...shopEffects(s), ...essenceEffects(s)], REGEN.outOfCombatFlat, levelBonus(s));
+  const active = activeSkills(s);
+  return unit(PLAYER(), active, [...killEffects(s.kills, s), ...shopEffects(s), ...essenceEffects(s), ...penaltyEffects(active)], REGEN.outOfCombatFlat, levelBonus(s));
+}
+// Attack penalty (skill level part attackPenalty: { at, mods }, player only):
+// once the player has at least `at` active skills with an attack, the
+// skill's penalty mods apply (negative bonuses, keys in data.js MODS). Every
+// active attack skill applies its own penalty, so they add up.
+const countAttacks = (active) => active.filter(({ L }) => L.attack).length;
+export const attackCount = (s) => countAttacks(activeSkills(s));
+export const penaltyOn = (p, n) => !!p && p.at > 0 && n >= p.at;
+function penaltyEffects(active) {
+  const n = countAttacks(active);
+  return active.flatMap(({ id, L }) => (penaltyOn(L.attackPenalty, n)
+    ? modEffects(`${id} ${skillDef(id)?.name ?? ''} attack penalty (${n} attacks)`, L.attackPenalty.mods).map((x) => ({ ...x, group: 'penalties' }))
+    : []));
 }
 // The player's active skills: unlocked specials, loaded skills, free skills.
 function activeSkills(s) {

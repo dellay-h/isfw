@@ -61,6 +61,9 @@ const SKILLS_HEADER = `// Skill data, shared by the player and enemies. Written 
 //            damage); type default physical
 //   empower: { mult, cooldown, armorPen } next attack deals +mult x damage
 //   mods:    attribute bonuses (keys in data.js MODS)
+//   attackPenalty: { at, mods } (player, attack skills) once the player has
+//            at least "at" active skills with an attack, mods apply (negative
+//            bonuses, keys in data.js MODS). Each attack skill applies its own.
 //   slots:   extra skill slots (player)
 //   rush:    { attackSpeed, duration } +attackSpeed at the start of a fight,
 //            falling to 0 over duration seconds (enemies only for now)
@@ -72,7 +75,7 @@ const SKILLS_HEADER = `// Skill data, shared by the player and enemies. Written 
 
 const ENEMY_ORDER = ['id', 'name', 'tier', 'rank', 'boss', 'profile', 'limit', 'unlockCost', 'base', 'skills', 'rewards', 'skillRewards'];
 const ACTION_ORDER = ['type', 'base', 'scaling', 'pctMaxHp', 'time', 'speedScaling', 'hits', 'cost', 'lifesteal', 'dot', 'shield', 'heal', 'countdown'];
-const LEVEL_ORDER = ['attack', 'spell', 'onHit', 'empower', 'mods', 'slots', 'rush', 'winHeal', 'aura'];
+const LEVEL_ORDER = ['attack', 'attackPenalty', 'spell', 'onHit', 'empower', 'mods', 'slots', 'rush', 'winHeal', 'aura'];
 
 const key = (k) => (/^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k));
 const str = (s) => `'${String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;

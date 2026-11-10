@@ -36,6 +36,7 @@ const ACTION_PROPS = [
 ];
 const PARTS = {
   attack: { label: 'attack (dmg, aspd; on-hit, empower)', make: () => ({ type: 'physical', base: 1, time: 1 }) },
+  attackPenalty: { label: 'attack penalty (player, with this many attacks or more)', make: () => ({ at: 3, mods: { damage: -0.1, attackSpeed: -0.1 } }) },
   spell: { label: 'spell (mag pwr, mag spd)', make: () => ({ type: 'magic', base: 1, time: 2 }) },
   onHit: { label: 'on-hit damage', make: () => ({ type: 'physical', base: 1 }) },
   empower: { label: 'empower (next attack)', make: () => ({ mult: 1, cooldown: 5 }) },
@@ -81,12 +82,27 @@ function problems() {
       const m = G.mergeLevels(k.levels, i + 1);
       for (const kind of ['attack', 'spell']) if (m[kind] && !(m[kind].time > 0)) p.push(`lv${i + 1}: ${kind} needs an interval above 0`);
       for (const key of Object.keys(k.levels[i].mods || {})) if (!MODS[key]) p.push(`lv${i + 1}: unknown bonus ${key}`);
+      for (const key of Object.keys(k.levels[i].attackPenalty?.mods || {})) if (!MODS[key]) p.push(`lv${i + 1}: unknown penalty ${key}`);
+      if (k.levels[i].attackPenalty && !m.attack) p.push(`lv${i + 1}: attack penalty on a skill without an attack (never counts it)`);
+      if (m.attackPenalty && !(m.attackPenalty.at > 0)) p.push(`lv${i + 1}: attack penalty needs a number of attacks above 0`);
     });
   }
   return per;
 }
 
 // ---------- rendering ----------
+// Attribute bonus rows (keys in MODS) for the mods object at path, plus a
+// "+ bonus" select. def: value of a newly added bonus.
+function modsTable(i, path, mods = {}, def = 1, addLabel = '+ bonus') {
+  const rows = Object.entries(mods).map(([key, v]) => `<tr>
+      <td>${select(`data-i="${i}" data-p="${path}" data-t="mod-key" data-k="${esc(key)}"`, Object.entries(MODS).filter(([m]) => m === key || !(m in mods)).map(([m, d]) => [m, d.label]).concat(MODS[key] ? [] : [[key, `${key} (unknown)`]]), key)}</td>
+      <td>${numInput(i, `${path}.${key}`, v)}</td>
+      <td>${xBtn('prop-del', `data-i="${i}" data-p="${path}.${key}"`)}</td></tr>`).join('');
+  const left = Object.keys(MODS).filter((m) => !(m in mods));
+  return `<table class="dev-table">${rows}</table>
+    ${left.length ? `<div class="addrow">${select(`data-act="mod-add" data-i="${i}" data-p="${path}" data-def="${def}"`, [['', addLabel], ...left.map((m) => [m, MODS[m].label])], '')}</div>` : ''}`;
+}
+
 function propRows(i, base, obj, props) {
   return props.filter((p) => getP(obj, p.path) !== undefined).map((p) => {
     const v = getP(obj, p.path);
@@ -116,14 +132,12 @@ function partBlock(k, i, L, l, part) {
     body = `<table class="dev-table">${propRows(i, base, L[part], props)}</table>
       ${missing.length ? `<div class="addrow">${select(`data-act="prop-add" data-i="${i}" data-l="${l}" data-part="${part}"`, [['', '+ property'], ...missing.map((p) => [p.path, p.label])], '')}</div>` : ''}`;
   } else if (part === 'mods') {
-    const entries = Object.entries(L.mods);
-    const rows = entries.map(([key, v]) => `<tr>
-        <td>${select(`data-i="${i}" data-p="${base}" data-t="mod-key" data-k="${esc(key)}"`, Object.entries(MODS).filter(([m]) => m === key || !(m in L.mods)).map(([m, d]) => [m, d.label]).concat(MODS[key] ? [] : [[key, `${key} (unknown)`]]), key)}</td>
-        <td>${numInput(i, `${base}.${key}`, v)}</td>
-        <td>${xBtn('prop-del', `data-i="${i}" data-p="${base}.${key}"`)}</td></tr>`).join('');
-    const left = Object.keys(MODS).filter((m) => !(m in L.mods));
-    body = `<table class="dev-table">${rows}</table>
-      ${left.length ? `<div class="addrow">${select(`data-act="mod-add" data-i="${i}" data-l="${l}"`, [['', '+ bonus'], ...left.map((m) => [m, MODS[m].label])], '')}</div>` : ''}`;
+    body = modsTable(i, base, L.mods);
+  } else if (part === 'attackPenalty') {
+    const p = L.attackPenalty;
+    body = `<table class="dev-table"><tr><td class="lbl">active with this many attacks or more</td><td>${numInput(i, `${base}.at`, p.at, { int: true })}</td></tr></table>
+      <div class="muted">penalties (negative bonuses, -0.1 = -10%):</div>
+      ${modsTable(i, `${base}.mods`, p.mods, -0.1, '+ penalty')}`;
   } else if (part === 'slots') {
     body = `<table class="dev-table"><tr><td class="lbl">extra slots</td><td>${numInput(i, base, L.slots, { int: true })}</td></tr></table>`;
   } else if (part === 'winHeal') {
@@ -154,7 +168,7 @@ function levelBlock(k, i, L, l, awards) {
     </div>
     ${parts.map((p) => partBlock(k, i, L, l, p)).join('') || '<div class="muted">empty level</div>'}
     ${missing.length ? `<div class="addrow">${select(`data-act="part-add" data-i="${i}" data-l="${l}"`, [['', '+ effect'], ...missing.map((p) => [p, PARTS[p].label])], '')}</div>` : ''}`;
-  return field(key, `level ${l + 1}`, `<span class="muted">${parts.map((p) => (p === 'mods' ? Object.keys(L.mods).join(', ') : p)).join(' · ')}</span>`, body);
+  return field(key, `level ${l + 1}`, `<span class="muted">${parts.map((p) => (p === 'mods' ? Object.keys(L.mods).join(', ') : p === 'attackPenalty' ? 'attack penalty' : p)).join(' · ')}</span>`, body);
 }
 
 // Skill groups shown on the page, in this order: monster skills by id (M..),
@@ -279,7 +293,7 @@ function onAction(el) {
       break;
     }
     case 'prop-del': delP(k, el.dataset.p, 3); break;
-    case 'mod-add': if (!el.value) return; L.mods[el.value] = 1; break;
+    case 'mod-add': if (!el.value) return; setP(k, `${el.dataset.p}.${el.value}`, Number(el.dataset.def) || 1); break;
     case 'part-add': if (!el.value) return; L[el.value] = PARTS[el.value].make(); break;
     case 'part-del': delete L[el.dataset.part]; break;
     case 'lv-add': k.levels.push({}); open.add(`sk:${k.id}:lv${k.levels.length}`); saveOpen(); break;

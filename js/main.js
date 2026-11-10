@@ -72,25 +72,27 @@ function buildTargets() {
 // ---------- skill descriptions ----------
 // Exact value for bonus texts: up to 3 decimals, no trailing zeros (0.5, not 1).
 const exact = (n) => String(Number(Number(n).toFixed(3)));
+// "+" for bonuses, nothing for penalties (the minus comes with the number).
+const sg = (v) => (v < 0 ? '' : '+');
 const MOD_TEXT = {
-  damage: (v) => `dmg +${exact(v * 100)}%`,
-  damageFlat: (v) => `dmg +${exact(v)}`,
-  attackSpeed: (v) => `aspd +${exact(v * 100)}%`,
-  attackSpeedFlat: (v) => `aspd +${exact(v)}`,
-  manaFlat: (v) => `max mp +${exact(v)}`,
-  manaRegenFlat: (v) => `mp regen +${exact(v)}/s`,
-  magicPowerFlat: (v) => `mag pwr +${exact(v)}`,
-  magicSpeedFlat: (v) => `mag spd +${exact(v)}`,
-  armorFlat: (v) => `armor +${exact(v)}`,
-  blockFlat: (v) => `block +${exact(v)}`,
-  blockShredFlat: (v) => `block shred +${exact(v)}/hit`,
-  maxHp: (v) => `max hp +${exact(v * 100)}%`,
-  hpFlat: (v) => `max hp +${exact(v)}`,
-  regenFlat: (v) => `regen +${exact(v)} hp/s`,
-  regenIn: (v) => `regen in process +${exact(v * 100)}% max hp/s`,
-  regenOut: (v) => `regen idle +${exact(v * 100)}% max hp/s`,
-  regenPct: (v) => `regen +${exact(v * 100)}% max hp/s`,
-  lifesteal: (v) => `lifesteal +${exact(v * 100)}% of physical dmg`,
+  damage: (v) => `dmg ${sg(v)}${exact(v * 100)}%`,
+  damageFlat: (v) => `dmg ${sg(v)}${exact(v)}`,
+  attackSpeed: (v) => `aspd ${sg(v)}${exact(v * 100)}%`,
+  attackSpeedFlat: (v) => `aspd ${sg(v)}${exact(v)}`,
+  manaFlat: (v) => `max mp ${sg(v)}${exact(v)}`,
+  manaRegenFlat: (v) => `mp regen ${sg(v)}${exact(v)}/s`,
+  magicPowerFlat: (v) => `mag pwr ${sg(v)}${exact(v)}`,
+  magicSpeedFlat: (v) => `mag spd ${sg(v)}${exact(v)}`,
+  armorFlat: (v) => `armor ${sg(v)}${exact(v)}`,
+  blockFlat: (v) => `block ${sg(v)}${exact(v)}`,
+  blockShredFlat: (v) => `block shred ${sg(v)}${exact(v)}/hit`,
+  maxHp: (v) => `max hp ${sg(v)}${exact(v * 100)}%`,
+  hpFlat: (v) => `max hp ${sg(v)}${exact(v)}`,
+  regenFlat: (v) => `regen ${sg(v)}${exact(v)} hp/s`,
+  regenIn: (v) => `regen in process ${sg(v)}${exact(v * 100)}% max hp/s`,
+  regenOut: (v) => `regen idle ${sg(v)}${exact(v * 100)}% max hp/s`,
+  regenPct: (v) => `regen ${sg(v)}${exact(v * 100)}% max hp/s`,
+  lifesteal: (v) => `lifesteal ${sg(v)}${exact(v * 100)}% of physical dmg`,
 };
 const modText = (k, v) => (MOD_TEXT[k] ? MOD_TEXT[k](v) : `${k} ${v}`);
 
@@ -181,6 +183,14 @@ function describe(L, total, prev, d) {
     }
   }
   for (const [k, v] of Object.entries(L.mods || {})) parts.push(modText(k, v));
+  if (L.attackPenalty) {
+    const p = total.attackPenalty;
+    const n = G.attackCount(s);
+    const on = G.penaltyOn(p, n);
+    const tip = `Attack penalty: applies while you have ${p.at} or more attacks active (you have ${n}${on ? '' : ', inactive'}). Every attack skill applies its own penalty.`;
+    const mods = Object.entries(L.attackPenalty.mods || {}).map(([k, v]) => modText(k, v)).join(', ');
+    parts.push(`<span class="tip${on ? ' warn' : ''}" tabindex="0" data-tip="${esc(tip)}">with ${p.at}+ attacks: ${mods || 'no penalty'}</span>`);
+  }
   if (L.slots) parts.push(`skill slots +${L.slots}`);
   if (L.winHeal) parts.push(`heals ${fmt(L.winHeal * 100, 0)}% max hp after each win`);
   if (L.aura) {
@@ -219,7 +229,7 @@ function levelLines(k, lv, d) {
 
 // ---------- attribute breakdowns ----------
 // Rows: [label, value, class]
-const GROUPS = ['enemies', 'prestige', 'essence', 'skills'];
+const GROUPS = ['enemies', 'prestige', 'essence', 'skills', 'penalties'];
 const sumV = (a) => a.reduce((x, y) => x + y.v, 0);
 
 // Rows for a list of effects: ungrouped items (base) first, then one total
