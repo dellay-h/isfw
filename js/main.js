@@ -605,7 +605,8 @@ function render() {
   $('#p-mp').textContent = `${fmt(s.mana, 1)} / ${fmt(d.maxMana, 0)}`;
   $('#p-mpbar').innerHTML = bar(s.mana, d.maxMana || 1);
   $('#p-mpregen').textContent = `${fmt(d.manaRegen, 2)}/s`;
-  $('#p-armor').innerHTML = `<span class="muted">${fmt(armorReduction(d.armor) * 100, 0)}%</span> ${fmt(d.armor, 1)}`;
+  // reduction % with up to 2 decimals (no trailing zeros), armor as an integer
+  $('#p-armor').innerHTML = `<span class="muted">${Number((armorReduction(d.armor) * 100).toFixed(2))}%</span> ${fmt(d.armor, 0)}`;
   $('#p-block').textContent = fmt(d.block, 1);
   $('#p-dps').textContent = fmt(d.dps, 3);
   $('#p-regen').textContent = `${fmt(s.fight ? d.regenInHp : d.regenOutHp, 1)}/s`;
