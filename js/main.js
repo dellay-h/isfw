@@ -89,6 +89,7 @@ const MOD_TEXT = {
   maxHp: (v) => `max hp ${sg(v)}${exact(v * 100)}%`,
   hpFlat: (v) => `max hp ${sg(v)}${exact(v)}`,
   regenFlat: (v) => `regen ${sg(v)}${exact(v)} hp/s`,
+  regenOutFlat: (v) => `idle regen ${sg(v)}${exact(v)} hp/s`,
   regenIn: (v) => `regen in process ${sg(v)}${exact(v * 100)}% max hp/s`,
   regenOut: (v) => `regen idle ${sg(v)}${exact(v * 100)}% max hp/s`,
   regenPct: (v) => `regen ${sg(v)}${exact(v * 100)}% max hp/s`,
@@ -406,6 +407,10 @@ function breakdown(key, d) {
       if (baseFlat) rows.push(['base flat', signed(baseFlat, 2)]);
       grouped(P.flat.regenFlat, (v) => signed(v, 2), rows, true);
       grouped(P.pct.regenFlat, (v) => `${v >= 0 ? '+' : ''}${fmt(v * 100, 0)}% flat regen`, rows);
+      if (st === 'regenOut') {
+        grouped(P.flat.regenOutFlat, (v) => signed(v, 2), rows, true);
+        grouped(P.pct.regenOutFlat, (v) => `${v >= 0 ? '+' : ''}${fmt(v * 100, 0)}% idle flat regen`, rows);
+      }
       if (P.lvl !== 1 && total) rows.push([`lvl ${s.level} bonus`, levelText(total, P.lvl), 'sep']);
       rows.push(['total', `${fmt(total, 2)}/s`, 'total']);
     };

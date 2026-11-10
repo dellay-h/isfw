@@ -147,6 +147,7 @@ export const ATTRS = [
   { key: 'block', label: 'block' },
   { key: 'blockShred', label: 'block shred' },
   { key: 'regenFlat', label: 'regen (hp/s)' },
+  { key: 'regenOutFlat', label: 'idle regen (hp/s, out of fights)' },
   { key: 'regenIn', label: 'regen % max hp/s (in fights)' },
   { key: 'lifesteal', label: 'lifesteal on physical damage (1 = 100%)' },
 ];
@@ -168,6 +169,7 @@ export const MODS = {
   blockFlat: { label: 'block +', to: [['block', 'flat']] },
   blockShredFlat: { label: 'block shred +/hit', to: [['blockShred', 'flat']] },
   regenFlat: { label: 'regen +hp/s', to: [['regenFlat', 'flat']] },
+  regenOutFlat: { label: 'idle regen +hp/s (out of fights)', to: [['regenOutFlat', 'flat']] },
   regenPct: { label: 'regen +% max hp/s (0.01 = 1%)', to: [['regenIn', 'flat'], ['regenOut', 'flat']] },
   regenIn: { label: 'regen in process +% max hp/s', to: [['regenIn', 'flat']] },
   regenOut: { label: 'regen idle +% max hp/s', to: [['regenOut', 'flat']] },

@@ -33,7 +33,7 @@ export const specials = () => C.skills.filter((k) => k.special);
 export const STAT_LABEL = {
   damage: 'dmg', maxHp: 'max hp', attackSpeed: 'aspd', magicPower: 'mag pwr', magicSpeed: 'mag spd',
   maxMana: 'max mp', manaRegen: 'mp regen', armor: 'armor', block: 'block', blockShred: 'block shred',
-  regenFlat: 'regen',
+  regenFlat: 'regen', regenOutFlat: 'idle regen',
 };
 export const rewardsOf = (e) => e.rewards || [];
 // 'tutorial' | 'common' | 'elite' | 'boss'
@@ -892,7 +892,7 @@ export const actionRate = (a, speed) => (a.time ? 1 / a.time : 0) + (a.speedScal
 // (prestige shop), 'essence' (essence shop) or 'penalties' (attack penalties).
 // Each attribute = (base + sum of flat effects) x (1 + sum of pct effects).
 const STATS = ['maxHp', 'damage', 'attackSpeed', 'magicPower', 'magicSpeed', 'maxMana', 'manaRegen',
-  'armor', 'block', 'blockShred', 'regenFlat', 'regenIn', 'regenOut', 'lifesteal'];
+  'armor', 'block', 'blockShred', 'regenFlat', 'regenOutFlat', 'regenIn', 'regenOut', 'lifesteal'];
 const ZERO = Object.fromEntries(STATS.map((k) => [k, 0]));
 const PLAYER = () => ({ ...ZERO, ...PLAYER_BASE, regenIn: REGEN.inCombat, regenOut: REGEN.outOfCombat });
 
@@ -980,7 +980,7 @@ function unit(base, active, extra = [], idleFlat = 0, lvl = 1) {
       + auras.reduce((a, x) => a + x.dps, 0),
     // hp per second
     regenInHp: val.regenIn * val.maxHp + val.regenFlat,
-    regenOutHp: val.regenOut * val.maxHp + val.regenFlat + idleFlat,
+    regenOutHp: val.regenOut * val.maxHp + val.regenFlat + val.regenOutFlat + idleFlat,
     parts: { flat, pct, lvl, idleFlat },
   };
 }
