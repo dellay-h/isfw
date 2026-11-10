@@ -609,14 +609,8 @@ function render() {
   $('#p-block').textContent = fmt(d.block, 1);
   $('#p-dps').textContent = fmt(d.dps, 3);
   $('#p-regen').textContent = `${fmt(s.fight ? d.regenInHp : d.regenOutHp, 1)}/s`;
-  $('#st-fights').textContent = s.stats.fights;
-  $('#st-wins').textContent = s.stats.wins;
-  $('#st-losses').textContent = s.stats.losses;
-  $('#st-ppoints').textContent = s.prestige.points;
-  $('#st-essence').textContent = Math.floor(s.essence.points);
   renderEssenceLock();
   renderShopLock();
-  $('#st-pcount').textContent = s.prestige.count;
   renderPrestige();
   renderPopup(d);
 
@@ -875,7 +869,6 @@ function renderEssenceLock() {
   const off = !G.essenceOn(s);
   if ($('#essence').hidden !== off) {
     $('#essence').hidden = off;
-    $('#st-essence-row').hidden = off;
     $('#stabs [data-stab=essence]').hidden = off;
     if (off && document.body.dataset.stab === 'essence') setStab('skills');
   }
