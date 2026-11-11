@@ -485,3 +485,6 @@ button.armed { color: var(--err); border-color: var(--err); }
 @media (max-width: 379px) {
   .m-wide { display: none; }
 }
+
+/* prestige shop: heading row before the generated enemy head starts */
+#shop-items .shop-group td { color: var(--muted); padding-top: 10px; border-bottom: 1px solid var(--line); }

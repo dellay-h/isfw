@@ -592,7 +592,10 @@ export function enemyShopOpen(s, e) {
   return !items.length || items.some((x) => shopLevel(s, x.id) > 0);
 }
 export const enemyRevealed = (s, e) => !!e && (!revealRule(e) || !!s.revealed[e.id]) && tierOpen(s, e.tier || 0) && enemyShopOpen(s, e);
-export const shopRevealed = (s, x) => !!x && (!REVEAL.shop[x.id] || !!s.revealed[x.id]);
+// A prestige item's reveal condition: REVEAL.shop, or the item's own
+// `reveal` (generated enemy head starts: that enemy defeated once).
+const shopRule = (x) => REVEAL.shop[x.id] || x.reveal;
+export const shopRevealed = (s, x) => !!x && (!shopRule(x) || !!s.revealed[x.id]);
 export const visibleEnemies = (s) => C.enemies.filter((e) => enemyRevealed(s, e));
 export const visibleShop = (s) => PRESTIGE_SHOP.filter((x) => shopRevealed(s, x));
 // A skill or special shows when an enemy that is not hidden awards its lv1,
@@ -622,7 +625,7 @@ export function updateReveals(s, legacy = false, logIt = true) {
   }
   for (const x of PRESTIGE_SHOP) {
     if (shopRevealed(s, x)) continue;
-    if ((legacy && s.prestige.shop[x.id]) || condMet(s, REVEAL.shop[x.id], legacy)) { s.revealed[x.id] = true; out.push(`${x.id} ${x.name}`); }
+    if ((legacy && s.prestige.shop[x.id]) || condMet(s, shopRule(x), legacy)) { s.revealed[x.id] = true; out.push(`${x.id} ${x.name}`); }
   }
   if (out.length && logIt) log(s, `revealed: ${out.join(', ')}`, 'warn');
   return out;

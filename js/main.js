@@ -858,14 +858,16 @@ function renderShop() {
   if (key === lastShopKey) return;
   lastShopKey = key;
   $('#shop-points').textContent = `${s.prestige.points} pt${s.prestige.points === 1 ? '' : 's'}`;
-  $('#shop-items tbody').innerHTML = items.map((x) => {
+  $('#shop-items tbody').innerHTML = items.map((x, i) => {
+    // generated enemy head starts (H..) come last, under their own heading
+    const head = x.generated && !items[i - 1]?.generated ? '<tr class="shop-group"><td colspan="4">enemy head starts · 1 kill at the start of every prestige</td></tr>' : '';
     const lv = G.shopLevel(s, x.id);
     const cost = G.shopCost(s, x.id);
     const btn = cost === null
       ? '<span class="muted">max</span>'
       : `<button data-act="buy" data-id="${x.id}" ${G.canBuy(s, x.id) ? '' : 'disabled'}>${cost} pt</button>${G.shopMissing(s, x.id) ? `<div class="muted">needs ${G.shopMissing(s, x.id)}</div>` : ''}`;
     const nw = G.isShopNew(s, x.id);
-    return `<tr${lv ? '' : ' class="muted"'}${nw ? ` data-pnew="${x.id}"` : ''}><td>${x.id}${nw ? ' <span class="badge" title="new">•</span>' : ''}</td><td>${x.name}<div class="muted">lv ${lv}/${x.max}</div></td><td>${shopLines(x)}<span class="muted">/lv</span></td><td>${btn}</td></tr>`;
+    return `${head}<tr${lv ? '' : ' class="muted"'}${nw ? ` data-pnew="${x.id}"` : ''}><td>${x.id}${nw ? ' <span class="badge" title="new">•</span>' : ''}</td><td>${x.name}<div class="muted">lv ${lv}/${x.max}</div></td><td>${shopLines(x)}<span class="muted">/lv</span></td><td>${btn}</td></tr>`;
   }).join('');
 }
 

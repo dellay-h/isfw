@@ -248,6 +248,23 @@ export const POWER = drafts.power || structuredClone(FILE_POWER);
 // The shops the game uses (shop.js; retired items left out).
 const inShop = (shop) => SHOP.filter((x) => x.shop === shop && !x.retired);
 export const PRESTIGE_SHOP = inShop('prestige');
+// Enemy head starts: one generated prestige item per enemy (H + the enemy's
+// number, e.g. H017 for E017; not in shop.js): every prestige starts with 1
+// kill of that enemy. Cost: the enemy's tier in points, x2 for elites. None
+// for bosses, challenges (their kills are kept anyway), tier 0 (P07 head
+// start) or enemies in development. Hidden until that enemy is first
+// defeated (revealed for good).
+export const ENEMY_START = { eliteMult: 2 };
+for (const e of ENEMIES) {
+  const rank = e.rank || (e.boss ? 'boss' : 'common');
+  const tier = e.tier || 0;
+  if (tier <= 0 || ['boss', 'challenge'].includes(rank)) continue;
+  PRESTIGE_SHOP.push({
+    id: `H${e.id.replace(/^E/, '')}`, shop: 'prestige', name: `head start: ${e.name}`, max: 1,
+    cost: { base: tier * (rank === 'elite' ? ENEMY_START.eliteMult : 1), step: 0 },
+    startKills: { enemy: e.id, n: 1 }, reveal: { enemy: e.id }, generated: true,
+  });
+}
 export const ESSENCE_SHOP = inShop('essence');
 // Retired items { id: item }: saves that bought them are refunded on load.
 export const RETIRED_SHOP = Object.fromEntries(SHOP.filter((x) => x.retired).map((x) => [x.id, x]));
