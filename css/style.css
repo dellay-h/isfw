@@ -309,7 +309,7 @@ button.armed { color: var(--err); border-color: var(--err); }
 #shop-points { float: right; }
 #shop td { vertical-align: top; white-space: normal; padding: 2px 4px; }
 #shop td:first-child { width: 40px; }
-#shop td:nth-child(2) { white-space: nowrap; }
+#shop td:nth-child(2) { white-space: normal; }
 #shop-items { max-width: 520px; }
 #shop td:last-child { text-align: right; white-space: nowrap; }
 #shop .grid tr:first-child { border-top: 0; }
@@ -415,7 +415,7 @@ button.armed { color: var(--err); border-color: var(--err); }
 #ess-points { float: right; }
 #essence td { vertical-align: top; white-space: normal; padding: 2px 4px; }
 #essence td:first-child { width: 40px; }
-#essence td:nth-child(2) { white-space: nowrap; }
+#essence td:nth-child(2) { white-space: normal; }
 #essence td:last-child { text-align: right; white-space: nowrap; }
 #essence .tip::after { white-space: normal; width: 220px; text-align: left; }
 
@@ -452,10 +452,9 @@ button.armed { color: var(--err); border-color: var(--err); }
 
 /* ---------- phones (v1.28) ---------- */
 @media (max-width: 640px) {
-  /* header: the page links scroll inside the bar instead of widening the page */
-  header { padding: 0 8px 0 12px; }
-  header nav { flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-  header nav::-webkit-scrollbar { display: none; }
+  /* header: the page links wrap onto more lines (no sideways scrolling) */
+  header { padding: 0 8px 0 12px; flex-wrap: wrap; }
+  header nav { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
   header nav a { padding: 8px 8px; white-space: nowrap; }
   header .spacer { display: none; }
   #version { padding-left: 8px; white-space: nowrap; }
@@ -487,4 +486,22 @@ button.armed { color: var(--err); border-color: var(--err); }
 }
 
 /* prestige shop: heading row before the generated enemy head starts */
-#shop-items .shop-group td { color: var(--muted); padding-top: 10px; border-bottom: 1px solid var(--line); }
+#shop-items .shop-group td { color: var(--muted); padding-top: 10px; border-bottom: 1px solid var(--line); white-space: normal; width: auto; text-align: left; }
+
+/* ---------- no horizontal scrolling (v1.45) ----------
+   Dev tables wrap their cells and fields shrink to the column instead of
+   widening the page. */
+.dev-view .dev-table { max-width: 100%; }
+.dev-view .dev-table td, .dev-view .dev-table th { white-space: normal; overflow-wrap: anywhere; }
+.dev-view select, .dev-view input[type=text], .dev-view input[type=number] { max-width: 100%; }
+@media (max-width: 640px) {
+  .dev-table td.lbl { width: auto; }
+  .dev-view input.w-name { width: 100%; }
+}
+#shop td, #essence td { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  /* label + field rows wrap onto more lines (tables with column headers keep their grid) */
+  .dev-view .dev-table:not(.grid), .dev-view .dev-table:not(.grid) > tbody { display: block; }
+  .dev-view .dev-table:not(.grid) tr { display: flex; flex-wrap: wrap; align-items: center; column-gap: 4px; }
+  .dev-view .dev-table:not(.grid) td { display: block; flex: 0 1 auto; min-width: 0; max-width: 100%; }
+}

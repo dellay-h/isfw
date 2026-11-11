@@ -25,7 +25,7 @@ function bossLockCells(e) {
   const l = G.bossLock(s, e);
   const t = e.tier || 0;
   return {
-    label: `tier ${t} boss <span class="warn">locked</span><div class="sub">kill ${l.need} tier ${t} enemies to unlock</div>`,
+    label: `tier ${t} boss <span class="warn">locked</span>`,
     bar: bar(l.have, l.need, 'lockbar'),
     count: `<span class="nw">${l.have}/${l.need}</span>`,
   };
@@ -159,6 +159,12 @@ function describeAction(kind, L, total, prev, d) {
     lines.unshift(`adds ${added(L[kind]).join(', ')}`, '');
   }
   if (tip.length) lines.push('', ...tip);
+  // attack penalty (attackPenalty): only in the hover, "2+ attacks penalty: 10%"
+  const pen = kind === 'attack' && total.attackPenalty;
+  if (pen && pen.at > 0) {
+    const vals = [...new Set(Object.values(pen.mods || {}).map((v) => fmt(Math.abs(v) * 100, 0)))];
+    if (vals.length) lines.push('', `${pen.at}+ attacks penalty: ${vals.join('/')}%`);
+  }
   return `<span class="tip" tabindex="0" data-tip="${esc(lines.join('\n'))}">${kind}</span> <span class="muted">${type === 'physical' ? 'phys' : 'mag'}</span>`;
 }
 
@@ -184,14 +190,6 @@ function describe(L, total, prev, d) {
     }
   }
   for (const [k, v] of Object.entries(L.mods || {})) parts.push(modText(k, v));
-  if (L.attackPenalty) {
-    const p = total.attackPenalty;
-    const n = G.attackCount(s);
-    const on = G.penaltyOn(p, n);
-    const tip = `Attack penalty: applies while you have ${p.at} or more attacks active (you have ${n}${on ? '' : ', inactive'}). Every attack skill applies its own penalty.`;
-    const mods = Object.entries(L.attackPenalty.mods || {}).map(([k, v]) => modText(k, v)).join(', ');
-    parts.push(`<span class="tip${on ? ' warn' : ''}" tabindex="0" data-tip="${esc(tip)}">with ${p.at}+ attacks: ${mods || 'no penalty'}</span>`);
-  }
   if (L.slots) parts.push(`skill slots +${L.slots}`);
   if (L.winHeal) parts.push(`heals ${fmt(L.winHeal * 100, 0)}% max hp after each win`);
   if (L.aura) {
