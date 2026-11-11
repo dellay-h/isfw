@@ -61,5 +61,5 @@ export const SHOP = [
   { id: 'N10', shop: 'essence', name: 'limit shrinker', max: 1, cost: { base: 5000, step: 0 }, limitShrink: true, requires: 'P09' },
   { id: 'N11', shop: 'essence', name: 'load out', max: 1, cost: { base: 500, step: 0 }, loadouts: 1 },
   { id: 'N12', shop: 'essence', name: 'loadout slots', max: 5, cost: { base: 250, step: 250 }, requires: 'N11', loadouts: 1 },
-  { id: 'N13', shop: 'essence', name: 'regen 1', max: 1, cost: { base: 100, step: 0 }, effects: [{ stat: 'regenFlat', kind: 'flat', v: 0.1 }, { stat: 'regenOutFlat', kind: 'flat', v: 1 }] },
+  { id: 'N13', shop: 'essence', name: 'regen 1', max: 1, cost: { base: 100, step: 0 }, effects: [{ stat: 'regenFlat', kind: 'flat', v: 0.3 }, { stat: 'regenOutFlat', kind: 'flat', v: 3 }] },
 ];
