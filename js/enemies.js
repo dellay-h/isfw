@@ -177,7 +177,9 @@ export const ENEMIES = [
     base: { armor: 0, maxHp: 0, block: 0, damage: -4 },
     skills: [{ skill: 'M04', level: 1 }],
     rewards: [
+      { stat: 'armor', total: 5 },
       { stat: 'damage', total: 1 },
+      { stat: 'maxHp', total: 5 },
     ],
     skillRewards: [],
   },
