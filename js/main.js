@@ -925,10 +925,10 @@ function renderEssence() {
   const pts = Math.floor(s.essence.points);
   const pt = `${pts} essence`;
   if ($('#ess-points').textContent !== pt) $('#ess-points').textContent = pt;
-  const key = JSON.stringify(s.essence.shop);
+  const key = JSON.stringify([s.essence.shop, s.prestige.shop]);
   if (key !== lastEssKey) {
     lastEssKey = key;
-    $('#ess-items tbody').innerHTML = G.essenceItems().map((x) => {
+    $('#ess-items tbody').innerHTML = G.visibleEssence(s).map((x) => {
       const lv = G.essenceLevel(s, x.id);
       const cost = G.essenceCost(s, x.id);
       const per = (x.effects || []).map(effectText);

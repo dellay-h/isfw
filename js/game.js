@@ -597,7 +597,12 @@ export const enemyRevealed = (s, e) => !!e && (!revealRule(e) || !!s.revealed[e.
 const shopRule = (x) => REVEAL.shop[x.id] || x.reveal;
 export const shopRevealed = (s, x) => !!x && (!shopRule(x) || !!s.revealed[x.id]);
 export const visibleEnemies = (s) => C.enemies.filter((e) => enemyRevealed(s, e));
-export const visibleShop = (s) => PRESTIGE_SHOP.filter((x) => shopRevealed(s, x));
+// An item that needs another item of the same shop (`requires`, e.g. N12
+// loadout slots needs N11 load out) stays hidden until that one is owned;
+// one that needs an item of the other shop shows with a "needs" note.
+const sameShopMissing = (list, miss) => (x) => { const r = miss(x.id); return !r || !list.some((y) => y.id === r); };
+export const visibleShop = (s) => PRESTIGE_SHOP.filter((x) => shopRevealed(s, x) && sameShopMissing(PRESTIGE_SHOP, (id) => shopMissing(s, id))(x));
+export const visibleEssence = (s) => ESSENCE_SHOP.filter(sameShopMissing(ESSENCE_SHOP, (id) => essenceMissing(s, id)));
 // A skill or special shows when an enemy that is not hidden awards its lv1,
 // or the player has it now.
 export function skillVisible(s, id) {
