@@ -218,9 +218,10 @@ function reqText(r, level, k = null) {
 }
 
 // One line per level; levels not yet reached are muted (effects only, no
-// requirement text).
-function levelLines(k, lv, d) {
-  return k.levels.map((L, i) => {
+// requirement text), or left out with reachedOnly (slots: at least lv1).
+function levelLines(k, lv, d, reachedOnly = false) {
+  const levels = reachedOnly ? k.levels.slice(0, Math.max(1, lv)) : k.levels;
+  return levels.map((L, i) => {
     const reached = i < lv;
     const total = G.mergeLevels(k.levels, i + 1);
     const prev = G.mergeLevels(k.levels, i);
@@ -539,7 +540,7 @@ function renderSkills(d) {
     const k = id && G.skillDef(id);
     if (!k) return `<tr><td class="muted">${i}</td><td class="muted" colspan="3">empty</td><td></td></tr>`;
     const lv = G.skillLevel(s, id);
-    return `<tr><td class="muted">${i}</td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td>
+    return `<tr><td class="muted">${i}</td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d, true)}</td>
       <td><button data-act="unequip" data-i="${i}">unload</button></td></tr>`;
   }).join('') + G.freeSkills(s).map((id) => {
     // free skills (prestige shop): lv1 without unlocking, no slot; can be unloaded
@@ -548,7 +549,7 @@ function renderSkills(d) {
     const on = G.freeActive(s, id);
     const tip = 'free skill, chosen at random on the last prestige: lv1 without unlocking it, uses no slot';
     const b = on ? `<button data-act="free-off" data-id="${id}">unload</button>` : `<button data-act="free-on" data-id="${id}">load</button>`;
-    return `<tr${on ? '' : ' class="muted"'}><td class="muted"><span class="tip" tabindex="0" data-tip="${esc(tip)}">f</span></td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td><td>${b}</td></tr>`;
+    return `<tr${on ? '' : ' class="muted"'}><td class="muted"><span class="tip" tabindex="0" data-tip="${esc(tip)}">f</span></td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d, true)}</td><td>${b}</td></tr>`;
   }).join('');
 
   const full = !s.slots.includes(null);
@@ -843,7 +844,7 @@ function shopLines(x) {
     const name = e ? e.name : x.startKills.enemy;
     out.push(`<span class="tip" tabindex="0" data-tip="${esc(`Every prestige starts with ${x.startKills.n} ${name} kill${x.startKills.n === 1 ? '' : 's'} per level already done (never above its max kills), with the rewards and unlocks of those kills. Applies from the next prestige.`)}">start kills +${x.startKills.n}</span>`);
   }
-  if (x.loadouts) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Save the skills loaded now into a loadout and load them again with one click (loadouts section, under the slots). Skills that are not available are skipped. Kept through prestiges.')}">loadout slots +${x.loadouts}</span>`);
+  if (x.loadouts) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Save the skills loaded now into a loadout and load them again with one click (loadouts section, above the slots). Skills that are not available are skipped. Kept through prestiges.')}">loadout slots +${x.loadouts}</span>`);
   if (x.autoEquip) out.push(`<span class="tip" tabindex="0" data-tip="${esc('Skills already unlocked when a prestige starts (challenge specials and head start kills) get an auto-equip toggle in the library: toggled skills are loaded into the slots at the start of every prestige, no more than the slots a prestige starts with.')}">auto-equip</span>`);
   if (x.limitGrowth) {
     const ranks = x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ');
@@ -934,7 +935,7 @@ function renderEssence() {
       const per = (x.effects || []).map(effectText);
       if (x.limitGrowth) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`Turns on max kills growth for ${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')}: each kill raises the enemy's max kills on the next prestige (up to +10% of them), which raises its total attribute reward, until the cap (40x the base max kills, 4x the total attribute reward), where they stay (unless kill limit shrinking is owned). Kills past the base max kills give less and less.`)}">${x.limitGrowth.map((r) => (r.endsWith('s') ? `${r}es` : `${r}s`)).join(', ')} max kills growth</span>`);
       if (x.limitShrink) per.push(shrinkText());
-      if (x.loadouts) per.push(`<span class="tip" tabindex="0" data-tip="${esc('Save the skills loaded now into a loadout and load them again with one click (loadouts section, under the slots). Skills that are not available are skipped. Kept through prestiges.')}">loadout slots +${x.loadouts}</span>`);
+      if (x.loadouts) per.push(`<span class="tip" tabindex="0" data-tip="${esc('Save the skills loaded now into a loadout and load them again with one click (loadouts section, above the slots). Skills that are not available are skipped. Kept through prestiges.')}">loadout slots +${x.loadouts}</span>`);
       const miss = G.essenceMissing(s, x.id);
       const k = x.unlockSkill && G.skillDef(x.unlockSkill);
       if (k) per.push(`<span class="tip" tabindex="0" data-tip="${esc(`${k.special ? 'Special (always active)' : 'Skill'}: ${describe(k.levels[0], G.mergeLevels(k.levels, 1), {}, G.derived(s)).join(', ') || k.name}`)}">unlocks ${k.id} ${k.name}</span>`);
