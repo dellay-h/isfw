@@ -181,4 +181,36 @@ export const ENEMIES = [
     ],
     skillRewards: [],
   },
+  {
+    id: 'E021', name: 'orc', tier: 3, rank: 'common', profile: 'default', limit: 25,
+    skills: [],
+    rewards: [
+      { stat: 'damage', total: 4 },
+    ],
+    skillRewards: [],
+  },
+  {
+    id: 'E022', name: 'druid', tier: 3, rank: 'common', profile: 'magic', limit: 25,
+    skills: [],
+    rewards: [
+      { stat: 'damage', total: 4 },
+    ],
+    skillRewards: [],
+  },
+  {
+    id: 'E023', name: 'troll', tier: 3, rank: 'common', profile: 'defensive', limit: 25,
+    skills: [],
+    rewards: [
+      { stat: 'damage', total: 4 },
+    ],
+    skillRewards: [],
+  },
+  {
+    id: 'E024', name: 'fire wizard apprentice', tier: 3, rank: 'common', profile: 'magic', limit: 25,
+    skills: [],
+    rewards: [
+      { stat: 'damage', total: 4 },
+    ],
+    skillRewards: [],
+  },
 ];
