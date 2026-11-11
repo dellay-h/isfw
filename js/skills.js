@@ -228,6 +228,13 @@ export const SKILLS = [
     ],
   },
   {
+    id: 'S21', name: 'frenzy',
+    levels: [
+      { rush: { attackSpeed: 1, duration: 6 } },
+      { rush: { attackSpeed: 0.5 } },
+    ],
+  },
+  {
     id: 'M04', name: 'paladin smite',
     levels: [
       { attack: { type: 'magic', scaling: 3, time: 4 } },

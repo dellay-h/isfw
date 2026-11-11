@@ -118,7 +118,10 @@ export const ENEMIES = [
     rewards: [
       { stat: 'armor', total: 10 },
     ],
-    skillRewards: [],
+    skillRewards: [
+      { skill: 'S21', level: 1, at: 'first' },
+      { skill: 'S21', level: 2, at: 5 },
+    ],
   },
   {
     id: 'E010', name: 'vampire', tier: 1, rank: 'boss', profile: 'defensive', limit: 1,

@@ -191,6 +191,10 @@ function describe(L, total, prev, d) {
   }
   for (const [k, v] of Object.entries(L.mods || {})) parts.push(modText(k, v));
   if (L.slots) parts.push(`skill slots +${L.slots}`);
+  if (L.rush) {
+    const r = total.rush;
+    parts.push(`+${fmt(r.attackSpeed || 0, 2)} aspd at fight start, falling to 0 over ${fmt(r.duration || 0, 1)}s`);
+  }
   if (L.winHeal) parts.push(`heals ${fmt(L.winHeal * 100, 0)}% max hp after each win`);
   if (L.aura) {
     const o = total.aura;
