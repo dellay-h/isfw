@@ -179,8 +179,8 @@ export const ENEMIES = [
     id: 'E025', name: 'fyndhorn slime', tier: 2, rank: 'elite', profile: 'defensive', limit: 5,
     skills: [{ skill: 'M06', level: 1 }],
     rewards: [
-      { stat: 'armor', total: 15 },
-      { stat: 'magicResist', total: 15 },
+      { stat: 'armor', total: 10 },
+      { stat: 'magicResist', total: 10 },
     ],
     skillRewards: [
       { skill: 'S22', level: 1, at: 'first' },
