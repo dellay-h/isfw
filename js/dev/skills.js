@@ -30,6 +30,7 @@ const ACTION_PROPS = [
   { path: 'shield.base', label: 'shield: base', def: 20 },
   { path: 'shield.scaling', label: 'shield: power scaling', def: 1 },
   { path: 'shield.duration', label: 'shield: duration (s)', def: 8 },
+  { path: 'shield.type', label: 'shield: only absorbs', def: 'physical', choices: [['physical', 'physical damage'], ['magic', 'magic damage']] },
   { path: 'heal.pctMaxHp', label: 'heal: own max hp (0.1 = 10%)', def: 0.1 },
   { path: 'heal.base', label: 'heal: base', def: 10 },
   { path: 'heal.scaling', label: 'heal: power scaling', def: 1 },
@@ -106,7 +107,8 @@ function modsTable(i, path, mods = {}, def = 1, addLabel = '+ bonus') {
 function propRows(i, base, obj, props) {
   return props.filter((p) => getP(obj, p.path) !== undefined).map((p) => {
     const v = getP(obj, p.path);
-    const input = p.bool ? boolInput(i, `${base}.${p.path}`, v) : numInput(i, `${base}.${p.path}`, v, { int: p.int });
+    const input = p.choices ? select(`data-i="${i}" data-p="${base}.${p.path}" data-t="text"`, p.choices, v)
+      : p.bool ? boolInput(i, `${base}.${p.path}`, v) : numInput(i, `${base}.${p.path}`, v, { int: p.int });
     return `<tr><td class="lbl">${p.label}</td><td>${input}</td><td>${xBtn('prop-del', `data-i="${i}" data-p="${base}.${p.path}"`)}</td></tr>`;
   }).join('');
 }
@@ -114,7 +116,7 @@ function propRows(i, base, obj, props) {
 // Damage type select (physical: armor/block apply, lifesteal attribute;
 // magic: ignores armor/block). Shows the default when the level sets none.
 function typeRow(i, base, obj, kind) {
-  return `<div class="addrow"><span class="muted">damage</span> ${select(`data-i="${i}" data-p="${base}.type" data-t="text"`, [['physical', 'physical (armor/block apply)'], ['magic', 'magic (ignores armor/block)']], G.damageType(obj, kind))}</div>`;
+  return `<div class="addrow"><span class="muted">damage</span> ${select(`data-i="${i}" data-p="${base}.type" data-t="text"`, [['physical', 'physical (armor/block apply)'], ['magic', 'magic (magic resistance applies)']], G.damageType(obj, kind))}</div>`;
 }
 
 function partBlock(k, i, L, l, part) {

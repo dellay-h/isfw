@@ -84,6 +84,8 @@ const MOD_TEXT = {
   magicSpeedFlat: (v) => `mag spd ${sg(v)}${exact(v)}`,
   armorFlat: (v) => `armor ${sg(v)}${exact(v)}`,
   armor: (v) => `armor ${sg(v)}${exact(v * 100)}%`,
+  magicResistFlat: (v) => `mag res ${sg(v)}${exact(v)}`,
+  magicResist: (v) => `mag res ${sg(v)}${exact(v * 100)}%`,
   blockFlat: (v) => `block ${sg(v)}${exact(v)}`,
   blockShredFlat: (v) => `block shred ${sg(v)}${exact(v)}/hit`,
   maxHp: (v) => `max hp ${sg(v)}${exact(v * 100)}%`,
@@ -140,7 +142,7 @@ function describeAction(kind, L, total, prev, d) {
   if (a.shield) {
     const o = a.shield;
     tip.push(formula('shield', G.actionHit(o, power), o.base, o.scaling, pl));
-    bits.push(`shield ${fmt(G.actionHit(o, power))} for ${fmt(n(o.duration), 0)}s`);
+    bits.push(`${o.type ? `${o.type}-only ` : ''}shield ${fmt(G.actionHit(o, power))} for ${fmt(n(o.duration), 0)}s`);
   }
   if (a.heal) {
     const o = a.heal;
@@ -249,8 +251,8 @@ function grouped(items, show, rows, skipZero = false) {
 function enemyBreakdown(e, d) {
   const rows = [];
   const { total, parts, unit: u } = G.enemyDps(e, d.maxHp);
-  // physical damage is reduced by your armor and block; magic isn't
-  const vsT = (type, raw) => (type === 'physical' ? G.mitigate(raw, d.armor, d.block) : raw);
+  // physical damage is reduced by your armor and block, magic by your magic resistance
+  const vsT = (type, raw) => (type === 'physical' ? G.mitigate(raw, d.armor, d.block) : G.resistMagic(raw, d.magicResist));
   const vsOnHit = u.onHits.reduce((x, o) => x + vsT(o.type, o.dmg), 0);
   const vsText = (v, raw) => (v !== raw ? ` <span class="muted">(${fmt(v)} vs you)</span>` : '');
   let vsYou = 0;
@@ -264,7 +266,7 @@ function enemyBreakdown(e, d) {
       if (a.dot.dps) p.push(fmt(a.dot.dps));
       rows.push(['dot, stacks', `${p.join(' + ')}/s for ${fmt(a.dot.duration, 0)}s`]);
     }
-    if (a.shield) rows.push(['shield', `${fmt(a.shield.amount)} for ${fmt(a.shield.duration, 0)}s`]);
+    if (a.shield) rows.push([a.shield.type ? `${a.shield.type}-only shield` : 'shield', `${fmt(a.shield.amount)} for ${fmt(a.shield.duration, 0)}s`]);
     if (a.lifesteal) rows.push(['lifesteal', `${fmt(a.lifesteal * 100, 0)}%`]);
     if (a.heal) rows.push(['heals itself', fmt(a.heal)]);
     if (a.cost) rows.push(['mana', `${fmt(a.cost, 0)} per use`]);
@@ -279,7 +281,7 @@ function enemyBreakdown(e, d) {
   }
   if (u.empowers.length) rows.push(['empowered attacks', u.empowers.map((p) => `+${fmt(p.mult * 100, 0)}% / ${fmt(p.cooldown, 0)}s`).join(', ')]);
   rows.push(['total', fmt(total), 'total']);
-  rows.push(['vs your armor/block', fmt(vsYou)]);
+  rows.push(['vs your defenses', fmt(vsYou)]);
   return rows;
 }
 
@@ -289,6 +291,7 @@ function statsBreakdown(e, d) {
   const rows = [['attributes', '', 'head'], ['hp', fmt(u.maxHp, 0)]];
   if (u.regenInHp) rows.push([u.regenInHp < 0 ? 'decay' : 'regen', `${signed(u.regenInHp, 1)}/s${u.regenIn ? ` <span class="muted">(${fmt(u.regenIn * 100, 1)}% max hp)</span>` : ''}`]);
   if (u.armor) rows.push(['armor', `${fmt(u.armor, 0)} <span class="muted">(-${fmt(armorReduction(u.armor) * 100, 0)}% physical dmg)</span>`]);
+  if (u.magicResist) rows.push(['mag res', `${fmt(u.magicResist, 0)} <span class="muted">(-${fmt(armorReduction(u.magicResist) * 100, 0)}% magic dmg)</span>`]);
   if (u.block) rows.push(['block', fmt(u.block, 1)]);
   for (const [k, label, dp] of [['damage', 'dmg', 2], ['attackSpeed', 'aspd', 2], ['magicPower', 'mag pwr', 2], ['magicSpeed', 'mag spd', 2], ['maxMana', 'max mp', 0], ['manaRegen', 'mp regen', 2], ['blockShred', 'block shred', 1]]) {
     if (u[k]) rows.push([label, fmt(u[k], dp)]);
@@ -375,7 +378,7 @@ function breakdown(key, d) {
   const P = d.parts;
   const sum = sumV;
   const rows = [];
-  if (['maxHp', 'damage', 'attackSpeed', 'magicPower', 'magicSpeed', 'maxMana', 'manaRegen', 'armor', 'block'].includes(key)) {
+  if (['maxHp', 'damage', 'attackSpeed', 'magicPower', 'magicSpeed', 'maxMana', 'manaRegen', 'armor', 'magicResist', 'block'].includes(key)) {
     const dp = 3;
     grouped(P.flat[key], (v, plain) => (plain ? fmt(v, dp) : signed(v, dp)), rows);
     if (P.pct[key].length) {
@@ -385,6 +388,7 @@ function breakdown(key, d) {
     if (P.lvl !== 1) rows.push([`lvl ${s.level} bonus`, levelText(sum(P.flat[key]) * (1 + sum(P.pct[key])), P.lvl), 'sep']);
     rows.push(['total', fmt(d[key], dp), 'total']);
     if (key === 'armor') rows.push(['hit reduction', `${fmt(armorReduction(d.armor) * 100, 1)}%`]);
+    if (key === 'magicResist') rows.push(['magic dmg reduction', `${fmt(armorReduction(d.magicResist) * 100, 1)}%`]);
     if (key === 'block' && d.blockShred) rows.push(['your block shred', `${fmt(d.blockShred, 1)}/hit`]);
   } else if (key === 'dps') {
     if (!d.actions.length && !d.auras.length) rows.push(['no attack or spell loaded', '0']);
@@ -395,7 +399,7 @@ function breakdown(key, d) {
       if (a.pct) rows.push(['+ % target max hp (not in total)', `${exact(a.pct * 100)}% per hit`]);
       if (a.kind === 'attack' && d.onHit) rows.push(['on hit / interval', `${fmt(d.onHit)}${a.hits > 1 ? ` ×${a.hits}` : ''} / ${secs(a.interval)}s = ${fmt(d.onHit * a.hits * a.rate)}`]);
       if (a.dot) rows.push(['burn (not in total)', `${a.dot.pct ? `${exact(a.dot.pct * 100)}% target hp + ` : ''}${fmt(a.dot.dps)}/s`]);
-      if (a.shield) rows.push(['shield', `${fmt(a.shield.amount)} for ${fmt(a.shield.duration, 0)}s`]);
+      if (a.shield) rows.push([a.shield.type ? `${a.shield.type}-only shield` : 'shield', `${fmt(a.shield.amount)} for ${fmt(a.shield.duration, 0)}s`]);
       if (a.cost) rows.push(['mana', `${fmt(a.cost * a.rate)}/s needed`]);
     }
     rows.push(['total', fmt(d.dps, 3), 'total']);
@@ -528,7 +532,7 @@ function dotText(dots, maxHp = 0) {
 }
 
 function shieldText(sh) {
-  return sh && sh.amount > 0 ? `<span class="muted">shield ${fmt(sh.amount, 1)} (${fmt(sh.left, 1)}s)</span>` : '';
+  return sh && sh.amount > 0 ? `<span class="muted">${sh.type ? `${sh.type === 'physical' ? 'phys' : 'magic'} ` : ''}shield ${fmt(sh.amount, 1)} (${fmt(sh.left, 1)}s)</span>` : '';
 }
 
 function bar(cur, max, cls = '') {
@@ -671,6 +675,7 @@ function render() {
   $('#p-mpregen').textContent = `${fmt(d.manaRegen, 2)}/s`;
   // reduction % with up to 2 decimals (no trailing zeros), armor as an integer
   $('#p-armor').innerHTML = `<span class="muted">${Number((armorReduction(d.armor) * 100).toFixed(2))}%</span> ${fmt(d.armor, 0)}`;
+  $('#p-mres').innerHTML = `<span class="muted">${Number((armorReduction(d.magicResist) * 100).toFixed(2))}%</span> ${fmt(d.magicResist, 0)}`;
   $('#p-block').textContent = fmt(d.block, 1);
   $('#p-dps').textContent = fmt(d.dps, 3);
   $('#p-regen').textContent = `${fmt(s.fight ? d.regenInHp : d.regenOutHp, 1)}/s`;

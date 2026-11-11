@@ -400,7 +400,7 @@ let getGameState = () => null;
 const PREVIEW_ATTRS = [
   ['maxHp', 'hp', 1], ['damage', 'dmg', 3], ['attackSpeed', 'aspd', 3], ['magicPower', 'mag pwr', 3],
   ['magicSpeed', 'mag spd', 3], ['maxMana', 'mp', 1], ['manaRegen', 'mp regen', 2], ['armor', 'armor', 1],
-  ['block', 'block', 1], ['blockShred', 'block shred', 1], ['regenOutHp', 'regen idle', 1],
+  ['magicResist', 'mag res', 1], ['block', 'block', 1], ['blockShred', 'block shred', 1], ['regenOutHp', 'regen idle', 1],
 ];
 
 // The preview player: kills, player level, skill levels set by hand, then

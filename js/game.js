@@ -32,7 +32,7 @@ export const specialDef = (id) => C.skills.find((k) => k.id === id && k.special)
 export const specials = () => C.skills.filter((k) => k.special);
 export const STAT_LABEL = {
   damage: 'dmg', maxHp: 'max hp', attackSpeed: 'aspd', magicPower: 'mag pwr', magicSpeed: 'mag spd',
-  maxMana: 'max mp', manaRegen: 'mp regen', armor: 'armor', block: 'block', blockShred: 'block shred',
+  maxMana: 'max mp', manaRegen: 'mp regen', armor: 'armor', magicResist: 'mag res', block: 'block', blockShred: 'block shred',
   regenFlat: 'regen', regenOutFlat: 'idle regen',
 };
 export const rewardsOf = (e) => e.rewards || [];
@@ -900,14 +900,17 @@ export const actionRate = (a, speed) => (a.time ? 1 / a.time : 0) + (a.speedScal
 // (prestige shop), 'essence' (essence shop) or 'penalties' (attack penalties).
 // Each attribute = (base + sum of flat effects) x (1 + sum of pct effects).
 const STATS = ['maxHp', 'damage', 'attackSpeed', 'magicPower', 'magicSpeed', 'maxMana', 'manaRegen',
-  'armor', 'block', 'blockShred', 'regenFlat', 'regenOutFlat', 'regenIn', 'regenOut', 'lifesteal'];
+  'armor', 'magicResist', 'block', 'blockShred', 'regenFlat', 'regenOutFlat', 'regenIn', 'regenOut', 'lifesteal'];
 const ZERO = Object.fromEntries(STATS.map((k) => [k, 0]));
 const PLAYER = () => ({ ...ZERO, ...PLAYER_BASE, regenIn: REGEN.inCombat, regenOut: REGEN.outOfCombat });
 
 // Damage types. Every attack, spell and on-hit has one: physical (reduced
-// by armor and block, feeds the lifesteal attribute) or magic (ignores armor
-// and block). Defaults: attacks and on-hit physical, spells magic.
+// by armor and block, feeds the lifesteal attribute) or magic (reduced by
+// magic resistance, same curve as armor; ignores armor and block).
+// Defaults: attacks and on-hit physical, spells magic.
 export const DAMAGE_TYPES = ['physical', 'magic'];
+// Magic damage left after a target's magic resistance.
+export const resistMagic = (raw, magicResist) => raw * (1 - armorReduction(magicResist || 0));
 export const damageType = (def, kind) => (DAMAGE_TYPES.includes(def?.type) ? def.type : kind === 'spell' ? 'magic' : 'physical');
 
 const modEffects = (label, mods) => Object.entries(mods || {}).flatMap(([k, v]) =>
@@ -969,7 +972,8 @@ function unit(base, active, extra = [], idleFlat = 0, lvl = 1) {
         countdown: !!def.countdown,
         // % of target max hp per second = pctMaxHp + power x pctScaling; plus a flat base + power x scaling
         dot: def.dot ? { pct: (def.dot.pctMaxHp || 0) + power * (def.dot.pctScaling || 0), dps: actionHit(def.dot, power), duration: def.dot.duration || 0 } : null,
-        shield: def.shield ? { amount: actionHit(def.shield, power), duration: def.shield.duration || 0 } : null,
+        // shield.type: only absorbs that damage type (default: all)
+        shield: def.shield ? { amount: actionHit(def.shield, power), duration: def.shield.duration || 0, type: DAMAGE_TYPES.includes(def.shield.type) ? def.shield.type : null } : null,
         heal: def.heal ? (def.heal.pctMaxHp || 0) * val.maxHp + actionHit(def.heal, power) : 0,
       });
     }
@@ -1204,13 +1208,13 @@ export function enemyDps(e, playerMaxHp) {
 // type. target: { maxHp, armor, block } (an enemy unit or the player's
 // derived attributes), or null for raw damage (no resistances; % max hp
 // hits and burns left out). Physical hits and on-hits: armor, then block,
-// per hit; physical auras: armor only; magic: unreduced (no magic
-// resistance yet); burns: unreduced, counted with their action's type.
+// per hit; physical auras: armor only; magic: magic resistance; burns:
+// unreduced, counted with their action's type.
 // Countdown actions and empowered attacks are left out.
 export function dpsVs(u, target = null) {
   const out = { physical: 0, magic: 0 };
   const add = (type, v) => { out[type === 'magic' ? 'magic' : 'physical'] += v; };
-  const red = (type, raw) => (target && type === 'physical' ? mitigate(raw, target.armor || 0, target.block || 0) : raw);
+  const red = (type, raw) => (!target ? raw : type === 'physical' ? mitigate(raw, target.armor || 0, target.block || 0) : resistMagic(raw, target.magicResist));
   for (const a of u.actions) {
     if (a.countdown) continue;
     const hit = a.hit + (target ? (a.pct || 0) * target.maxHp : 0);
@@ -1224,7 +1228,7 @@ export function dpsVs(u, target = null) {
 }
 const powerOf = (hp, v) => ({ power: hp * v.total, hp, dps: v.total, physical: v.physical, magic: v.magic });
 // The base player (no kills, no skills) as a target: hp and resistances.
-const basePlayer = () => ({ maxHp: PLAYER_BASE.maxHp, armor: PLAYER_BASE.armor || 0, block: PLAYER_BASE.block || 0 });
+const basePlayer = () => ({ maxHp: PLAYER_BASE.maxHp, armor: PLAYER_BASE.armor || 0, magicResist: PLAYER_BASE.magicResist || 0, block: PLAYER_BASE.block || 0 });
 
 // Enemy power level against a player (target: the player's derived
 // attributes; default the base player).
@@ -1255,13 +1259,13 @@ export function playerPower(s, d = derived(s), target = null) {
 }
 
 // Effective hp: the damage of each type needed to defeat a unit, from its max
-// hp and its resistances only (armor for physical; magic has no resistance
-// yet). Block, lifesteal, regen, shields and the like are left out: their
+// hp and its resistances only (armor for physical, magic resistance for
+// magic). Block, lifesteal, regen, shields and the like are left out: their
 // effect depends on the attacker.
 export function effectiveHp(u) {
   return {
     physical: u.maxHp / (1 - armorReduction(u.armor)),
-    magic: u.maxHp,
+    magic: u.maxHp / (1 - armorReduction(u.magicResist || 0)),
   };
 }
 
@@ -1319,30 +1323,42 @@ export function stopFight(s) {
   s.retry = null;
 }
 
-// Apply damage to a shield first, then return what is left.
-function absorb(shield, amount) {
+// Apply damage to a shield first, then return what is left. A typed shield
+// (shield.type) only absorbs damage of that type.
+function absorb(shield, amount, type = null) {
   if (!shield || shield.amount <= 0) return amount;
+  if (shield.type && shield.type !== type) return amount;
   const used = Math.min(shield.amount, amount);
   shield.amount -= used;
   return amount - used;
 }
 
-// Damage from a list of dots over dt; drops expired ones. pct dots are a
-// fraction of maxHp (the victim's) per second.
+// Damage from a list of dots over dt, by damage type ({ physical, magic };
+// unreduced); drops expired ones. pct dots are a fraction of maxHp (the
+// victim's) per second.
 function tickDots(dots, dt, maxHp = 0) {
-  let dmg = 0;
+  const dmg = { physical: 0, magic: 0 };
   for (const x of dots) {
-    dmg += (x.dps + (x.pct || 0) * maxHp) * Math.min(dt, x.left);
+    dmg[x.type === 'physical' ? 'physical' : 'magic'] += (x.dps + (x.pct || 0) * maxHp) * Math.min(dt, x.left);
     x.left -= dt;
   }
   for (let i = dots.length - 1; i >= 0; i--) if (dots[i].left <= 0) dots.splice(i, 1);
   return dmg;
 }
+// Damage of each type through a shield (what the shield doesn't absorb).
+const absorbAll = (shield, byType) => Object.entries(byType).reduce((a, [type, v]) => a + (v ? absorb(shield, v, type) : 0), 0);
 
-// Aura damage per second on a target: magic unreduced; physical reduced by
-// the target's armor (not block, it isn't a hit).
+// Aura damage per second on a target: physical reduced by the target's
+// armor (not block, it isn't a hit), magic by its magic resistance.
+const auraOne = (x, target) => (x.type === 'physical' ? x.dps * (1 - armorReduction(target.armor || 0)) : resistMagic(x.dps, target.magicResist));
 export function auraDamage(auras, target) {
-  return auras.reduce((a, x) => a + (x.type === 'physical' ? x.dps * (1 - armorReduction(target.armor || 0)) : x.dps), 0);
+  return auras.reduce((a, x) => a + auraOne(x, target), 0);
+}
+// Aura damage over dt by damage type.
+function auraByType(auras, target, dt) {
+  const out = { physical: 0, magic: 0 };
+  for (const x of auras) out[x.type === 'physical' ? 'physical' : 'magic'] += auraOne(x, target) * dt;
+  return out;
 }
 
 function tickShield(sh, dt) {
@@ -1401,18 +1417,18 @@ export function step(s, dt) {
 
   // Continuous damage: enemy decay and burns, player debuffs (shields absorb).
   const eRegen = eu.regenInHp * dt;
-  f.eHp += Math.min(0, eRegen) - absorb(f.eShield, tickDots(f.eDots, dt, eu.maxHp));
+  f.eHp += Math.min(0, eRegen) - absorbAll(f.eShield, tickDots(f.eDots, dt, eu.maxHp));
   if (f.eHp <= 0) return win(s, e);
   f.eHp = Math.min(eu.maxHp, f.eHp + Math.max(0, eRegen));
-  s.hp -= absorb(f.pShield, tickDots(f.pDots, dt, d.maxHp));
+  s.hp -= absorbAll(f.pShield, tickDots(f.pDots, dt, d.maxHp));
   if (s.hp <= 0) return lose(s, e, 'debuff');
   // Auras: constant damage to the other side (shields absorb)
   if (d.auras.length) {
-    f.eHp -= absorb(f.eShield, auraDamage(d.auras, eu) * dt);
+    f.eHp -= absorbAll(f.eShield, auraByType(d.auras, eu, dt));
     if (f.eHp <= 0) return win(s, e);
   }
   if (eu.auras.length) {
-    s.hp -= absorb(f.pShield, auraDamage(eu.auras, d) * dt);
+    s.hp -= absorbAll(f.pShield, auraByType(eu.auras, d, dt));
     if (s.hp <= 0) return lose(s, e, eu.auras[0].name);
   }
 
@@ -1451,8 +1467,8 @@ export function step(s, dt) {
 function use(src, dst, a) {
   src.timers[a.key] -= a.interval;
   src.mana -= a.cost;
-  if (a.dot) dst.dots.push({ name: a.name, dps: a.dot.dps, pct: a.dot.pct, left: a.dot.duration });
-  if (a.shield) src.shield = { amount: a.shield.amount, left: a.shield.duration };
+  if (a.dot) dst.dots.push({ name: a.name, type: a.type, dps: a.dot.dps, pct: a.dot.pct, left: a.dot.duration });
+  if (a.shield) src.shield = { amount: a.shield.amount, left: a.shield.duration, type: a.shield.type };
   if (a.heal) src.hp = Math.min(src.u.maxHp, src.hp + a.heal);
 
   const attack = a.kind === 'attack';
@@ -1478,11 +1494,11 @@ function use(src, dst, a) {
     if (attack && src.u.blockShred) dst.shred = Math.min(dst.u.block, dst.shred + src.u.blockShred);
     for (const { raw, type } of sources) {
       if (!raw) continue;
-      // physical: armor (minus armor pen) then block; magic: unreduced
-      const dmg = type === 'physical' ? mitigate(raw, dst.u.armor - pen, dst.u.block - dst.shred) : raw;
+      // physical: armor (minus armor pen) then block; magic: magic resistance
+      const dmg = type === 'physical' ? mitigate(raw, dst.u.armor - pen, dst.u.block - dst.shred) : resistMagic(raw, dst.u.magicResist);
       dealt += dmg;
       if (type === 'physical') physical += dmg;
-      dst.hp -= absorb(dst.shield, dmg);
+      dst.hp -= absorb(dst.shield, dmg, type);
     }
   }
   const healed = dealt * a.lifesteal + physical * (src.u.lifesteal || 0);

@@ -25,7 +25,8 @@
 //     dot: { pctMaxHp, pctScaling, base, scaling, duration }   damage over time
 //          per stack per second = (pctMaxHp + power x pctScaling) x target max hp
 //          + base + power x scaling
-//     shield: { base, scaling, duration }          temporary hp, absorbs first
+//     shield: { base, scaling, duration, type }    temporary hp, absorbs first;
+//                         type 'physical' or 'magic': only absorbs that type
 //     heal: { pctMaxHp, base, scaling }            heals the user
 //     countdown           shows a countdown in the process panel
 //   onHit:   { type, base, scaling } extra damage on each attack hit (scaling x
@@ -232,6 +233,19 @@ export const SKILLS = [
     levels: [
       { rush: { attackSpeed: 1, duration: 6 } },
       { rush: { attackSpeed: 0.5 } },
+    ],
+  },
+  {
+    id: 'S22', name: 'fyndhorn vigor',
+    levels: [
+      { mods: { hpFlat: 30, manaFlat: 10, manaRegenFlat: 0.5 } },
+      { mods: { hpFlat: 20, manaFlat: 5, manaRegenFlat: 0.25 } },
+    ],
+  },
+  {
+    id: 'M06', name: 'fyndhorn barrier',
+    levels: [
+      { spell: { type: 'magic', time: 6, speedScaling: 0, shield: { base: 40, duration: 6, type: 'physical' } } },
     ],
   },
   {

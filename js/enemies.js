@@ -176,6 +176,18 @@ export const ENEMIES = [
     ],
   },
   {
+    id: 'E025', name: 'fyndhorn slime', tier: 2, rank: 'elite', profile: 'defensive', limit: 5,
+    skills: [{ skill: 'M06', level: 1 }],
+    rewards: [
+      { stat: 'armor', total: 15 },
+      { stat: 'magicResist', total: 15 },
+    ],
+    skillRewards: [
+      { skill: 'S22', level: 1, at: 'first' },
+      { skill: 'S22', level: 2, at: 5 },
+    ],
+  },
+  {
     id: 'E020', name: 'paladin', tier: 2, rank: 'boss', profile: 'tank', limit: 1,
     base: { armor: 0, maxHp: 0, block: 0, damage: -4 },
     skills: [{ skill: 'M04', level: 1 }],

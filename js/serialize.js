@@ -54,7 +54,8 @@ const SKILLS_HEADER = `// Skill data, shared by the player and enemies. Written 
 //     dot: { pctMaxHp, pctScaling, base, scaling, duration }   damage over time
 //          per stack per second = (pctMaxHp + power x pctScaling) x target max hp
 //          + base + power x scaling
-//     shield: { base, scaling, duration }          temporary hp, absorbs first
+//     shield: { base, scaling, duration, type }    temporary hp, absorbs first;
+//                         type 'physical' or 'magic': only absorbs that type
 //     heal: { pctMaxHp, base, scaling }            heals the user
 //     countdown           shows a countdown in the process panel
 //   onHit:   { type, base, scaling } extra damage on each attack hit (scaling x
