@@ -427,8 +427,34 @@ const popup = $('#popup');
 let popKey = null;
 let popAnchor = null;
 
+// Skill details (data-bd="skill:<id>"): every level (locked ones muted), the
+// next level's requirement, and the action hovers written out in full.
+function skillInfo(id, d) {
+  const k = G.skillDef(id);
+  if (!k) return '';
+  const lv = G.skillLevel(s, id);
+  const next = lv < k.levels.length ? reqText(G.levelReq(k, lv), lv + 1, k) : '';
+  const head = `<div class="sk-head">${k.id} ${k.name} <span class="muted">${k.special ? 'special · ' : ''}lv ${lv}/${k.levels.length}</span></div>`;
+  const tpl = document.createElement('template');
+  tpl.innerHTML = head + levelLines(k, lv, d) + (next ? `<div class="sk-next muted">next: ${next}</div>` : '');
+  for (const t of tpl.content.querySelectorAll('.tip')) {
+    const x = document.createElement('div');
+    x.className = 'sk-tip muted';
+    x.textContent = (t.dataset.tip || '').split('\n').map((l) => l.trim()).filter(Boolean).join('\n');
+    const line = t.closest('.parts > div') || t.parentElement;
+    t.replaceWith(t.textContent);
+    line.after(x);
+  }
+  return tpl.innerHTML;
+}
+
 function renderPopup(d) {
   if (!popKey) return;
+  if (popKey.startsWith('skill:')) {
+    const html = skillInfo(popKey.slice(6), d);
+    if (popup.innerHTML !== html) popup.innerHTML = html;
+    return;
+  }
   popup.innerHTML = '<table>' + breakdown(popKey, d)
     .map(([l, v, c = '']) => `<tr class="${c}"><td>${l}</td><td class="num">${v}</td></tr>`)
     .join('') + '</table>';
@@ -445,6 +471,14 @@ function openPopup(q) {
   renderPopup(G.derived(s, s.fight?.elapsed ?? null));
   const r = q.getBoundingClientRect();
   if (narrow()) {
+    popup.hidden = false;
+    const w = popup.offsetWidth;
+    popup.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + window.scrollX}px`;
+    popup.style.top = `${r.bottom + window.scrollY + 4}px`;
+    return;
+  }
+  if (popKey.startsWith('skill:')) {
+    // next to the skill name, kept inside the window
     popup.hidden = false;
     const w = popup.offsetWidth;
     popup.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + window.scrollX}px`;
@@ -540,7 +574,7 @@ function renderSkills(d) {
     const k = id && G.skillDef(id);
     if (!k) return `<tr><td class="muted">${i}</td><td class="muted" colspan="3">empty</td><td></td></tr>`;
     const lv = G.skillLevel(s, id);
-    return `<tr><td class="muted">${i}</td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d, true)}</td>
+    return `<tr><td class="muted">${i}</td><td>${k.id}</td><td colspan="2"><span class="sk-name" data-bd="skill:${k.id}">${k.name}</span></td>
       <td><button data-act="unequip" data-i="${i}">unload</button></td></tr>`;
   }).join('') + G.freeSkills(s).map((id) => {
     // free skills (prestige shop): lv1 without unlocking, no slot; can be unloaded
@@ -549,7 +583,7 @@ function renderSkills(d) {
     const on = G.freeActive(s, id);
     const tip = 'free skill, chosen at random on the last prestige: lv1 without unlocking it, uses no slot';
     const b = on ? `<button data-act="free-off" data-id="${id}">unload</button>` : `<button data-act="free-on" data-id="${id}">load</button>`;
-    return `<tr${on ? '' : ' class="muted"'}><td class="muted"><span class="tip" tabindex="0" data-tip="${esc(tip)}">f</span></td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d, true)}</td><td>${b}</td></tr>`;
+    return `<tr${on ? '' : ' class="muted"'}><td class="muted"><span class="tip" tabindex="0" data-tip="${esc(tip)}">f</span></td><td>${k.id}</td><td colspan="2"><span class="sk-name" data-bd="skill:${k.id}">${k.name}</span></td><td>${b}</td></tr>`;
   }).join('');
 
   const full = !s.slots.includes(null);
@@ -568,24 +602,22 @@ function renderSkills(d) {
   $('#library tbody').innerHTML = lib.map((k, idx) => {
     const lv = levels[idx];
     if (!lv) {
-      const body = G.skillShopItem(s, k.id) ? levelLines(k, 0, d) : reqText(G.levelReq(k, 0), 1);
-      return `<tr class="muted"><td></td><td>${k.id}</td><td>${k.name}</td><td>${body}</td><td>${autoBtn(k)}</td></tr>`;
+      return `<tr class="muted"><td></td><td>${k.id}</td><td colspan="2"><span class="sk-name" data-bd="skill:${k.id}">${k.name}</span></td><td>${autoBtn(k)}</td></tr>`;
     }
     const btn = G.isFree(s, k.id)
       ? (G.freeActive(s, k.id) ? '<span class="muted">free</span>' : `<button data-act="free-on" data-id="${k.id}">load</button>`)
       : s.slots.includes(k.id)
       ? '<span class="muted">loaded</span>'
       : `<button data-act="equip" data-id="${k.id}" ${full ? 'disabled' : ''}>load</button>`;
-    return `<tr${freshAttr(k.id)}><td>${newTag(k.id)}</td><td>${k.id}</td><td>${k.name}</td><td>${levelLines(k, lv, d)}</td><td>${btn}${autoBtn(k)}</td></tr>`;
+    return `<tr${freshAttr(k.id)}><td>${newTag(k.id)}</td><td>${k.id}</td><td colspan="2"><span class="sk-name" data-bd="skill:${k.id}">${k.name}</span></td><td>${btn}${autoBtn(k)}</td></tr>`;
   }).join('');
 
   $('#special tbody').innerHTML = sps.map((x) => {
     const lv = G.skillLevel(s, x.id);
     if (!lv) {
-      const body = G.skillShopItem(s, x.id) ? levelLines(x, 0, d) : reqText(G.unlockReq(x.id, 1), 1);
-      return `<tr class="muted"><td></td><td>${x.id}</td><td>${x.name}</td><td>${body}</td><td></td></tr>`;
+      return `<tr class="muted"><td></td><td>${x.id}</td><td colspan="2"><span class="sk-name" data-bd="skill:${x.id}">${x.name}</span></td><td></td></tr>`;
     }
-    return `<tr${freshAttr(x.id)}><td>${newTag(x.id)}</td><td>${x.id}</td><td>${x.name}</td><td>${levelLines(x, lv, d)}</td><td class="muted">active</td></tr>`;
+    return `<tr${freshAttr(x.id)}><td>${newTag(x.id)}</td><td>${x.id}</td><td colspan="2"><span class="sk-name" data-bd="skill:${x.id}">${x.name}</span></td><td class="muted">active</td></tr>`;
   }).join('');
 
   $('#slot-count').textContent = `${s.slots.filter(Boolean).length}/${s.slots.length}`;
