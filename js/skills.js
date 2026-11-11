@@ -63,7 +63,7 @@ export const SKILLS = [
     id: 'S02', name: 'gel coat',
     levels: [
       { mods: { hpFlat: 20 } },
-      { mods: { regenPct: 0.004 } },
+      { mods: { regenPct: 0.01 } },
       { mods: { manaRegenFlat: 0.5 } },
     ],
   },
