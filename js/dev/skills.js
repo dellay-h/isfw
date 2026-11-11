@@ -42,7 +42,7 @@ const PARTS = {
   empower: { label: 'empower (next attack)', make: () => ({ mult: 1, cooldown: 5 }) },
   mods: { label: 'attribute bonuses', make: () => ({ damageFlat: 1 }) },
   slots: { label: 'skill slots', make: () => 1 },
-  rush: { label: 'rush (attack speed at fight start, decaying; enemies)', make: () => ({ attackSpeed: 3, duration: 4 }) },
+  rush: { label: 'rush (attack speed at fight start, decaying)', make: () => ({ attackSpeed: 3, duration: 4 }) },
   winHeal: { label: 'heal after each win (max hp fraction; player)', make: () => 0.05 },
   aura: { label: 'aura (damage/s to the opponent in fights)', make: () => ({ type: 'magic', base: 1 }) },
 };

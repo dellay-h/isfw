@@ -437,7 +437,7 @@ function openPopup(q) {
   popAnchor = q;
   popKey = q.dataset.bd;
   popOpened = Date.now();
-  renderPopup(G.derived(s));
+  renderPopup(G.derived(s, s.fight?.elapsed ?? null));
   const r = q.getBoundingClientRect();
   if (narrow()) {
     popup.hidden = false;
@@ -616,7 +616,7 @@ function renderLoadouts() {
 
 function render() {
   if (visibleKey() !== targetsKey) buildTargets();
-  const d = G.derived(s);
+  const d = G.derived(s, s.fight?.elapsed ?? null); // in a fight: includes rush
 
   $('#p-lvl').innerHTML = `<span class="muted">${fmt(s.xp, 0)}/${G.xpToNext(s)} xp</span> ${s.level}`;
   $('#p-xpbar').innerHTML = bar(s.xp, G.xpToNext(s));

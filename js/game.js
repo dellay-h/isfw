@@ -1052,10 +1052,13 @@ export function killEffects(kills, s = null) {
 }
 
 // Player: base attributes + kill rewards + prestige shop + unlocked specials
-// + loaded skills + attack penalties.
-export function derived(s) {
+// + loaded skills + attack penalties. t: seconds into the fight (rush, a
+// decaying attack speed bonus at the start of a fight, only counts in a
+// fight, as for enemies).
+export function derived(s, t = null) {
   const active = activeSkills(s);
-  return unit(PLAYER(), active, [...killEffects(s.kills, s), ...shopEffects(s), ...essenceEffects(s), ...penaltyEffects(active)], REGEN.outOfCombatFlat, levelBonus(s));
+  const rush = t === null ? [] : rushEffects(active, t);
+  return unit(PLAYER(), active, [...killEffects(s.kills, s), ...shopEffects(s), ...essenceEffects(s), ...penaltyEffects(active), ...rush], REGEN.outOfCombatFlat, levelBonus(s));
 }
 // Attack penalty (skill level part attackPenalty: { at, mods }, player only):
 // once the player has at least `at` active skills with an attack, the
@@ -1364,7 +1367,7 @@ function sides(s, f, d, eu) {
 
 // Advance the simulation by dt seconds.
 export function step(s, dt) {
-  const d = derived(s);
+  const d = derived(s, s.fight ? s.fight.elapsed : null);
   const f = s.fight;
   syncHp(s, d);
 

@@ -66,7 +66,7 @@ const SKILLS_HEADER = `// Skill data, shared by the player and enemies. Written 
 //            bonuses, keys in data.js MODS). Each attack skill applies its own.
 //   slots:   extra skill slots (player)
 //   rush:    { attackSpeed, duration } +attackSpeed at the start of a fight,
-//            falling to 0 over duration seconds (enemies only for now)
+//            falling to 0 over duration seconds (player and enemies)
 //   winHeal: heals this fraction of max hp after each win (player)
 //   aura:    { type, base, pctMaxHp } damage per second to the opponent during
 //            a fight = base + pctMaxHp x own max hp; type default magic
