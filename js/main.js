@@ -767,7 +767,9 @@ function render() {
   $('#btn-stop').disabled = !f && !s.retry;
   $('#auto').checked = s.repeat;
 
-  renderSkills(d);
+  // without rush: its decaying aspd would rebuild the skills panel every
+  // frame during a fight (buttons couldn't be clicked)
+  renderSkills(s.fight ? G.derived(s) : d);
   renderNew();
   renderShop();
   renderEssence();
