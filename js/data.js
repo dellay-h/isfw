@@ -182,7 +182,6 @@ export const MODS = {
 // commit edits there). In the dev version, edits not committed yet are kept
 // in the browser as drafts and used instead.
 import { SITE, key } from './site.js';
-import { loadRemote, token } from './github.js';
 import { ENEMIES as LOCAL_ENEMIES } from './enemies.js';
 import { SKILLS as LOCAL_SKILLS } from './skills.js';
 import { SHOP as LOCAL_SHOP } from './shop.js';
@@ -191,7 +190,9 @@ import { POWER as LOCAL_POWER } from './power.js';
 // Online dev version, signed in: use the latest files on the dev branch
 // (REMOTE.error is set if that failed; the files served with the page are
 // used then, and nothing can be committed).
-export const REMOTE = SITE.mode === 'dev' && token.get() ? await loadRemote().catch((error) => ({ error })) : null;
+// (github.js is only loaded in the dev version)
+const GH = SITE.mode === 'dev' ? await import('./github.js') : null;
+export const REMOTE = GH && GH.token.get() ? await GH.loadRemote().catch((error) => ({ error })) : null;
 const fromRemote = !!(REMOTE && !REMOTE.error);
 const FILE_ENEMIES = fromRemote ? REMOTE.enemies.data : LOCAL_ENEMIES;
 const FILE_SKILLS = fromRemote ? REMOTE.skills.data : LOCAL_SKILLS;

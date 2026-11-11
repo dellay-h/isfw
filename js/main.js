@@ -1,7 +1,6 @@
 // Entry point: game loop, rendering and input.
 import { ENEMIES, REGEN, USING_DRAFT, armorReduction } from './data.js';
 import * as G from './game.js';
-import { initDev, showDev } from './dev.js';
 import { SITE, key } from './site.js';
 
 let s = G.load();
@@ -1058,6 +1057,10 @@ function tick() {
 // The playable version (SITE.mode 'play') has no dev pages at all.
 const PLAY = SITE.mode === 'play';
 const VIEWS = PLAY ? { monitor: '#view-monitor' } : { monitor: '#view-monitor', 'dev/enemies': '#view-dev-enemies', 'dev/skills': '#view-dev-skills', 'dev/shop': '#view-dev-shop', 'dev/run': '#view-dev-run' };
+// Dev pages (dev.js and js/dev/*): loaded in the background once the monitor
+// runs, and never in the playable version. Until then a dev view shows
+// #view-dev-loading.
+let dev = null;
 if (PLAY) {
   for (const a of document.querySelectorAll('header nav a')) if (a.dataset.view !== 'monitor') a.remove();
 }
@@ -1069,13 +1072,14 @@ function showView() {
   if (v === 'dev') v = 'dev/enemies';
   if (!VIEWS[v]) v = 'monitor';
   if (PLAY && location.hash && location.hash !== '#monitor') history.replaceState(null, '', '#monitor');
-  for (const [name, sel] of Object.entries(VIEWS)) $(sel).hidden = name !== v;
+  const waiting = !PLAY && !dev && v.startsWith('dev/');
+  for (const [name, sel] of Object.entries(VIEWS)) $(sel).hidden = waiting || name !== v;
+  if (!PLAY) $('#view-dev-loading').hidden = !waiting;
   for (const a of document.querySelectorAll('header nav a')) a.classList.toggle('on', a.dataset.view === v);
   document.title = `isfw / ${v}`;
-  if (!PLAY) showDev(v.startsWith('dev/') ? v : null);
+  if (dev) dev.showDev(v.startsWith('dev/') ? v : null);
 }
 $('#draft-tag').hidden = !USING_DRAFT;
-if (!PLAY) initDev({ getState: () => s, save: () => G.save(s), getSpeed: () => devSpeed, setSpeed: setDevSpeed });
 renderSpeedTag();
 window.addEventListener('hashchange', showView);
 showView();
@@ -1084,6 +1088,15 @@ buildTargets();
 if (!s.log.length) G.log(s, 'session initialised', 'muted');
 render();
 setInterval(tick, TICK);
+if (!PLAY) {
+  import('./dev.js').then((m) => {
+    m.initDev({ getState: () => s, save: () => G.save(s), getSpeed: () => devSpeed, setSpeed: setDevSpeed });
+    dev = m;
+    showView();
+  }).catch((err) => {
+    $('#dev-loading-msg').textContent = `dev pages failed to load: ${err.message} (reload to retry)`;
+  });
+}
 window.addEventListener('beforeunload', () => G.save(s));
 // Expose for debugging in the console.
 window.isfw = { get state() { return s; }, G };

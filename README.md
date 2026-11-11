@@ -57,7 +57,7 @@ before editing the files by hand.
 - `js/power.js` – tier power levels and enemy profiles (written by dev/enemies)
 - `js/game.js` – state, save/load, units, combat simulation (no DOM)
 - `js/main.js` – game loop, monitor rendering, input, view switching
-- `js/dev.js`, `js/dev/*.js` – dev screens (shared store, enemy page, skill page, shop page, run page)
+- `js/dev.js`, `js/dev/*.js` – dev screens (shared store, enemy page, skill page, shop page, run page); loaded in the background after the monitor starts, never in the playable version
 - `js/serialize.js` – writes `enemies.js` / `skills.js` / `shop.js` / `power.js` source
 - `design/` – design notes: archetype ideas, skill ideas
 - `js/site.js` – which version this copy is (dev; the playable copy gets its own) and browser storage names
