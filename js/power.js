@@ -27,7 +27,7 @@ export const POWER = [
   { kind: 'rank', rank: 'elite', bonus: 0.5 },
   { kind: 'rank', rank: 'boss', bonus: 1 },
   { kind: 'tier', tier: 2, mult: 4.7 },
-  { kind: 'tier', tier: 3, mult: 22.09 },
+  { kind: 'tier', tier: 3, mult: 12 },
   { kind: 'profile', id: 'tank', name: 'tank', mult: { maxHp: 2.5, damage: 0.4, magicPower: 0, maxMana: 0, manaRegen: 0 }, add: {}, skills: [{ skill: 'M03', level: 1 }] },
   { kind: 'profile', id: 'magic', name: 'default magic', mult: { damage: 0.2 }, add: {}, skills: [{ skill: 'M03', level: 1 }, { skill: 'M05', level: 1 }] },
 ];
