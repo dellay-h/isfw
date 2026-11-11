@@ -642,8 +642,9 @@ function renderLoadouts() {
     const usable = G.loadoutUsable(s, i);
     const names = ids.map((id) => {
       const k = G.skillDef(id);
-      const label = `${id} ${k ? k.name : '(removed)'}`;
-      return usable.includes(id) ? label : `<span class="muted" title="not available now: skipped when loading">${label}</span>`;
+      // code only; the name shows on hover
+      const name = k ? k.name : '(removed)';
+      return usable.includes(id) ? `<span title="${esc(name)}">${id}</span>` : `<span class="muted" title="${esc(`${name}: not available now, skipped when loading`)}">${id}</span>`;
     }).join(', ');
     const active = G.loadoutActive(s, i);
     const load = active
