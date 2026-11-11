@@ -231,7 +231,7 @@ export const SKILLS = [
   {
     id: 'S21', name: 'frenzy',
     levels: [
-      { rush: { attackSpeed: 1, duration: 6 } },
+      { rush: { attackSpeed: 1, duration: 4 } },
       { rush: { attackSpeed: 0.5 } },
     ],
   },
