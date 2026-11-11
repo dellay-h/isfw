@@ -512,3 +512,6 @@ button.armed { color: var(--err); border-color: var(--err); }
 #popup .sk-tip { white-space: pre-wrap; margin: 0 0 3px 1ch; }
 #popup .sk-next { margin-top: 2px; border-top: 1px solid var(--line); padding-top: 2px; }
 #popup:has(.sk-head) { max-width: 320px; }
+
+/* src rows for attributes the player doesn't have yet (value 0) */
+#unit tr[data-has][hidden] { display: none !important; }

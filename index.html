@@ -20,7 +20,7 @@
     <span class="spacer"></span>
     <span id="speed-tag" class="warn" title="dev time speed (dev/run)" hidden></span>
     <span id="draft-tag" class="warn" title="enemies/skills/shop come from dev edits not committed to the dev branch yet" hidden>dev draft&nbsp;&nbsp;</span>
-    <span class="muted" id="version">v1.53</span>
+    <span class="muted" id="version">v1.54</span>
   </header>
 
   <main id="view-monitor">
@@ -37,17 +37,17 @@
         <tr><td>hp <span class="q" data-bd="maxHp">?</span></td><td class="num" id="p-hp"></td></tr>
         <tr><td></td><td id="p-hpbar"></td></tr>
         <tr><td>regen <span class="q" data-bd="regen">?</span></td><td class="num" id="p-regen"></td></tr>
-        <tr><td>armor <span class="q" data-bd="armor">?</span></td><td class="num" id="p-armor"></td></tr>
-        <tr><td>mag res <span class="q" data-bd="magicResist">?</span></td><td class="num" id="p-mres"></td></tr>
-        <tr><td>block <span class="q" data-bd="block">?</span></td><td class="num" id="p-block"></td></tr>
+        <tr data-has="armor"><td>armor <span class="q" data-bd="armor">?</span></td><td class="num" id="p-armor"></td></tr>
+        <tr data-has="magicResist"><td>mag res <span class="q" data-bd="magicResist">?</span></td><td class="num" id="p-mres"></td></tr>
+        <tr data-has="block"><td>block <span class="q" data-bd="block">?</span></td><td class="num" id="p-block"></td></tr>
         <tr><td>dps <span class="q" data-bd="dps">?</span></td><td class="num" id="p-dps"></td></tr>
         <tr><td>dmg <span class="q" data-bd="damage">?</span></td><td class="num" id="p-dmg"></td></tr>
         <tr><td>aspd <span class="q" data-bd="attackSpeed">?</span></td><td class="num" id="p-aspd"></td></tr>
-        <tr><td>mp <span class="q" data-bd="maxMana">?</span></td><td class="num" id="p-mp"></td></tr>
-        <tr><td></td><td id="p-mpbar"></td></tr>
-        <tr><td>mp regen <span class="q" data-bd="manaRegen">?</span></td><td class="num" id="p-mpregen"></td></tr>
-        <tr><td>mag pwr <span class="q" data-bd="magicPower">?</span></td><td class="num" id="p-mpow"></td></tr>
-        <tr><td>mag spd <span class="q" data-bd="magicSpeed">?</span></td><td class="num" id="p-mspd"></td></tr>
+        <tr data-has="maxMana"><td>mp <span class="q" data-bd="maxMana">?</span></td><td class="num" id="p-mp"></td></tr>
+        <tr data-has="maxMana"><td></td><td id="p-mpbar"></td></tr>
+        <tr data-has="manaRegen"><td>mp regen <span class="q" data-bd="manaRegen">?</span></td><td class="num" id="p-mpregen"></td></tr>
+        <tr data-has="magicPower"><td>mag pwr <span class="q" data-bd="magicPower">?</span></td><td class="num" id="p-mpow"></td></tr>
+        <tr data-has="magicSpeed"><td>mag spd <span class="q" data-bd="magicSpeed">?</span></td><td class="num" id="p-mspd"></td></tr>
       </table>
     </section>
 

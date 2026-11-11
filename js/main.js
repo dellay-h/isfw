@@ -679,6 +679,12 @@ function render() {
   $('#p-mres').innerHTML = `<span class="muted">${Number((armorReduction(d.magicResist) * 100).toFixed(2))}%</span> ${fmt(d.magicResist, 0)}`;
   $('#p-block').textContent = fmt(d.block, 1);
   $('#p-dps').textContent = fmt(d.dps, 3);
+  // Hide attributes the player doesn't have yet (still 0, e.g. no mana before
+  // a mana skill); they show up as soon as anything gives them a value.
+  for (const tr of document.querySelectorAll('#unit tr[data-has]')) {
+    const off = !d[tr.dataset.has];
+    if (tr.hidden !== off) tr.hidden = off;
+  }
   $('#p-regen').textContent = `${fmt(s.fight ? d.regenInHp : d.regenOutHp, 1)}/s`;
   renderEssenceLock();
   renderShopLock();
